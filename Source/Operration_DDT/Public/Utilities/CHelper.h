@@ -4,11 +4,7 @@ class UFXSystemAsset;
 #include "Particles/ParticleSystem.h"
 #include "NiagaraSystem.h"
 #include "NiagaraFunctionLibrary.h"
-#include "GameFramework/Character.h"
-#include "Components/CapsuleComponent.h"
 #include "Kismet/GameplayStatics.h"
-#include "Character/ACGhostTrail.h"
-#include "Character/CPlayer.h"
 
 #define CheckTrue(x) { if(x == true) return; }
 #define CheckTrueResult(x, y) { if(x == true) return y; }
@@ -32,7 +28,7 @@ class UFXSystemAsset;
 }
 
 
-class PROJECT_DT_API CHelpers
+class OPERRATION_DDT_API CHelpers
 {
 public:
 	template<typename T>
@@ -48,15 +44,6 @@ public:
 		}
 
 		InActor->SetRootComponent(*OutComponent);
-	}
-	template<typename T>
-static T* GetWidget(AActor* InActor)
-	{
-		if (ACPlayer* Player = Cast<ACPlayer>(InActor))
-		{
-			return Cast<T>(Player->UWidget);
-		}
-		return nullptr;
 	}
 
 	template<typename T>

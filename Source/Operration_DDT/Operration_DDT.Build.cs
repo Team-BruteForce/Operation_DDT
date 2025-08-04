@@ -10,7 +10,9 @@ public class Operration_DDT : ModuleRules
 	
 		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "Niagara", "NavigationSystem", "UMG", "MotionWarping","PhysicsCore" });
 
-		PrivateDependencyModuleNames.AddRange(new string[] {  });
+		// Include paths for Utilities and Global.h
+		PublicIncludePaths.AddRange(new string[] { "Source/Operration_DDT/Public" });
+		PrivateIncludePaths.AddRange(new string[] { "Source/Operration_DDT/Private" });
 
 		// Uncomment if you are using Slate UI
 		// PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
