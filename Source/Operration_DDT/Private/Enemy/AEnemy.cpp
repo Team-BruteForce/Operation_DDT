@@ -1,31 +1,31 @@
 #pragma once
 
 #include "Enemy/AEnemy.h"
+#include "AIController.h"
 #include "Global.h"
 AAEnemy::AAEnemy()
 {
-	PrimaryActorTick.bCanEverTick = true;
-	// USkeletalMesh* mesh;
-	// CHelpers::GetAsset<USkeletalMesh>(&mesh, AssetPaths::ENEMY_MESH);
-	//
-	// TSubclassOf<UAnimInstance> Anim;
-	// CHelpers::GetClass<UAnimInstance>(&Anim, AssetPaths::ENEMY_ANIM);
-	// GetMesh()->SetAnimInstanceClass(Anim);
+	USkeletalMesh* mesh;
+	CHelpers::GetAsset<USkeletalMesh>(&mesh, AssetPaths::ENEMY_MESH);
+	GetMesh()->SetSkeletalMesh(mesh);
+	GetMesh()->SetRelativeLocation(FVector(0.0f, 0.0f, -90.0f));
+	GetMesh()->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f));
+	
+	TSubclassOf<UAnimInstance> Anim;
+	CHelpers::GetClass<UAnimInstance>(&Anim, AssetPaths::ENEMY_ANIM);
+	GetMesh()->SetAnimInstanceClass(Anim);
+
+	TSubclassOf<AAIController> AIC;
+	CHelpers::GetClass<AAIController>(&AIC, AssetPaths::ENEMY_AIC);
+	AIControllerClass = AIC;
+
 }
 
 // Called when the game starts or when spawned
 void AAEnemy::BeginPlay()
 {
 	Super::BeginPlay();
-	// CHelpers::GetAsset<USkeletalMesh>(&mesh, AssetPaths::CHARACTER_MESH);
 	
-}
-
-// Called every frame
-void AAEnemy::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
 }
 
 // Called to bind functionality to input

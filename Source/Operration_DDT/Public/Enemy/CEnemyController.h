@@ -13,5 +13,13 @@ UCLASS()
 class OPERRATION_DDT_API ACEnemyController : public AAIController
 {
 	GENERATED_BODY()
-	
+public:
+	ACEnemyController(const FObjectInitializer& ObjectInitializer);
+
+	virtual void BeginPlay() override;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+	class UCEnemyStateTreeAIComponent* EnemyStateTreeAIComponent;
+
 };
+	
