@@ -2,6 +2,7 @@
 
 #include "Enemy/AEnemy.h"
 #include "AIController.h"
+#include "Enemy/Component/CEnemyMovement.h"
 #include "Global.h"
 AAEnemy::AAEnemy()
 {
@@ -19,6 +20,8 @@ AAEnemy::AAEnemy()
 	CHelpers::GetClass<AAIController>(&AIC, AssetPaths::ENEMY_AIC);
 	AIControllerClass = AIC;
 
+	CHelpers::CreateActorComponent<UCEnemyMovement>(this, &EnemyMovementComponent, "MovementComponent");
+	
 }
 
 // Called when the game starts or when spawned

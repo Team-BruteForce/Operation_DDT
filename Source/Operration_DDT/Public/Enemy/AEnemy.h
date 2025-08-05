@@ -6,7 +6,7 @@
 #include "GameFramework/Character.h"
 #include "AEnemy.generated.h"
 
-UCLASS()
+UCLASS(BlueprintType)
 class OPERRATION_DDT_API AAEnemy : public ACharacter
 {
 	GENERATED_BODY()
@@ -14,13 +14,15 @@ class OPERRATION_DDT_API AAEnemy : public ACharacter
 public:
 	// Sets default values for this character's properties
 	AAEnemy();
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+	class UCEnemyMovement* EnemyMovementComponent;
+	
 
 protected:
 	virtual void BeginPlay() override;
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-public:
-	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="PatrolPath")
-	class AAPatrolPath* PatrolPath;
+
 };
