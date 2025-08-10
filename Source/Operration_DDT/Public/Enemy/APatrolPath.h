@@ -12,17 +12,11 @@ class OPERRATION_DDT_API AAPatrolPath : public AActor
 	GENERATED_BODY()
 	
 public:	
-	// Sets default values for this actor's properties
 	AAPatrolPath();
 
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
+public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PatrolPath")
 	class USplineComponent* SplineComponent;
 };
