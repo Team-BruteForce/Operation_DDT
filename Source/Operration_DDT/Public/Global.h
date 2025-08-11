@@ -7,4 +7,3 @@
 #include "Utilities/AssetPath.h"
 #include "Utilities/CHelper.h"
 #include "Utilities/CLog.h"
-#include "Enemy/CEnemyStateTreeAIComponent.h"
