@@ -4,7 +4,6 @@
 #include "Enemy/CBoss.h"
 #include "Global.h"
 #include "Enemy/CBossAIC.h"
-
 /**
  * @brief 보스 캐릭터 생성자
  * 
@@ -31,6 +30,11 @@ ACBoss::ACBoss()
 	TSubclassOf<ACBossAIC> AIC;
 	CHelpers::GetClass<ACBossAIC>(&AIC, AssetPaths::Boss_AIC);
 	AIControllerClass = AIC;
+}
+
+void ACBoss::AttackTest()
+{
+	GetMesh()->GetAnimInstance()->Montage_Play(AttackMontage);
 }
 
 /**

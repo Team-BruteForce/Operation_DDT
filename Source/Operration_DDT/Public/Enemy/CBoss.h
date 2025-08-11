@@ -28,6 +28,12 @@ public:
 	 */
 	ACBoss();
 
+	UFUNCTION()
+	void AttackTest();
+	
+	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="TestMontage")
+	 class UAnimMontage* AttackMontage;
+
 protected:
 	/**
 	 * @brief 게임 시작 또는 스폰 시 호출되는 함수
