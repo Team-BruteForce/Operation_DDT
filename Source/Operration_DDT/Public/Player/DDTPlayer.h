@@ -4,7 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Components/CStateComponent.h"
 #include "DDTPlayer.generated.h"
+
+DECLARE_MULTICAST_DELEGATE_OneParam(FInputBindingDelegate, class UEnhancedInputComponent*);
 
 UCLASS(Blueprintable)
 class OPERRATION_DDT_API ADDTPlayer : public ACharacter
@@ -15,15 +18,42 @@ public:
 	// Sets default values for this character's properties
 	ADDTPlayer();
 
+	FInputBindingDelegate InputBindingDelegate;
+
+private:
+	UPROPERTY(VisibleAnywhere)
+		class USpringArmComponent* SpringArm;
+ 
+	UPROPERTY(VisibleAnywhere)
+		class UCameraComponent* Camera;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	class UInputMappingContext* IMC_Player;
+ 
+private:
+	UPROPERTY(VisibleAnywhere)
+		class UCMontageComponent* Montages;
+ 
+	UPROPERTY(VisibleAnywhere)
+		class UCMovementComponent* Movement;
+ 
+	UPROPERTY(VisibleAnywhere)
+		class UCStateComponent* State;
+  
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
-	// Called to bind functionality to input
+public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+  
+private:
+	UFUNCTION()
+	void OnStateTypeChanged(EStateType InPrevType, EStateType InNewType);
+ 
+private:
+	void OnAvoid();
+ 
+private:
+	void BackStep();
 
 };
