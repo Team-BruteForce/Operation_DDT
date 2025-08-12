@@ -26,6 +26,9 @@ private:
 	class UButton* OpenWeaponUIButtonB;
 
 	UPROPERTY(meta = (BindWidget))
+	class UButton* StartButton;
+
+	UPROPERTY(meta = (BindWidget))
 	class UImage* WeaponDisplayA;
 
 	UPROPERTY(meta = (BindWidget))
@@ -36,6 +39,11 @@ private:
 
 	UFUNCTION()
 	void OnOpenWeaponUIButtonB();
+
+	UFUNCTION()
+	void OnGameStartButton();
+
+	void CheckDuplicateImage(UImage* Target, UImage* Other, UTexture2D* Texture);
 
 	UPROPERTY(EditAnywhere, Category = UI)
 	TSubclassOf<UUserWidget> WeaponSelectUI;

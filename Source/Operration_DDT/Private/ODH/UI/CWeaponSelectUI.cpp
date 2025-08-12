@@ -25,6 +25,8 @@ bool UCWeaponSelectUI::Initialize()
 		WeaponC->OnClicked.AddDynamic(this, &UCWeaponSelectUI::OnWeaponCButton);
 	}
 
+	
+
 	return true;
 }
 
