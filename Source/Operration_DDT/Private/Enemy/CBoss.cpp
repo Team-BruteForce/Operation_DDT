@@ -32,9 +32,17 @@ ACBoss::ACBoss()
 	AIControllerClass = AIC;
 }
 
-void ACBoss::AttackTest()
+/**
+ * @brief 공격 애니메이션을 재생하는 테스트 함수
+ * 
+ * @param StateTag 재생할 공격 애니메이션을 식별하는 게임플레이 태그
+ * 
+ * 지정된 StateTag에 해당하는 공격 애니메이션 몽타주를 재생합니다.
+ * 현재는 테스트 목적으로 사용되며, 향후 실제 공격 시스템으로 확장될 예정입니다.
+ */
+void ACBoss::AttackTest(FGameplayTag StateTag)
 {
-	GetMesh()->GetAnimInstance()->Montage_Play(AttackMontage);
+	GetMesh()->GetAnimInstance()->Montage_Play(AttackOptions[StateTag]);
 }
 
 /**

@@ -19,10 +19,11 @@
 void UCBossEnemyStateTreeEvaluator::Tick(FStateTreeExecutionContext& Context, const float DeltaTime)
 {
 	Super::Tick(Context, DeltaTime);
-	CLog::Log(Context.GetOwner()->GetName());
 
-	CLog::Log("Tick");
 	Get_Decision_Data(Context,DeltaTime);
+	CLog::Print( "State : "+Context.GetActiveStateName(), 1);
+	CLog::Print(FString::Printf(TEXT("Distance : %f"), player_ai_dist), 2);
+	CLog::Print("Target : "+Target->GetName(), 3);
 	
 }
 

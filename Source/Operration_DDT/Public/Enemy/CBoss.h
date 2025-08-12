@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "GameplayTagContainer.h"
 #include "CBoss.generated.h"
 
 /**
@@ -28,12 +29,26 @@ public:
 	 */
 	ACBoss();
 
+	/**
+	 * @brief 공격 애니메이션을 재생하는 테스트 함수
+	 * 
+	 * @param StateTag 재생할 공격 애니메이션을 식별하는 게임플레이 태그
+	 * 
+	 * 지정된 StateTag에 해당하는 공격 애니메이션 몽타주를 재생합니다.
+	 * 현재는 테스트 목적으로 사용되며, 향후 실제 공격 시스템으로 확장될 예정입니다.
+	 */
 	UFUNCTION()
-	void AttackTest();
-	
-	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="TestMontage")
-	 class UAnimMontage* AttackMontage;
+	void AttackTest(FGameplayTag StateTag);
 
+	
+	/**
+	 * @brief 공격 애니메이션 몽타주 맵
+	 * 
+	 * 게임플레이 태그와 공격 애니메이션 몽타주를 매핑하는 맵입니다.
+	 * 에디터에서 수정 가능하며, 다양한 공격 패턴에 대한 애니메이션을 관리합니다.
+	 */
+	UPROPERTY(EditAnywhere, Category = "Parameter")
+	TMap<FGameplayTag, TObjectPtr<UAnimMontage>> AttackOptions;
 protected:
 	/**
 	 * @brief 게임 시작 또는 스폰 시 호출되는 함수
