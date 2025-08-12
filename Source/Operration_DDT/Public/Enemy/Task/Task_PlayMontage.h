@@ -49,5 +49,8 @@ public:
 	 */
 	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="MontageData")
 	class APawn* Owner;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="Tag")
+	FGameplayTag SelectedTag;
 	
 };

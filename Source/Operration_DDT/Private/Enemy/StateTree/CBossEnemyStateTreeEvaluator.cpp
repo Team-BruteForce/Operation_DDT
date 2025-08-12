@@ -5,6 +5,7 @@
 #include "AIController.h"
 #include "Global.h"
 #include "StateTreeExecutionContext.h"
+#include "Enemy/CBoss.h"
 #include "GameFramework/GameSession.h"
 
 /**
@@ -24,6 +25,8 @@ void UCBossEnemyStateTreeEvaluator::Tick(FStateTreeExecutionContext& Context, co
 	CLog::Print( "State : "+Context.GetActiveStateName(), 1);
 	CLog::Print(FString::Printf(TEXT("Distance : %f"), player_ai_dist), 2);
 	CLog::Print("Target : "+Target->GetName(), 3);
+	if (SelectedTag.IsValid())
+		CLog::Print("AttackState : "+SelectedTag.ToString(), 3);
 	
 }
 
@@ -44,4 +47,18 @@ void UCBossEnemyStateTreeEvaluator::Get_Decision_Data(FStateTreeExecutionContext
 	CheckNull(Target);
 	
 	player_ai_dist=Boss->GetDistanceTo(Target);
+
+	ACBoss* boss=Cast<ACBoss>(Boss);
+	boss->AttackTags;
+	// 최종 선택된 태그를 담을 변수
+
+	// boss 포인터가 유효하고, 공격 태그 배열에 내용물이 하나라도 있다면
+	if (boss && boss->AttackTags.Num() > 0)
+	{
+		// 0부터 (배열의 크기 - 1) 사이의 숫자 중 하나를 랜덤으로 뽑습니다.
+		const int32 RandomIndex = FMath::RandRange(0, boss->AttackTags.Num() - 1);
+
+		// 랜덤 인덱스를 사용해 배열에서 태그를 꺼내옵니다.
+		SelectedTag = boss->AttackTags[RandomIndex];
+	}
 }

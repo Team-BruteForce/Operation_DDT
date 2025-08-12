@@ -41,14 +41,17 @@ public:
 	void AttackTest(FGameplayTag StateTag);
 
 	
+	
 	/**
 	 * @brief 공격 애니메이션 몽타주 맵
 	 * 
 	 * 게임플레이 태그와 공격 애니메이션 몽타주를 매핑하는 맵입니다.
 	 * 에디터에서 수정 가능하며, 다양한 공격 패턴에 대한 애니메이션을 관리합니다.
 	 */
-	UPROPERTY(EditAnywhere, Category = "Parameter")
+	UPROPERTY(EditAnywhere, Category = "Montage")
 	TMap<FGameplayTag, TObjectPtr<UAnimMontage>> AttackOptions;
+	UPROPERTY(EditAnywhere, Category = "Parameter")
+	TArray<FGameplayTag> AttackTags;
 protected:
 	/**
 	 * @brief 게임 시작 또는 스폰 시 호출되는 함수

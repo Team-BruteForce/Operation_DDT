@@ -42,6 +42,7 @@ ACBoss::ACBoss()
  */
 void ACBoss::AttackTest(FGameplayTag StateTag)
 {
+	// CLog::Log(StateTag.ToString());
 	GetMesh()->GetAnimInstance()->Montage_Play(AttackOptions[StateTag]);
 }
 
@@ -53,5 +54,5 @@ void ACBoss::AttackTest(FGameplayTag StateTag)
 void ACBoss::BeginPlay()
 {
 	Super::BeginPlay();
-	
+	AttackOptions.GetKeys(AttackTags);
 }

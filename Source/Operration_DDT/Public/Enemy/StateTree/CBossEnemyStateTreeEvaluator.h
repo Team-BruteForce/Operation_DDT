@@ -72,4 +72,8 @@ public:
 	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="Distance")
 	float player_ai_dist=0.0f;
 	
+	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="Tag")
+	FGameplayTag SelectedTag;
+	
+	
 };
