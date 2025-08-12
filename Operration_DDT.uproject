@@ -11,7 +11,12 @@
 			"AdditionalDependencies": [
 				"Engine",
 				"AIModule",
+<<<<<<< HEAD
 				"UMG"
+=======
+				"GameplayStateTreeModule",
+				"StateTreeModule"
+>>>>>>> LHW_FirstMerge
 			]
 		}
 	],
