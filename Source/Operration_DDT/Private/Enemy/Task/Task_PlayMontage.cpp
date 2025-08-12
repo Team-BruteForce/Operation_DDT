@@ -21,7 +21,7 @@ EStateTreeRunStatus UTask_PlayMontage::EnterState(FStateTreeExecutionContext& Co
 {
 	// CHelpers::GetComponent<>()
 	ACBoss* Boss=Cast<ACBoss>(Owner);
-	Boss->AttackTest(FGameplayTag::A);
+	// Boss->AttackTest(FGameplayTag::A);
 	return EStateTreeRunStatus::Running;
 }
 
