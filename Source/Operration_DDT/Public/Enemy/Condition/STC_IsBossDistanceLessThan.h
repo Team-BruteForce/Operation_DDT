@@ -24,7 +24,6 @@ class OPERRATION_DDT_API USTC_IsBossDistanceLessThan : public UStateTreeConditio
 	 * @return true: 거리가 임계값 이하, false: 거리가 임계값보다 큼
 	 */
 	virtual bool TestCondition(FStateTreeExecutionContext& Context) const override;
-
 public:
 	/**
 	 * @brief 보스와 플레이어 간의 거리

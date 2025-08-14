@@ -16,7 +16,7 @@ UCLASS()
 class OPERRATION_DDT_API UCBossEnemyStateTreeEvaluator : public UStateTreeEvaluatorBlueprintBase
 {
 	GENERATED_BODY()
-	
+
 	/**
 	 * @brief 매 프레임 호출되는 틱 함수
 	 * 
@@ -75,5 +75,7 @@ public:
 	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="Tag")
 	FGameplayTag SelectedTag;
 	
+	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="Tag")
+	bool IsAction=false;
 	
 };

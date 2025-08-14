@@ -1,5 +1,17 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
+/**
+ * @file CBoss.cpp
+ * @brief 보스 캐릭터의 핵심 로직을 구현하는 파일
+ * 
+ * 이 파일은 보스 캐릭터의 생성, 초기화, 공격 애니메이션 재생 등의 기능을 담당합니다.
+ * StateTree와 연동하여 보스의 AI 행동을 제어하는 기반이 되는 클래스입니다.
+ * 
+ * 주요 기능:
+ * - 보스 캐릭터의 기본 설정 (메시, 애니메이션, AI 컨트롤러)
+ * - 공격 애니메이션 몽타주 재생
+ * - 게임 시작 시 초기화 작업
+ */
 
 #include "Enemy/CBoss.h"
 #include "Global.h"
@@ -42,7 +54,7 @@ ACBoss::ACBoss()
  */
 void ACBoss::AttackTest(FGameplayTag StateTag)
 {
-	// CLog::Log(StateTag.ToString());
+	CLog::Log("AttackTest"+StateTag.ToString());
 	GetMesh()->GetAnimInstance()->Montage_Play(AttackOptions[StateTag]);
 }
 

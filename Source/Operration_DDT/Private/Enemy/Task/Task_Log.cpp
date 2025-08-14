@@ -1,5 +1,17 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
+/**
+ * @file Task_Log.cpp
+ * @brief StateTree 로그 태스크 구현 파일
+ * 
+ * 이 파일은 StateTree에서 디버깅 및 상태 모니터링을 위한 로그 태스크를 구현합니다.
+ * 현재 활성화된 상태의 이름을 로그로 출력하여 StateTree의 동작을 추적할 수 있습니다.
+ * 
+ * 주요 기능:
+ * - 현재 활성 상태 이름 로그 출력
+ * - StateTree 디버깅 지원
+ * - 상태 모니터링 및 추적
+ */
 
 #include "Enemy/Task/Task_Log.h"
 
