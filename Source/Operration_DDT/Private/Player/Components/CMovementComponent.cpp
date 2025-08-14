@@ -36,12 +36,19 @@ void UCMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 
 	// ...
 
-	Direction = FTransform(OwnerCharacter->GetControlRotation ()).TransformVector (Direction);
-	OwnerCharacter->AddMovementInput (Direction);
+	if (!Direction.IsNearlyZero())
+	{
+		FVector InputDirection = FTransform(OwnerCharacter->GetControlRotation()).TransformVector(Direction);
 
-	Direction = FVector::ZeroVector;
+		InputDirection.Z = 0.f;
+		InputDirection.Normalize ();
 
-	// 카메라 각도 클램프
+		OwnerCharacter->AddMovementInput (InputDirection);
+
+		Direction = FVector::ZeroVector;
+
+	}
+	
 	FRotator ControlRot = OwnerCharacter->GetControlRotation();
 	ControlRot.Pitch = FMath::ClampAngle(ControlRot.Pitch, MinPitch, MaxPitch);
 	OwnerCharacter->GetController()->SetControlRotation(ControlRot);

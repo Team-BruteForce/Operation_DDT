@@ -100,7 +100,7 @@ void UCMontageComponent::OnResponseReceived(FHttpRequestPtr Request, FHttpRespon
 	{
 		// JSON에서 values 배열 가져오기
 		const TArray<TSharedPtr<FJsonValue>>* Values;
-		if (JsonObject->TryGetArrayField("values", Values))
+		if (JsonObject->TryGetArrayField(TEXT("values"), Values))
 		{
 			for (const TSharedPtr<FJsonValue>& Row : *Values)
 			{

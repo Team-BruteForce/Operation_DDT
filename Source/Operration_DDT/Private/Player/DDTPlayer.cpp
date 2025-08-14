@@ -11,6 +11,9 @@
 #include "Player/Components/CMontageComponent.h"
 #include "../../../../Plugins/EnhancedInput/Source/EnhancedInput/Public/EnhancedInputSubsystems.h"
 #include "../../../../Plugins/EnhancedInput/Source/EnhancedInput/Public/EnhancedInputComponent.h"
+#include "Components/StaticMeshComponent.h"
+#include "DataWrappers/ChaosVDParticleDataWrapper.h"
+#include "Player/Components/CWeaponComponent.h"
 
 // Sets default values
 ADDTPlayer::ADDTPlayer()
@@ -23,14 +26,20 @@ ADDTPlayer::ADDTPlayer()
 	GetMesh()->SetSkeletalMesh (mesh);
 	GetMesh()->SetRelativeLocationAndRotation(FVector(0.f, 0.f, -90.f), FRotator(0.f, -90.f, 0.f));
 
+	TSubclassOf<UAnimInstance> AnimInstanceClass;
+	CHelpers::GetClass<UAnimInstance>(&AnimInstanceClass, AssetPaths::PLAYER_ANIM);
+	GetMesh()->SetAnimClass(AnimInstanceClass);
+
 	GetCharacterMovement ()->RotationRate = FRotator(0.f, 720.f, 0.f);
 
 	CHelpers::CreateComponent<USpringArmComponent>(this, &SpringArm, "SpringArm", GetMesh());
 	CHelpers::CreateComponent<UCameraComponent>(this, &Camera, "Camera", SpringArm);
 
+	// AddOn Components
 	CHelpers::CreateActorComponent<UCMontageComponent>(this, &Montages, "Montage");
 	CHelpers::CreateActorComponent<UCMovementComponent>(this, &Movement, "Movement");
 	CHelpers::CreateActorComponent<UCStateComponent>(this, &State, "State");
+	CHelpers::CreateActorComponent<UCWeaponComponent>(this, &WeaponComp, "WeaponComp");
 
 	SpringArm->SetRelativeLocation(FVector(0, 0, 140));
 	SpringArm->SetRelativeRotation(FRotator(0, 90, 0));
@@ -47,7 +56,11 @@ ADDTPlayer::ADDTPlayer()
 
 	Camera->bUsePawnControlRotation = false;
 
-
+	CHelpers::CreateComponent <UStaticMeshComponent>(this, &SwordHolster, "SwordHolster",GetMesh(), FName(TEXT("Holster_Sword")));
+	UStaticMesh* holster;
+	CHelpers::GetAsset (&holster, AssetPaths::SWORD_HOLSTER);
+	SwordHolster->SetStaticMesh(holster);
+	
 }
 
 // Called when the game starts or when spawned
@@ -55,8 +68,8 @@ void ADDTPlayer::BeginPlay()
 {
 	Super::BeginPlay();
 
-	Movement->OnRun();					//Movement의 기본을 Run으로 설정
-	Movement->DisableControlRotation();	//Movement의 기본을 DisableControlRotation으로 설정
+	Movement->OnRun();
+	Movement->EnableControlRotation ();
 
 	State->OnStateTypeChanged.AddDynamic(this, &ADDTPlayer::OnStateTypeChanged);
 
@@ -82,12 +95,17 @@ void ADDTPlayer::SetupPlayerInputComponent(class UInputComponent* PlayerInputCom
 	if (input)
 	{
 		Movement->SetupInputBinding (input);
+		input->BindAction(IA_Sword, ETriggerEvent::Started, WeaponComp, &UCWeaponComponent::SetSwordMode);
+		
 	}
 
 }
 
 void ADDTPlayer::OnStateTypeChanged(EStateType InPrevType, EStateType InNewType)
 {
-
+	/*switch (InNewType)
+	{
+		break;
+	}*/
 }
 

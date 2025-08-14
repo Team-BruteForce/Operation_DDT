@@ -26,9 +26,24 @@ private:
  
 	UPROPERTY(VisibleAnywhere)
 		class UCameraComponent* Camera;
+	
+	UPROPERTY(EditAnywhere, Category = "Weapon")
+	class UStaticMeshComponent* SwordHolster;
 
+#pragma region InputActions
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	class UInputMappingContext* IMC_Player;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	class UInputAction* IA_Rifle;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	class UInputAction* IA_Sword;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	class UInputAction* IA_Revolver;
+	
+#pragma endregion 
  
 private:
 	UPROPERTY(VisibleAnywhere)
@@ -39,6 +54,9 @@ private:
  
 	UPROPERTY(VisibleAnywhere)
 		class UCStateComponent* State;
+	
+	UPROPERTY(visibleAnywhere)
+		class UCWeaponComponent* WeaponComp;
   
 protected:
 	virtual void BeginPlay() override;
