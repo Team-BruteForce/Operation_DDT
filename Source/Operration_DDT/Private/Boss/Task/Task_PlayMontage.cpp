@@ -14,11 +14,11 @@
  * - StateTree 상태 관리
  */
 
-#include "Enemy/Task/Task_PlayMontage.h"
+#include "Boss/Task/Task_PlayMontage.h"
 
 #include "Global.h"
 #include "StateTreeExecutionContext.h"
-#include "Enemy/CBoss.h"
+#include "Boss/CBoss.h"
 /**
  * @brief 상태 진입 시 호출되는 함수
  * 

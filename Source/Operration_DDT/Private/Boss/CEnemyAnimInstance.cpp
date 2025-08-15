@@ -14,5 +14,5 @@
  * - 애니메이션 이벤트 처리 (향후 구현 예정)
  */
 
-#include "Enemy/CEnemyAnimInstance.h"
+#include "Boss/CEnemyAnimInstance.h"
 

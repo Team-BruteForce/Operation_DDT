@@ -14,7 +14,7 @@
  * - AI 행동 제어 (StateTree 기반)
  */
 
-#include "Enemy/CBossAIC.h"
+#include "Boss/CBossAIC.h"
 
 #include "Global.h"
 

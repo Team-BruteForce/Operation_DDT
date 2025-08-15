@@ -13,7 +13,7 @@
  * - AI 컨트롤러와 StateTree 컴포넌트 연동
  */
 
-#include "Enemy/Notifies/CBossEndAttack.h"
+#include "Boss/Notifies/CBossEndAttack.h"
 #include "AIController.h"
 #include "Components/StateTreeComponent.h"
 

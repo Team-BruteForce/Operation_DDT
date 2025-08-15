@@ -14,7 +14,7 @@
  * - StateTree 상태 전환 조건 제공
  */
 
-#include "Enemy/Condition/STC_IsBossDistanceGreaterThan.h"
+#include "Boss/Condition/STC_IsBossDistanceGreaterThan.h"
 
 /**
  * @brief 조건을 테스트하는 함수

@@ -13,10 +13,10 @@
  * - StateTree와의 연동을 위한 기본 액션 태스크
  */
 
-#include "Enemy/Task/Task_Action.h"
+#include "Boss/Task/Task_Action.h"
 
 #include "StateTreeExecutionContext.h"
-#include "Enemy/StateTree/CBossEnemyStateTreeEvaluator.h"
+#include "Boss/StateTree/CBossEnemyStateTreeEvaluator.h"
 #include "Utilities/CLog.h"
 
 EStateTreeRunStatus UTask_Action::EnterState(FStateTreeExecutionContext& Context,

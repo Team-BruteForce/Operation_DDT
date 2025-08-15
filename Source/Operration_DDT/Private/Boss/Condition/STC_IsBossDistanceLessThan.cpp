@@ -14,7 +14,7 @@
  * - StateTree 상태 전환 조건 제공
  */
 
-#include "Enemy/Condition/STC_IsBossDistanceLessThan.h"
+#include "Boss/Condition/STC_IsBossDistanceLessThan.h"
 #include "StateTreeExecutionContext.h"
 
 /**

@@ -13,9 +13,9 @@
  * - 게임 시작 시 초기화 작업
  */
 
-#include "Enemy/CBoss.h"
+#include "Boss/CBoss.h"
 #include "Global.h"
-#include "Enemy/CBossAIC.h"
+#include "Boss/CBossAIC.h"
 /**
  * @brief 보스 캐릭터 생성자
  * 

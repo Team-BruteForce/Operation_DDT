@@ -15,11 +15,11 @@
  * - 타겟(플레이어) 관리
  */
 
-#include "Enemy/StateTree/CBossEnemyStateTreeEvaluator.h"
+#include "Boss/StateTree/CBossEnemyStateTreeEvaluator.h"
 #include "AIController.h"
 #include "Global.h"
 #include "StateTreeExecutionContext.h"
-#include "Enemy/CBoss.h"
+#include "Boss/CBoss.h"
 #include "GameFramework/GameSession.h"
 
 /**
