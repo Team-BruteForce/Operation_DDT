@@ -16,11 +16,9 @@
  */
 
 #include "Boss/StateTree/CBossEnemyStateTreeEvaluator.h"
-#include "AIController.h"
 #include "Global.h"
-#include "StateTreeExecutionContext.h"
 #include "Boss/CBoss.h"
-#include "GameFramework/GameSession.h"
+#include "Boss/Component/BossStateComponent.h"
 
 /**
  * @brief 매 프레임 호출되는 틱 함수
@@ -35,13 +33,21 @@ void UCBossEnemyStateTreeEvaluator::Tick(FStateTreeExecutionContext& Context, co
 {
 	Super::Tick(Context, DeltaTime);
 
+	UBossStateComponent* State=CHelpers::GetComponent<UBossStateComponent>(Boss);
 	Get_Decision_Data(Context,DeltaTime);
-	CLog::Print( "State : "+Context.GetActiveStateName(), 1);
+	CLog::Print( State->GetStateTag().ToString(), 1);
 	CLog::Print(FString::Printf(TEXT("Distance : %f"), player_ai_dist), 2);
 	CLog::Print("Target : "+Target->GetName(), 3);
-	if (SelectedTag.IsValid())
-		CLog::Print("AttackState : "+SelectedTag.ToString(), 3);
-		CLog::Print(IsAction, 4);
+	
+	// 거리 상태 정보 출력
+	CLog::Print("Current Range Tag: " + CurrentRangeTag.ToString(), 4);
+
+	CurrentTag=State->GetStateTag();
+}
+
+void UCBossEnemyStateTreeEvaluator::TreeStart(FStateTreeExecutionContext& Context)
+{
+	Super::TreeStart(Context);
 	
 }
 
@@ -56,10 +62,36 @@ void UCBossEnemyStateTreeEvaluator::Tick(FStateTreeExecutionContext& Context, co
  */
 void UCBossEnemyStateTreeEvaluator::Get_Decision_Data(FStateTreeExecutionContext& Context, const float DeltaTime)
 {
-	Target = Target = GetWorld()->GetFirstPlayerController()->GetPawn();
+	Target = GetWorld()->GetFirstPlayerController()->GetPawn();
 
 	CheckNull(Owner);
 	CheckNull(Target);
 	
-	player_ai_dist=Boss->GetDistanceTo(Target);
+	player_ai_dist = Boss->GetDistanceTo(Target);
+	CurrentRangeTag = EvaluateDistanceState(player_ai_dist);
+}
+
+FGameplayTag UCBossEnemyStateTreeEvaluator::EvaluateDistanceState(float Distance)
+{
+	// 거리 300 기준으로 태그별 if문
+	if (Distance <= DistanceThreshold) // 300 이하
+	{
+		return Range.TooClose;
+	}
+	else if (Distance <= DistanceThreshold * 2) // 600 이하
+	{
+		return Range.Melee;
+	}
+	else if (Distance <= DistanceThreshold * 3) // 900 이하
+	{
+		return Range.Dash;
+	}
+	else if (Distance <= DistanceThreshold * 4) // 1200 이하
+	{
+		return Range.Ranged;
+	}
+	else // 1200 초과
+	{
+		return Range.OutOfRange;
+	}
 }

@@ -6,6 +6,15 @@
 #include "Blueprint/StateTreeEvaluatorBlueprintBase.h"
 #include "CBossEnemyStateTreeEvaluator.generated.h"
 
+USTRUCT(BlueprintType)
+struct FBossRangeTags {
+	GENERATED_BODY()
+	UPROPERTY(EditDefaultsOnly, meta=(Categories="BOSS.Flag.Range.Bucket")) FGameplayTag TooClose;
+	UPROPERTY(EditDefaultsOnly, meta=(Categories="BOSS.Flag.Range.Bucket")) FGameplayTag Melee;
+	UPROPERTY(EditDefaultsOnly, meta=(Categories="BOSS.Flag.Range.Bucket")) FGameplayTag Dash;
+	UPROPERTY(EditDefaultsOnly, meta=(Categories="BOSS.Flag.Range.Bucket")) FGameplayTag Ranged;
+	UPROPERTY(EditDefaultsOnly, meta=(Categories="BOSS.Flag.Range.Bucket")) FGameplayTag OutOfRange;
+};
 /**
  * @brief 보스 적 StateTree 평가자 클래스
  * 
@@ -26,6 +35,10 @@ class OPERRATION_DDT_API UCBossEnemyStateTreeEvaluator : public UStateTreeEvalua
 	 * StateTree가 실행될 때마다 호출되어 의사결정 데이터를 업데이트합니다.
 	 */
 	virtual void Tick(FStateTreeExecutionContext& Context, const float DeltaTime) override;
+
+
+	virtual void TreeStart(FStateTreeExecutionContext& Context) override;
+
 
 private:
 	/**
@@ -72,10 +85,29 @@ public:
 	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="Distance")
 	float player_ai_dist=0.0f;
 	
-	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="Tag")
-	FGameplayTag SelectedTag;
+	UPROPERTY(EditAnywhere, Category="Tags")
+	FBossRangeTags Range;
+	
+	// 거리 기준값 (300 단위로 설정)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Distance Settings")
+	float DistanceThreshold = 300.0f;
 	
 	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="Tag")
 	bool IsAction=false;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="StateTree Variables")
+	FGameplayTag CurrentRangeTag;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Tag")
+	FGameplayTag CurrentTag;
+	
+private:
+	/**
+	 * @brief 거리에 따른 태그를 설정하는 함수
+	 * 
+	 * @param Distance 현재 거리
+	 * @return FGameplayTag 거리에 따른 적합한 태그
+	 */
+	FGameplayTag EvaluateDistanceState(float Distance);
 	
 };

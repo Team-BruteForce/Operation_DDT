@@ -10,7 +10,7 @@
 /**
  * 
  */
-UCLASS()
+UCLASS(Blueprintable)
 class OPERRATION_DDT_API UCBossEndAttack : public UAnimNotify
 {
 	GENERATED_BODY()
@@ -18,5 +18,7 @@ public:
 	FString GetNotifyName_Implementation ( ) const override;
 
 	void Notify ( USkeletalMeshComponent* MeshComp , UAnimSequenceBase* Animation ) override;
-
+	
+	UPROPERTY(EditAnywhere,Category="Tag")
+	FGameplayTag EventTag;
 };

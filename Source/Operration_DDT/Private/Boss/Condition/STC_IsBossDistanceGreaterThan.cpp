@@ -2,29 +2,32 @@
 
 /**
  * @file STC_IsBossDistanceGreaterThan.cpp
- * @brief 보스와 플레이어 간 거리가 임계값보다 큰지 확인하는 조건 구현 파일
+ * @brief 보스가 범위 밖 거리에 있는지 확인하는 조건 구현 파일
  * 
  * 이 파일은 StateTree에서 사용되는 조건 클래스를 구현합니다.
- * 보스와 플레이어 간의 거리가 설정된 임계값보다 큰지 확인하여
+ * Evaluator에서 설정된 CurrentRangeTag가 OutOfRange 태그와 일치하는지 확인하여
  * StateTree의 상태 전환 조건으로 사용됩니다.
  * 
  * 주요 기능:
  * - 보스와 플레이어 간 거리 비교
- * - 임계값 기반 조건 판단
+ * - 태그 기반 조건 판단
  * - StateTree 상태 전환 조건 제공
  */
 
 #include "Boss/Condition/STC_IsBossDistanceGreaterThan.h"
+#include "StateTreeExecutionContext.h"
 
 /**
  * @brief 조건을 테스트하는 함수
  * 
  * @param Context StateTree 실행 컨텍스트
- * @return true: 거리가 임계값보다 큼, false: 거리가 임계값 이하
+ * @return true: 범위 밖 거리, false: 범위 내 거리
  * 
- * 보스와 플레이어 간의 거리가 설정된 임계값보다 큰지 확인합니다.
+ * Evaluator에서 설정된 CurrentRangeTag가 OutOfRange 태그와 일치하는지 확인합니다.
  */
 bool USTC_IsBossDistanceGreaterThan::TestCondition(FStateTreeExecutionContext& Context) const
 {
-	return BossToPlayerDistance>DistanceThreshold;
+	// Evaluator에서 설정된 CurrentRangeTag와 비교
+	// OutOfRange 범위 태그인지 확인
+	return CurrentRangeTag.MatchesTag(RangeTags.OutOfRange);
 }

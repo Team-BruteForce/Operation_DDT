@@ -42,6 +42,21 @@ ACBoss::ACBoss()
 	TSubclassOf<ACBossAIC> AIC;
 	CHelpers::GetClass<ACBossAIC>(&AIC, AssetPaths::Boss_AIC);
 	AIControllerClass = AIC;
+
+	//무기 스테틱 메시 로드 및 설정
+	UStaticMesh* staticmesh;
+	CHelpers::GetAsset<UStaticMesh>(&staticmesh, AssetPaths::Boss_WEAPON_MESH);
+
+	CHelpers::CreateActorComponent<UStaticMeshComponent>(this,&StaticMeshComponent,"Weapon");
+	StaticMeshComponent->SetStaticMesh(staticmesh);
+	StaticMeshComponent->SetupAttachment(GetMesh(),FName("Sword"));
+	StaticMeshComponent->SetCollisionEnabled(ECollisionEnabled::Type::NoCollision);
+
+	StaticMeshComponent->SetRelativeScale3D(FVector(30,30,30));
+
+	CHelpers::CreateActorComponent(this,&BossStateComponent,"State");
+	CHelpers::CreateActorComponent(this,&BossMovementComponent,"Movement");
+	
 }
 
 /**
@@ -54,7 +69,6 @@ ACBoss::ACBoss()
  */
 void ACBoss::AttackTest(FGameplayTag StateTag)
 {
-	CLog::Log("AttackTest"+StateTag.ToString());
 	GetMesh()->GetAnimInstance()->Montage_Play(AttackOptions[StateTag]);
 }
 

@@ -52,6 +52,17 @@ public:
 	TMap<FGameplayTag, TObjectPtr<UAnimMontage>> AttackOptions;
 	UPROPERTY(EditAnywhere, Category = "Parameter")
 	TArray<FGameplayTag> AttackTags;
+	
+	UPROPERTY(EditAnywhere, Category = "Weapon")
+	class UStaticMeshComponent* StaticMeshComponent;
+
+	UPROPERTY(EditAnywhere, Category = "State")
+	class UBossStateComponent* BossStateComponent;
+
+	UPROPERTY(EditAnywhere, Category = "State")
+	class UCBossMovementComponent* BossMovementComponent;
+	
+	
 protected:
 	/**
 	 * @brief 게임 시작 또는 스폰 시 호출되는 함수

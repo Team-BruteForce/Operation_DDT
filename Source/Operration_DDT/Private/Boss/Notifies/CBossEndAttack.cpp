@@ -25,7 +25,8 @@ FString UCBossEndAttack::GetNotifyName_Implementation() const
 void UCBossEndAttack::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation)
 {
 	Super::Notify(MeshComp, Animation);
-	FGameplayTag EventTag = FGameplayTag::RequestGameplayTag(FName("ACTION.NextAttack"));
+
+	
 
 	// 1. 이 애니메이션을 재생한 '몸'(Pawn)을 찾습니다.
 	APawn* OwnerPawn = Cast<APawn>(MeshComp->GetOwner());

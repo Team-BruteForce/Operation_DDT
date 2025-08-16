@@ -36,8 +36,8 @@ EStateTreeRunStatus UTask_PlayMontage::EnterState(FStateTreeExecutionContext& Co
 
 	
 	// 몽타주 실행
-	// if(bStarted) return EStateTreeRunStatus::Running;
-	// bStarted=true;
+	if(bStarted) return EStateTreeRunStatus::Running;
+	bStarted=true;
 	if (ACBoss* Boss = Cast<ACBoss>(Owner))
 	Boss->AttackTest(SelectedTag);
 

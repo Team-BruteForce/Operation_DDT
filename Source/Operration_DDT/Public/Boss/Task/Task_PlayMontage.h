@@ -67,6 +67,4 @@ public:
 	UPROPERTY(VisibleAnywhere)
 	bool bStarted=false;
 	
-	
-	
 };
