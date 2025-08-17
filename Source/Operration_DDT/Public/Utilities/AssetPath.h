@@ -21,4 +21,5 @@ namespace AssetPaths
     constexpr const TCHAR* Boss_ANIM = TEXT ( "/Script/Engine.AnimBlueprint'/Game/LHW/Blueprint/ABP_Boss.ABP_Boss_C'" );
     constexpr const TCHAR* Boss_AIC = TEXT ( "/Script/Engine.Blueprint'/Game/LHW/Blueprint/AIC_Boss.AIC_Boss_C'" );
     constexpr const TCHAR* Boss_STATE_TREE = TEXT ( "/Script/StateTreeModule.StateTree'/Game/LHW/StateTree/ST_Enemy.ST_Enemy_C'" );
+    constexpr const TCHAR* Boss_WEAPON_MESH = TEXT ( "" );
 }
