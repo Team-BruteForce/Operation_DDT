@@ -96,6 +96,7 @@ void ADDTPlayer::SetupPlayerInputComponent(class UInputComponent* PlayerInputCom
 	{
 		Movement->SetupInputBinding (input);
 		input->BindAction(IA_Sword, ETriggerEvent::Started, WeaponComp, &UCWeaponComponent::SetSwordMode);
+		input->BindAction(IA_Attack, ETriggerEvent::Started, WeaponComp, &UCWeaponComponent::DoAction);
 		
 	}
 

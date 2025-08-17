@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Animation/AnimInstance.h"
+#include "Components/CWeaponComponent.h"
 #include "CPlayerAnimInstance.generated.h"
 
 /**
@@ -24,14 +25,22 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category="Animation")
 	float Direction;
 
+protected:
+		UPROPERTY(BlueprintReadOnly, EditAnywhere, Category="Animation")
+		EWeaponType WeaponType = EWeaponType::Max;
+
 public:
 	void NativeBeginPlay() override;
 	void NativeUpdateAnimation(float DeltaSeconds) override;
 
 private:
 	class ACharacter* OwnerCharacter;
+	class UCWeaponComponent* Weapon;
 
 	FRotator PrevRotation;
+
+	UFUNCTION()
+	void OnWeaponTypeChanged(EWeaponType InPrevType, EWeaponType InNewType);
 	
 	
 };

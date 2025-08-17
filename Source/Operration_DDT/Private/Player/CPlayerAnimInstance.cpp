@@ -10,6 +10,12 @@ void UCPlayerAnimInstance::NativeBeginPlay()
 	Super::NativeBeginPlay();
 	OwnerCharacter = Cast<ACharacter>(TryGetPawnOwner());
 	CheckNull(OwnerCharacter);
+
+	Weapon = CHelpers::GetComponent<UCWeaponComponent>(OwnerCharacter);
+	if (!!Weapon)
+	{
+		Weapon->OnWeaponTypeChanged.AddDynamic(this, &UCPlayerAnimInstance::OnWeaponTypeChanged);
+	}
 }
 
 void UCPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
@@ -25,8 +31,14 @@ void UCPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	FRotator delta = UKismetMathLibrary::NormalizedDeltaRotator(rotator, rotator2);
 
 	PrevRotation = UKismetMathLibrary::RInterpTo(PrevRotation,delta,DeltaSeconds, 25.f);
-	Direction = PrevRotation.Yaw;
+	//Direction = PrevRotation.Yaw;
+	Direction = FVector::DotProduct(OwnerCharacter->GetVelocity(),OwnerCharacter->GetActorRightVector());
 
 	Pitch = UKismetMathLibrary::FInterpTo(Pitch, OwnerCharacter->GetBaseAimRotation().Pitch, DeltaSeconds, 25.f);
 	
+}
+
+void UCPlayerAnimInstance::OnWeaponTypeChanged(EWeaponType InPrevType, EWeaponType InNewType)
+{
+	WeaponType = InNewType;
 }

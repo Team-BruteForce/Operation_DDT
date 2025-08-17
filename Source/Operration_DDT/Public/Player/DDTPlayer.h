@@ -42,6 +42,9 @@ private:
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	class UInputAction* IA_Revolver;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	class UInputAction* IA_Attack;
 	
 #pragma endregion 
  

@@ -11,6 +11,10 @@
 /**
  * 
  */
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FEquipmentBeginEquip);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FEquipmentUnEquip);
+
 UCLASS()
 class OPERRATION_DDT_API UCEquipment : public UObject
 {
@@ -33,7 +37,11 @@ public:
 	void UnEquip();
 
 
+public:
+	FEquipmentBeginEquip OnEquipmentBeginEquip;
+	FEquipmentUnEquip OnEquipmentUnEquip;
 
+	
 private:
 	class ACharacter* OwnerCharacter;
 	FEquipmentData Data;

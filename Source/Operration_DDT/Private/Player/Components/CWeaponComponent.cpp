@@ -5,6 +5,7 @@
 #include "Global.h"
 #include "GameFramework/Character.h"
 #include "Player/Components/CStateComponent.h"
+#include "Weapons/CDoAction.h"
 #include "Weapons/CEquipment.h"
 #include "Weapons/CWeaponAsset.h"
 
@@ -54,6 +55,14 @@ class UCEquipment* UCWeaponComponent::GetEquipment()
 	return DataAssets[(int8)Type]->GetEquipment();
 }
 
+class UCDoAction* UCWeaponComponent::GetDoAction()
+{
+	CheckTrueResult(IsUnarmedMode(), nullptr);
+	CheckFalseResult(!!DataAssets[(int32)Type], nullptr);
+
+	return DataAssets[(int32)Type]->GetDoAction();
+}
+
 void UCWeaponComponent::SetUnarmedMode()
 {
 	GetEquipment()->UnEquip();
@@ -79,6 +88,12 @@ void UCWeaponComponent::SetRevolverMode()
 	CheckFalse(IsIdleMode());
 
 	SetMode(EWeaponType::Revolver);
+}
+
+void UCWeaponComponent::DoAction()
+{
+	if (GetDoAction())
+		GetDoAction()->DoAction();
 }
 
 void UCWeaponComponent::SetMode(EWeaponType InType)

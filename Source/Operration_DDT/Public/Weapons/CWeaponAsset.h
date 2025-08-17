@@ -18,7 +18,7 @@ class OPERRATION_DDT_API UCWeaponAsset : public UDataAsset
 private:
 
 	UPROPERTY(EditAnywhere)
-	TSubclassOf<class ACAttachment> ACAttachmentClass;
+	TSubclassOf<class ACAttachment> AttachmentClass;
 
 	UPROPERTY(EditAnywhere)
 	FEquipmentData EquipmentData;
@@ -26,9 +26,17 @@ private:
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class UCEquipment> EquipmentClass;
 
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class UCDoAction> DoActionClass;
+
+	UPROPERTY(EditAnywhere)
+	TArray<FDoActionData> DoActionDatas;
+
 public:
 	FORCEINLINE class ACAttachment* GetAttachment() { return Attachment; }
 	FORCEINLINE class UCEquipment* GetEquipment() { return Equipment; }
+	FORCEINLINE class UCDoAction* GetDoAction() { return DoAction; }
+	
 
 	UCWeaponAsset();
 
@@ -42,6 +50,9 @@ private:
 
 	UPROPERTY()
 	class UCEquipment* Equipment;
+
+	UPROPERTY()
+	class UCDoAction* DoAction;
 
 	
 };

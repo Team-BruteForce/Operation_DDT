@@ -14,6 +14,7 @@ void UCEquipment::BeginPlay(class ACharacter* InOwner, const FEquipmentData& InD
 
 	Movement = CHelpers::GetComponent<UCMovementComponent> (OwnerCharacter);
 	State = CHelpers::GetComponent<UCStateComponent> (OwnerCharacter);
+	
 }
 
 void UCEquipment::Equip_Implementation()
@@ -35,6 +36,8 @@ void UCEquipment::Equip_Implementation()
 void UCEquipment::Begin_Equip_Implementation()
 {
 	bBeginEquip = true;
+	if (OnEquipmentBeginEquip.IsBound())
+		OnEquipmentBeginEquip.Broadcast();
 }
 
 void UCEquipment::End_Equip_Implementation()
@@ -51,4 +54,7 @@ void UCEquipment::UnEquip_Implementation()
 {
 	bEquipped = false;
 	Movement->EnableControlRotation();
+
+	if (OnEquipmentUnEquip.IsBound())
+		OnEquipmentUnEquip.Broadcast();
 }

@@ -6,7 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "CAttachment.generated.h"
 
-UCLASS()
+UCLASS(Blueprintable)
 class OPERRATION_DDT_API ACAttachment : public AActor
 {
 	GENERATED_BODY()
@@ -32,5 +32,12 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, Category = "Game")
 	class ACharacter* OwnerCharacter;
+	
+public:
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnBeginEquip();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnUnEquip();
 
 };

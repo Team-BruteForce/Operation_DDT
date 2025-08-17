@@ -48,6 +48,7 @@ private:
 public:
 	class ACAttachment* GetAttachment();
 	class UCEquipment* GetEquipment();
+	class UCDoAction* GetDoAction();
 
 public: // 무기 세팅
 	void SetUnarmedMode();
@@ -55,6 +56,7 @@ public: // 무기 세팅
 	void SetSwordMode();
 	void SetRevolverMode();
 
+	void DoAction();
 private:
 	void SetMode(EWeaponType InType);
 	void ChangeType(EWeaponType InType);

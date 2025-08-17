@@ -4,6 +4,7 @@
 #include "Weapons/CAttachment.h"
 #include "Global.h"
 #include "GameFramework/Character.h"
+#include "GameFramework/SpringArmComponent.h"
 
 // Sets default values
 ACAttachment::ACAttachment()
@@ -32,6 +33,6 @@ void ACAttachment::Tick(float DeltaTime)
 
 void ACAttachment::AttachTo(FName InSocketName)
 {
+	CLog::Print(InSocketName.ToString());
 	AttachToComponent (OwnerCharacter->GetMesh (), FAttachmentTransformRules(EAttachmentRule::KeepRelative, true), InSocketName);
 }
-
