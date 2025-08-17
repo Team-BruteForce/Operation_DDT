@@ -62,7 +62,6 @@ public:
 	UPROPERTY(EditAnywhere, Category = "State")
 	class UCBossMovementComponent* BossMovementComponent;
 	
-	
 protected:
 	/**
 	 * @brief 게임 시작 또는 스폰 시 호출되는 함수

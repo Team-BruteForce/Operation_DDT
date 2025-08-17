@@ -3,7 +3,9 @@
 
 #include "Boss/Condition/STC_IsBossInDashRange.h"
 
+#include "Utilities/CLog.h"
+
 bool USTC_IsBossInDashRange::TestCondition(FStateTreeExecutionContext& Context) const
 {
-	return Super::TestCondition(Context);
+	return CurrentRangeTag.MatchesTag(RangeTags.Dash);
 }
