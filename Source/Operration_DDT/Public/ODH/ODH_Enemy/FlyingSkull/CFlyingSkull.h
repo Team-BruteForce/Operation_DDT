@@ -3,11 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Pawn.h"
+#include "GameFramework/Character.h"
 #include "CFlyingSkull.generated.h"
 
 UCLASS()
-class OPERRATION_DDT_API ACFlyingSkull : public APawn
+class OPERRATION_DDT_API ACFlyingSkull : public ACharacter
 {
 	GENERATED_BODY()
 
