@@ -992,7 +992,9 @@ WARN_LOGFILE           =
 # Note: If this tag is empty the current directory is searched.
 
 INPUT = Source/Operration_DDT/Public/Boss \
-        Source/Operration_DDT/Private/Boss
+        Source/Operration_DDT/Private/Boss \
+        Plugins/EditorPlugin_DataSync/Source/EditorPlugin_DataSync/Public \
+        Plugins/EditorPlugin_DataSync/Source/EditorPlugin_DataSync/Private
 
 # This tag can be used to specify the character encoding of the source files
 # that Doxygen parses. Internally Doxygen uses the UTF-8 encoding. Doxygen uses
