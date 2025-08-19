@@ -1,98 +1,87 @@
-# C++ 보스 AI 프로젝트
+# 언리얼 엔진 보스 AI 프로젝트
 
-이 프로젝트는 StateTree를 사용하여 보스 캐릭터의 AI를 구현합니다. 다양한 조건에 따라 보스의 행동을 제어하고, 애니메이션과의 연동을 통해 생동감 있는 전투를 연출합니다. 거리, 공격 범위 등을 고려한 정교한 AI 로직을 통해 흥미로운 게임플레이를 제공합니다.
+이 프로젝트는 언리얼 엔진에서 보스 캐릭터의 AI와 애니메이션을 구현하는 것을 목표로 합니다. StateTree를 활용한 AI 로직과 다양한 애니메이션, 그리고 에디터 플러그인을 통해 보스 캐릭터를 효과적으로 제어하고 데이터를 관리할 수 있도록 설계되었습니다.
 
+## 주요 기능
 
-## 주요 클래스
+* StateTree 기반 AI: 보스의 행동 패턴을 StateTree를 사용하여 구현하여 유연하고 확장 가능한 AI 시스템을 제공합니다.
+* 다양한 공격 애니메이션: 근접 공격, 원거리 공격, 대쉬 공격 등 다양한 공격 애니메이션을 지원합니다.
+* 데이터 동기화 플러그인: 언리얼 에디터 플러그인을 통해 게임플레이 태그 등의 데이터를 외부와 동기화할 수 있습니다.
+* 유연한 무기 및 장비 시스템: 보스가 다양한 무기와 장비를 사용하고 교체할 수 있도록 설계되었습니다.
 
-### `ACBoss`
+## 클래스 및 함수 설명
 
-보스 캐릭터의 핵심 클래스입니다. 공격 애니메이션 몽타주 맵을 관리하고, 게임 시작 시 초기화 작업을 수행합니다.
+### 핵심 클래스
+
+* **`ACBoss`**: 보스 캐릭터의 핵심 로직을 담당하는 클래스입니다. 공격 애니메이션을 관리하고, 게임 시작 시 초기화 작업을 수행합니다.
 
 ```cpp
-// ACBoss.h
+// ACBoss 주요 함수
+void AttackTest(); // 공격 애니메이션 재생 테스트 함수
+void BeginPlay(); // 게임 시작 또는 스폰 시 호출되는 함수
 ```
 
-* **`ACBoss()` (생성자):**  객체 생성 및 초기화를 담당합니다.
-* **`AttackTest()`:** 공격 애니메이션을 재생하는 테스트 함수입니다. 디버깅 및 애니메이션 확인에 유용합니다.
-* **`BeginPlay()`:** 게임 시작 또는 스폰 시 호출됩니다. 필요한 초기 설정을 수행합니다.
-
-
-### `ACBossAIC`
-
-보스 캐릭터의 AI 컨트롤러 클래스입니다. Pawn을 소유하게 되면 AI 로직이 시작됩니다.
+* **`ACBossAIC`**: 보스 캐릭터의 AI를 제어하는 컨트롤러 클래스입니다. StateTree를 사용하여 보스의 행동을 결정합니다.
 
 ```cpp
-// ACBossAIC.h
+// ACBossAIC 주요 함수
+void OnPossess(APawn* InPawn); // Pawn 소유 시 호출되는 함수
 ```
 
-* **`OnPossess(APawn* InPawn)`:** Pawn 소유 시 호출됩니다.  보스 AI의 시작점입니다.
+* **`UCEnemyAnimInstance`**: 적 캐릭터의 애니메이션 인스턴스 클래스입니다. 애니메이션 블렌딩 및 상태 머신 관리를 담당합니다.
 
+### AI 관련 클래스
 
-### `UCBossEndAttack`
-
-보스 공격 종료 애니메이션 노티파이 클래스입니다.
+* **`UCBossEnemyStateTreeEvaluator`**: AI 컨트롤러 소유자로서, StateTree의 평가를 담당합니다. 매 프레임마다 상태를 업데이트하고 의사 결정에 필요한 데이터를 제공합니다.
 
 ```cpp
-// UCBossEndAttack.h
+// UCBossEnemyStateTreeEvaluator 주요 함수
+void Tick(float DeltaTime); // 매 프레임 호출되는 틱 함수
+void TreeStart(); // StateTree 시작 시 호출되는 함수
+FBossBTDecisionData Get_Decision_Data(); // 의사결정에 필요한 데이터를 수집하는 함수
+void EvaluateDistanceState(); // 거리에 따른 태그를 설정하는 함수
 ```
 
-* **`GetNotifyName_Implementation()`:**
-* **`Notify()`:**
-
-
-### `UCBossEnemyStateTreeEvaluator`
-
-AI 컨트롤러의 소유자이며, StateTree의 핵심 로직을 담당합니다. 매 프레임마다 상태를 평가하고 적절한 행동을 결정합니다.
+* **`USTC_IsBoss*` 시리즈**: StateTree에서 사용되는 조건들을 정의하는 클래스입니다. 각 클래스는 특정 조건을 검사하는 `TestCondition` 함수를 포함합니다. 예를 들어 `USTC_IsBossInMeleeRange`는 보스가 근접 공격 범위 내에 있는지 확인합니다.
 
 ```cpp
-// UCBossEnemyStateTreeEvaluator.h
+// USTC_* 주요 함수
+bool TestCondition(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory); // 조건을 테스트하는 함수
 ```
 
-* **`Tick()`:** 매 프레임 호출됩니다. StateTree의 상태를 업데이트하고, 조건에 따라 상태 전환을 수행합니다.
-* **`TreeStart()`:** StateTree 시작 시 호출됩니다.
-* **`Get_Decision_Data()`:** 의사결정에 필요한 데이터를 수집합니다.  예를 들어 플레이어와의 거리, 현재 상태 등을 가져올 수 있습니다.
-* **`EvaluateDistanceState()`:**  플레이어와의 거리에 따라 StateTree의 태그를 설정합니다. 이를 통해 거리에 따른 다양한 행동을 구현할 수 있습니다.
-
-
-### `UCEnemyAnimInstance`
-
-적 캐릭터의 애니메이션 인스턴스 클래스입니다.
+* **`UTask_*` 시리즈**: StateTree에서 사용되는 태스크들을 정의하는 클래스입니다. 각 클래스는 특정 행동을 수행하는 `EnterState` 및 `Tick` 함수를 포함합니다. 예를 들어 `UTask_PlayMontage`는 몽타주 애니메이션을 재생합니다.
 
 ```cpp
-// UCEnemyAnimInstance.h
+// UTask_PlayMontage 주요 함수
+void EnterState(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory); // 상태 진입 시 호출되는 함수
+void Tick(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds); // 상태 실행 중 매 프레임 호출되는 함수
 ```
 
 
-## StateTree 조건 클래스
+### 무기 및 장비 관련 클래스
 
-다음 클래스들은 StateTree에서 사용되는 조건들을 정의합니다. 각 클래스는 `TestCondition` 함수를 통해 조건의 참/거짓을 반환합니다.
+* **`ACBossWeapon`**: 보스가 사용하는 무기를 나타내는 클래스입니다. 무기 장착, 해제, 충돌 처리 등의 기능을 제공합니다.
 
-* **`USTC_IsBossActionInProgress`**: 보스가 현재 공격 중인지 확인합니다.
-* **`USTC_IsBossDistanceGreaterThan`**: 보스와 플레이어 사이의 거리가 특정 값보다 큰지 확인합니다.
-* **`USTC_IsBossDistanceLessThan`**: 보스와 플레이어 사이의 거리가 특정 값보다 작은지 확인합니다.
-* **`USTC_IsBossInDashRange`**: 보스가 돌진 공격 범위 안에 있는지 확인합니다.
-* **`USTC_IsBossInMeleeRange`**: 보스가 근접 공격 범위 안에 있는지 확인합니다.
-* **`USTC_IsBossInRangedRange`**: 보스가 원거리 공격 범위 안에 있는지 확인합니다.
+* **`UCBossEquipment`**: 보스가 장착할 수 있는 장비를 나타내는 클래스입니다.
 
+* **`UCBossWeaponAsset`**:  무기 및 장비와 관련된 에셋을 관리하는 클래스입니다.
 
-## StateTree 태스크 클래스
+* **`UCBossDoAction`**: 보스의 행동을 정의하는 클래스입니다. 공격, 이동 등 다양한 행동을 구현할 수 있습니다.
 
-다음 클래스들은 StateTree에서 실행되는 태스크들을 정의합니다.
+### 에디터 플러그인 관련 클래스
 
-* **`UTask_Action`**: 특정 액션을 실행하는 태스크입니다.
-* **`UTask_Log`**: 로그를 출력하는 태스크입니다. 디버깅에 유용합니다.
-* **`UTask_PlayMontage`**: 애니메이션 몽타주를 재생하는 태스크입니다.
-* **`UTask_RotateTowardsPlayer`**: 보스를 플레이어 방향으로 회전시키는 태스크입니다.
-* **`UTask_SwitchState`**: StateTree의 상태를 전환하는 태스크입니다.
+* **`FEditorPlugin_DataSyncModule`**: 데이터 동기화 플러그인의 핵심 모듈입니다. 플러그인 시작, 종료, 버튼 클릭 이벤트 처리 등을 담당합니다.
+
+* **`FEditorPlugin_DataSyncCommands`**: 데이터 동기화 플러그인의 명령어를 정의하는 클래스입니다.
+
+* **`FEditorPlugin_DataSyncStyle`**: 데이터 동기화 플러그인의 스타일을 정의하는 클래스입니다.
 
 
-## 추가 설명
+## 향후 개발 계획
 
-* `.cpp` 파일들은 각 클래스의 구현을 담고 있습니다.
-* `.h` 파일들은 각 클래스의 선언을 담고 있습니다.
-* `BossStateComponent`는 보스의 상태를 관리하는 컴포넌트입니다.
-* `CBossMovementComponent`는 보스의 이동을 제어하는 컴포넌트입니다.
+* 더욱 다양한 보스 행동 패턴 추가
+* 성능 최적화
+* 에디터 플러그인 기능 확장
 
 
-이 README 파일은 프로젝트의 전반적인 구조를 이해하는 데 도움이 되도록 작성되었습니다.  더 자세한 내용은 각 클래스의 소스 코드를 참조하십시오.  궁금한 점이나 제안 사항이 있으면 언제든지 이슈를 남겨주세요.
+이 README 파일은 프로젝트의 전반적인 구조와 주요 클래스에 대한 설명을 제공합니다. 각 클래스의 상세한 구현은 소스 코드를 참조하십시오.  궁금한 점이나 제안 사항이 있으면 언제든지 이슈를 등록해주세요.
