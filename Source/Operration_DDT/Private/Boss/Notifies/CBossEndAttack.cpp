@@ -26,8 +26,6 @@ void UCBossEndAttack::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase
 {
 	Super::Notify(MeshComp, Animation);
 
-	
-
 	// 1. 이 애니메이션을 재생한 '몸'(Pawn)을 찾습니다.
 	APawn* OwnerPawn = Cast<APawn>(MeshComp->GetOwner());
 	if (!OwnerPawn) return;

@@ -12,6 +12,7 @@ UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class OPERRATION_DDT_API UCBossWeaponComponent : public UActorComponent
 {
 	GENERATED_BODY()
+	
 private:
 	UPROPERTY(EditAnywhere, Category="DataAsset")
 	TMap<FGameplayTag, class UCBossWeaponAsset*> DataAssets;
@@ -32,7 +33,6 @@ public:
 
 	void BossDoAction();
 	
-	// 태그로 데이터 에셋을 찾는 함수
 	class UCBossWeaponAsset* GetDataAssetByTag(const FGameplayTag& InTag);
 
 private:
