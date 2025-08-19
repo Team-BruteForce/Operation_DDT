@@ -52,15 +52,15 @@ public:
 	TMap<FGameplayTag, TObjectPtr<UAnimMontage>> AttackOptions;
 	UPROPERTY(EditAnywhere, Category = "Parameter")
 	TArray<FGameplayTag> AttackTags;
-	
-	UPROPERTY(EditAnywhere, Category = "Weapon")
-	class UStaticMeshComponent* StaticMeshComponent;
 
-	UPROPERTY(EditAnywhere, Category = "State")
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = "State")
 	class UBossStateComponent* BossStateComponent;
 
-	UPROPERTY(EditAnywhere, Category = "State")
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = "State")
 	class UCBossMovementComponent* BossMovementComponent;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = "State")
+	class UCBossWeaponComponent* BossWeaponComponent;
 	
 protected:
 	/**

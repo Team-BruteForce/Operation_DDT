@@ -8,7 +8,7 @@ public class Operration_DDT : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 		
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "Niagara", "NavigationSystem", "UMG", "MotionWarping","PhysicsCore", "HTTP", "Json", "JsonUtilities","GameplayTags","AIModule" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "Niagara", "NavigationSystem", "UMG", "MotionWarping","PhysicsCore", "HTTP", "Json", "JsonUtilities","GameplayTags","AIModule", "Blutility" });
 
 		// Include paths for Utilities and Global.h
 		PublicIncludePaths.AddRange(new string[] { "Source/Operration_DDT/Public" });
