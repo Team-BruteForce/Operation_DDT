@@ -41,14 +41,13 @@ void UCBossEnemyStateTreeEvaluator::Tick(FStateTreeExecutionContext& Context, co
 	
 	// 거리 상태 정보 출력
 	CLog::Print("Current Range Tag: " + CurrentRangeTag.ToString(), 4);
-
+	CalculateTargetMovementDirection();
 	CurrentTag=State->GetStateTag();
 }
 
 void UCBossEnemyStateTreeEvaluator::TreeStart(FStateTreeExecutionContext& Context)
 {
 	Super::TreeStart(Context);
-	
 }
 
 /**
@@ -69,6 +68,85 @@ void UCBossEnemyStateTreeEvaluator::Get_Decision_Data(FStateTreeExecutionContext
 	
 	player_ai_dist = Boss->GetDistanceTo(Target);
 	CurrentRangeTag = EvaluateDistanceState(player_ai_dist);
+}
+
+void UCBossEnemyStateTreeEvaluator::CalculateTargetMovementDirection()
+{
+	if (!Target || !Owner || !GetWorld()) return;
+	
+	// 타겟의 현재 위치와 이전 프레임 위치를 비교하여 이동 방향 계산
+	static FVector PreviousTargetLocation = Target->GetActorLocation();
+	FVector CurrentTargetLocation = Target->GetActorLocation();
+	FVector TargetMovementDirection = (CurrentTargetLocation - PreviousTargetLocation).GetSafeNormal();
+	
+	// 보스의 오른쪽 방향 벡터
+	FVector BossRight = Boss->GetActorRightVector();
+	
+	// 타겟 이동 방향과 보스 오른쪽 방향의 내적 계산
+	float DotProduct = FVector::DotProduct(TargetMovementDirection, BossRight);
+	
+	// 이동 방향 판단
+	FString MovementDirection;
+	FColor DirectionColor;
+		CLog::Log("CalculateTargetMovementDirection : "+CurrentTargetDirectionState.ToString());
+	
+	if (DotProduct > 0.1f)
+	{
+		CurrentTargetDirectionState=DirectionTag.Right;
+		DirectionColor = FColor::Green;
+	}
+	else if (DotProduct < -0.1f)
+	{
+		CurrentTargetDirectionState=DirectionTag.Left;
+		DirectionColor = FColor::Red;
+	}
+	else
+	{
+		CurrentTargetDirectionState=DirectionTag.Center;
+		DirectionColor = FColor::Yellow;
+	}
+	
+	// 디버그 텍스트 표시
+	FString DebugText = FString::Printf(TEXT("Target Movement: %s (Dot: %.2f)"), 
+		*MovementDirection, DotProduct);
+	DrawDebugString(
+		GetWorld(),
+		Target->GetActorLocation() + FVector(0, 0, 150),
+		DebugText,
+		nullptr,
+		DirectionColor,
+		0.0f
+	);
+	
+	// 타겟 이동 방향 시각화
+	if (TargetMovementDirection.Size() > 0.1f)
+	{
+		DrawDebugLine(
+			GetWorld(),
+			CurrentTargetLocation,
+			CurrentTargetLocation + TargetMovementDirection * 100.0f,
+			DirectionColor,
+			false,
+			-1.0f,
+			0,
+			3.0f
+		);
+	}
+	
+	// 보스의 오른쪽 방향 시각화
+	DrawDebugLine(
+		GetWorld(),
+		Boss->GetActorLocation(),
+		Boss->GetActorLocation() + BossRight * 100.0f,
+		FColor::Blue,
+		false,
+		-1.0f,
+		0,
+		2.0f
+	);
+	
+	// 이전 위치 업데이트
+	PreviousTargetLocation = CurrentTargetLocation;
 }
 
 FGameplayTag UCBossEnemyStateTreeEvaluator::EvaluateDistanceState(float Distance)

@@ -15,6 +15,14 @@ struct FBossRangeTags {
 	UPROPERTY(EditDefaultsOnly, meta=(Categories="BOSS.Flag.Range.Bucket")) FGameplayTag Ranged;
 	UPROPERTY(EditDefaultsOnly, meta=(Categories="BOSS.Flag.Range.Bucket")) FGameplayTag OutOfRange;
 };
+
+USTRUCT(BlueprintType)
+struct FBossTargetState {
+	GENERATED_BODY()
+	UPROPERTY(EditDefaultsOnly, meta=(Categories="BOSS.Flag.TargetDirection.Right")) FGameplayTag Right;
+	UPROPERTY(EditDefaultsOnly, meta=(Categories="BOSS.Flag.TargetDirection.Center")) FGameplayTag Center;
+	UPROPERTY(EditDefaultsOnly, meta=(Categories="BOSS.Flag.TargetDirection.Left")) FGameplayTag Left;
+};
 /**
  * @brief 보스 적 StateTree 평가자 클래스
  * 
@@ -50,6 +58,7 @@ private:
 	 * 플레이어와 보스 간의 거리 등 의사결정에 필요한 데이터를 수집합니다.
 	 */
 	void Get_Decision_Data(FStateTreeExecutionContext& Context, const float DeltaTime);
+	void CalculateTargetMovementDirection();
 
 public:
 	/**
@@ -65,16 +74,16 @@ public:
 	 * 
 	 * 보스 캐릭터의 액터입니다.
 	 */
-	UPROPERTY(EditAnywhere,BlueprintReadOnly,Category="Owner")
-	class AActor* Boss;
+	UPROPERTY(EditAnywhere,BlueprintReadOnly,Category="Boss")
+	class APawn* Boss;
 	
 	/**
 	 * @brief 타겟 액터
 	 * 
 	 * 보스가 추적할 타겟(플레이어) 액터입니다.
 	 */
-	UPROPERTY(VisibleDefaultsOnly,BlueprintReadOnly,Category="Target")
-	class AActor* Target;
+	UPROPERTY(EditAnywhere,BlueprintReadOnly,Category="Target")
+	class APawn* Target;
 
 public:
 	/**
@@ -87,6 +96,8 @@ public:
 	
 	UPROPERTY(EditAnywhere, Category="Tags")
 	FBossRangeTags Range;
+	UPROPERTY(EditAnywhere, Category="Tags")
+	FBossTargetState DirectionTag;
 	
 	// 거리 기준값 (300 단위로 설정)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Distance Settings")
@@ -100,6 +111,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Tag")
 	FGameplayTag CurrentTag;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Tag")
+	FGameplayTag CurrentTargetDirectionState;
 	
 private:
 	/**

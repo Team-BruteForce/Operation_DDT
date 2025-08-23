@@ -5,16 +5,6 @@
 #include "CoreMinimal.h"
 #include "Blueprint/StateTreeTaskBlueprintBase.h"
 #include "Task_PlayMontage.generated.h"
-
-USTRUCT()
-struct FPlayMontageInstanceData
-{
-	GENERATED_BODY()
-
-	// StateTree 파라미터 'IsAction'에 바인딩
-	UPROPERTY(EditAnywhere, Category="Params")
-	bool IsAction;
-};
 /**
  * @brief 애니메이션 몽타주를 재생하는 StateTree 태스크 클래스
  * 
@@ -26,8 +16,6 @@ class OPERRATION_DDT_API UTask_PlayMontage : public UStateTreeTaskBlueprintBase
 {
 	GENERATED_BODY()
 
-public:
-	typedef FPlayMontageInstanceData FInstanceDataType;
 protected:
 	/**
 	 * @brief 상태 진입 시 호출되는 함수

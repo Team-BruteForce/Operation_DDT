@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "CBossWeaponStuctures.h"
+#include "GameplayTagContainer.h"
 #include "Engine/DataAsset.h"
 #include "CBossWeaponAsset.generated.h"
 
@@ -20,7 +21,7 @@ private:
 	TSubclassOf<class ACBossWeapon> BossWeaponClass;
 
 	UPROPERTY(EditAnywhere)
-	TArray< FBossEquipmentData> BossEquipmentData;
+	TMap<FGameplayTag, FBossEquipmentData> BossEquipmentData;
 
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class UCBossEquipment> BossEquipmentClass;
@@ -29,10 +30,10 @@ private:
 	TSubclassOf<class UCBossDoAction> BossDoActionClass;
 
 	UPROPERTY(EditAnywhere)
-	TArray<FBossDoActionData> BossDoActionDatas;
+	TMap<FGameplayTag,FBossDoActionData> BossDoActionDatas;
 	
 	UPROPERTY(EditAnywhere)
-	TArray<FBossHitData> HitDatas;
+	TMap<FGameplayTag,FBossHitData> HitDatas;
 public:
 	FORCEINLINE class ACBossWeapon* GetBossWeapon ( ) { return BossWeapon; }
 	FORCEINLINE class UCBossEquipment* GetBossEquipment ( ) { return BossEquipment; }

@@ -19,6 +19,7 @@
 #include "Global.h"
 #include "StateTreeExecutionContext.h"
 #include "Boss/CBoss.h"
+#include "Boss/Component/CBossWeaponComponent.h"
 /**
  * @brief 상태 진입 시 호출되는 함수
  * 
@@ -38,8 +39,16 @@ EStateTreeRunStatus UTask_PlayMontage::EnterState(FStateTreeExecutionContext& Co
 	// 몽타주 실행
 	if(bStarted) return EStateTreeRunStatus::Running;
 	bStarted=true;
-	if (ACBoss* Boss = Cast<ACBoss>(Owner))
-	Boss->AttackTest(SelectedTag);
+	ACBoss* Boss= Cast<ACBoss>(Owner);
+	// = CHelpers::GetComponent<UCBossWeaponComponent>(Boss);
+	UCBossWeaponComponent* WeaponComp=Boss->GetComponentByClass<UCBossWeaponComponent>();
+	// Boss->AttackTest(SelectedTag);
+	if (WeaponComp)
+	{
+		WeaponComp->BossDoAction(SelectedTag);
+		CLog::Log("UTask_PlayMontage");
+	}
+	
 
 
 	return EStateTreeRunStatus::Running;

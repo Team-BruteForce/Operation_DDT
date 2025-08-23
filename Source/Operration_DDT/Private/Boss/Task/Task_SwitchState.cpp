@@ -11,5 +11,5 @@ EStateTreeRunStatus UTask_SwitchState::EnterState(FStateTreeExecutionContext& Co
 {
 	UBossStateComponent* State= CHelpers::GetComponent<UBossStateComponent>(Owner);
 	State->SetStateTag(OwningStateTag);
-	return Super::EnterState(Context, Transition);
+	return EStateTreeRunStatus::Running;
 }

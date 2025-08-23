@@ -3,10 +3,13 @@
 
 #include "Boss/BossWeapon/CBossDoAction.h"
 #include "Global.h"
+#include "Boss/Component/BossStateComponent.h"
 #include "GameFramework/Character.h"
 
+
 void UCBossDoAction::BeginPlay(class ACBossWeapon* InAttachment, class UCBossEquipment* InEquipment,
-	class ACharacter* InOwner, TArray<FBossDoActionData>& InDoActionData, TArray<FBossHitData>& InHitData)
+	class ACharacter* InOwner, TMap<FGameplayTag, FBossDoActionData>& InDoActionData,
+	TMap<FGameplayTag, FBossHitData>& InHitData)
 {
 	OwnerCharacter = InOwner;
 	World = OwnerCharacter->GetWorld ( );
@@ -18,13 +21,13 @@ void UCBossDoAction::BeginPlay(class ACBossWeapon* InAttachment, class UCBossEqu
 	BossHitDatas = InHitData;
 }
 
-void UCBossDoAction::DoAction ( )
+void UCBossDoAction::DoAction (FGameplayTag Tag)
 {
-	// State->SetActionMode ();
+	BossDoActionDatas[Tag].DoAction(OwnerCharacter);
 }
 void UCBossDoAction::Begin_DoAction ( )
 {
-	bBeginAction = true;
+	// bBeginAction = true;
 }
 
 void UCBossDoAction::End_DoAction ( )

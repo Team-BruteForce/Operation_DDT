@@ -39,6 +39,20 @@
 #include "Boss/CBossAIC.h"
 
 #include "Global.h"
+#include "StateTree.h"
+#include "Components/StateTreeAIComponent.h"
+
+ACBossAIC::ACBossAIC()
+{
+	// StateTree 컴포넌트 생성
+	CHelpers::CreateActorComponent(this, &StateTreeComp, "StateTreeComp");
+
+	// // StateTree 설정
+	// if (StateTree && StateTreeComp)
+	// {
+	// 	StateTreeComp->SetStateTree(StateTree);
+	// }
+}
 
 /**
  * @brief Pawn 소유 시 호출되는 함수
@@ -51,6 +65,5 @@
 void ACBossAIC::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
-
-	CLog::Log("Possess Success");
+	if (!StateTreeComp) return;
 }

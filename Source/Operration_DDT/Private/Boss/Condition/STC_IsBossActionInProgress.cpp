@@ -28,13 +28,10 @@
  */
 bool USTC_IsBossActionInProgress::TestCondition(FStateTreeExecutionContext& Context) const
 {
-	// 방법 2: 어택 태그가 유효한지 체크 (어택 중인 경우)
-		CLog::Log(CurrentActionTag.ToString());
 	
 	if (CurrentActionTag.IsValid())
 	{
 		// 어택 관련 태그인지 확인 (예: "BOSS.Action.Attack" 등)
-		CLog::Log(CurrentActionTag.MatchesTag(FGameplayTag::RequestGameplayTag(TEXT("BOSS.State.Attacking"))));
 		return !CurrentActionTag.MatchesTag(FGameplayTag::RequestGameplayTag(TEXT("BOSS.State.Attacking")));
 	}
 	

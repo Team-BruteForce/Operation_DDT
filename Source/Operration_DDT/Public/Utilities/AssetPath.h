@@ -16,10 +16,11 @@ namespace AssetPaths
 #pragma endregion PlayerAsset
     
 
-
+#pragma region BossAsset
     constexpr const TCHAR* Boss_MESH = TEXT ( "/Script/Engine.SkeletalMesh'/Game/LHW/Paladin_Anim_Set/Animation/Skeleton/SK_Mannequin.SK_Mannequin'" );
     constexpr const TCHAR* Boss_ANIM = TEXT ( "/Script/Engine.AnimBlueprint'/Game/LHW/Blueprint/ABP_Boss.ABP_Boss_C'" );
     constexpr const TCHAR* Boss_AIC = TEXT ( "/Script/Engine.Blueprint'/Game/LHW/Blueprint/AIC_Boss.AIC_Boss_C'" );
-    constexpr const TCHAR* Boss_STATE_TREE = TEXT ( "/Script/StateTreeModule.StateTree'/Game/LHW/StateTree/ST_Enemy.ST_Enemy_C'" );
-    constexpr const TCHAR* Boss_WEAPON_MESH = TEXT ( "" );
+    constexpr const TCHAR* Boss_StateTree = TEXT ("/Script/StateTreeModule.StateTree'/Game/LHW/StateTree/STT_Boss.STT_Boss_C'");
+    constexpr const TCHAR* Boss_StatsDataTable = TEXT ("/Script/Engine.DataTable'/Game/LHW/BossData/DT_BossStats.DT_BossStats'");
+#pragma endregion BossAsset
 }

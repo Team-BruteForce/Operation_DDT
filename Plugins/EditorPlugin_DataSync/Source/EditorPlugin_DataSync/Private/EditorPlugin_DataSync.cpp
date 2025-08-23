@@ -142,6 +142,18 @@ TSharedRef<SDockTab> FEditorPlugin_DataSyncModule::OnSpawnPluginTab(const FSpawn
 			.AutoHeight()
 			.Padding(10)
 			[
+				SNew(SButton)
+				.Text(LOCTEXT("SyncBossStatsButtonText", "Sync Boss Stats"))
+				.OnClicked_Lambda([this]()
+				{
+					SyncBossStats();
+					return FReply::Handled();
+				})
+			]
+			+ SVerticalBox::Slot()
+			.AutoHeight()
+			.Padding(10)
+			[
 				SNew(STextBlock)
 				.Text(LOCTEXT("StatusText", "Status: Ready"))
 			]
@@ -187,6 +199,14 @@ void FEditorPlugin_DataSyncModule::SyncGameplayTags()
 	MakeAPIRequest("/api/tags", "GameplayTags");
 }
 
+void FEditorPlugin_DataSyncModule::SyncBossStats()
+{
+	UE_LOG(LogTemp, Log, TEXT("Boss Stats 동기화 시작..."));
+	
+	// API 요청 생성
+	MakeAPIRequest("/api/stats", "BossStats");
+}
+
 void FEditorPlugin_DataSyncModule::MakeAPIRequest(const FString& Endpoint, const FString& DataType)
 {
 	// HTTP 모듈 확인
@@ -199,7 +219,7 @@ void FEditorPlugin_DataSyncModule::MakeAPIRequest(const FString& Endpoint, const
 	// 요청 생성
 	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request = FHttpModule::Get().CreateRequest();
 	Request->SetVerb("GET");
-	Request->SetURL(FString::Printf(TEXT("http://localhost:3000%s"), *Endpoint));
+	Request->SetURL(FString::Printf(TEXT("http://localhost:3000%s?type=%s"), *Endpoint, *DataType));
 	Request->SetHeader(TEXT("Content-Type"), TEXT("application/json"));
 	
 	// 콜백 바인딩
@@ -230,27 +250,64 @@ void FEditorPlugin_DataSyncModule::OnDataReceived(FHttpRequestPtr Request, FHttp
 		bool bSuccess = JsonObject->GetBoolField("success");
 		if (bSuccess)
 		{
-			// "tags" 필드에서 데이터 가져오기 (data가 아님!)
-			TArray<TSharedPtr<FJsonValue>> TagsData = JsonObject->GetArrayField("tags");
-			UE_LOG(LogTemp, Log, TEXT("태그 데이터 %d개 받음"), TagsData.Num());
-			
-			if (TagsData.Num() > 0)
+			// URL에서 type 파라미터 확인
+			FString RequestURL = Request->GetURL();
+			if (RequestURL.Contains("type=GameplayTags"))
 			{
-				// GameplayTags 데이터 테이블 업데이트
-				UDataTable* TagTable = Cast<UDataTable>(StaticLoadObject(UDataTable::StaticClass(), nullptr, TEXT("/Game/LHW/BossData/NewDataTable")));
-				if (TagTable)
+				// "tags" 필드에서 데이터 가져오기
+				TArray<TSharedPtr<FJsonValue>> TagsData = JsonObject->GetArrayField("tags");
+				UE_LOG(LogTemp, Log, TEXT("태그 데이터 %d개 받음"), TagsData.Num());
+				
+				if (TagsData.Num() > 0)
 				{
-					UpdateGameplayTagsTable(TagTable, TagsData);
-					UE_LOG(LogTemp, Log, TEXT("GameplayTags 동기화 완료"));
+					// GameplayTags 데이터 테이블 업데이트
+					UDataTable* TagTable = Cast<UDataTable>(StaticLoadObject(UDataTable::StaticClass(), nullptr, TEXT("/Game/LHW/BossData/DT_Tag")));
+					if (TagTable)
+					{
+						UpdateGameplayTagsTable(TagTable, TagsData);
+						UE_LOG(LogTemp, Log, TEXT("GameplayTags 동기화 완료"));
+					}
+					else
+					{
+						UE_LOG(LogTemp, Log, TEXT("DT_Tag 테이블을 찾을 수 없습니다."));
+					}
 				}
 				else
 				{
-					UE_LOG(LogTemp, Log, TEXT("DT_Tag 테이블을 찾을 수 없습니다."));
+					UE_LOG(LogTemp, Log, TEXT("tags 배열이 비어있습니다."));
 				}
 			}
-			else
+			else if (RequestURL.Contains("type=BossStats"))
 			{
-				UE_LOG(LogTemp, Log, TEXT("tags 배열이 비어있습니다."));
+				// "bossStats" 필드에서 데이터 가져오기
+				if (JsonObject->HasField("bossStats"))
+				{
+					TArray<TSharedPtr<FJsonValue>> StatsData = JsonObject->GetArrayField("bossStats");
+					UE_LOG(LogTemp, Log, TEXT("보스 스탯 데이터 %d개 받음"), StatsData.Num());
+				
+					if (StatsData.Num() > 0)
+					{
+						// 보스 스탯 데이터 테이블 업데이트
+						UDataTable* BossTable = Cast<UDataTable>(StaticLoadObject(UDataTable::StaticClass(), nullptr, TEXT("/Game/LHW/BossData/DT_BossStats")));
+						if (BossTable)
+						{
+							UpdateBossStatsTableSimple(BossTable, StatsData);
+							UE_LOG(LogTemp, Log, TEXT("Boss Stats 동기화 완료"));
+						}
+						else
+						{
+							UE_LOG(LogTemp, Log, TEXT("DT_BossStats 테이블을 찾을 수 없습니다."));
+						}
+					}
+					else
+					{
+						UE_LOG(LogTemp, Log, TEXT("bossStats 배열이 비어있습니다."));
+					}
+				}
+				else
+				{
+					UE_LOG(LogTemp, Log, TEXT("bossStats 필드를 찾을 수 없습니다."));
+				}
 			}
 		}
 		else
@@ -358,6 +415,80 @@ FGameplayTagTableRow FEditorPlugin_DataSyncModule::ParseGameplayTagData(const TS
 	
 	return TagRow;
 }
+
+void FEditorPlugin_DataSyncModule::UpdateBossStatsTableSimple(UDataTable* BossTable, const TArray<TSharedPtr<FJsonValue>>& Data)
+{
+	if (!BossTable)
+	{
+		UE_LOG(LogTemp, Log, TEXT("BossTable이 유효하지 않습니다."));
+		return;
+	}
+	
+	UE_LOG(LogTemp, Log, TEXT("Boss Stats 테이블 업데이트 시작..."));
+	
+	// 테이블 초기화
+	BossTable->EmptyTable();
+	
+	int32 SuccessCount = 0;
+	int32 ErrorCount = 0;
+	
+	// 각 행의 데이터 처리
+	for (const TSharedPtr<FJsonValue>& RowValue : Data)
+	{
+		TSharedPtr<FJsonObject> RowObject = RowValue->AsObject();
+		if (!RowObject.IsValid()) continue;
+		
+		try
+		{
+			// JSON에서 각 변수 직접 가져오기 (API 응답 필드명에 맞춤)
+			FString BossName = RowObject->GetStringField("name");
+			int32 MaxHP = RowObject->GetIntegerField("maxHP");
+			int32 MaxAP = RowObject->GetIntegerField("maxAP");
+			float ATK = RowObject->GetNumberField("atk");
+			float DEF = RowObject->GetNumberField("def");
+			int32 Speed = RowObject->GetIntegerField("speed");
+			
+			// 행 이름 생성
+			FName RowName = FName(*BossName);
+			
+			// 간단한 구조체 생성 (FTableRowBase 상속)
+			struct FBossStatSimple : public FTableRowBase
+			{
+				int32 MaxHP;
+				int32 MaxAP;
+				float ATK;
+				float DEF;
+				int32 Speed;
+			};
+			
+			FBossStatSimple BossStat;
+			BossStat.MaxHP = MaxHP;
+			BossStat.MaxAP = MaxAP;
+			BossStat.ATK = ATK;
+			BossStat.DEF = DEF;
+			BossStat.Speed = Speed;
+			
+			// 테이블에 행 추가
+			BossTable->AddRow(RowName, BossStat);
+			SuccessCount++;
+			
+			UE_LOG(LogTemp, Log, TEXT("보스 스탯 추가 성공: %s (HP:%d, AP:%d, ATK:%.1f, DEF:%.1f, Speed:%d)"), 
+				*BossName, MaxHP, MaxAP, ATK, DEF, Speed);
+		}
+		catch (...)
+		{
+			ErrorCount++;
+			UE_LOG(LogTemp, Log, TEXT("행 데이터 파싱 중 오류 발생"));
+		}
+	}
+	
+	// 테이블을 더티로 표시
+	BossTable->MarkPackageDirty();
+	
+	UE_LOG(LogTemp, Log, TEXT("Boss Stats 테이블 업데이트 완료: 성공 %d개, 실패 %d개"), SuccessCount, ErrorCount);
+}
+
+
 
 #undef LOCTEXT_NAMESPACE
 	

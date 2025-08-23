@@ -54,6 +54,7 @@ ACBoss::ACBoss()
 	GetMesh()->SetSkeletalMesh(mesh);
 	GetMesh()->SetRelativeLocation(FVector(0.0f, 0.0f, -90.0f));
 	GetMesh()->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f));
+	GetMesh()->SetRelativeScale3D(FVector(1.8f));
 	
 	// 애님 인스턴스 클래스 에셋 로드 및 설정
 	TSubclassOf<UAnimInstance> Anim;
@@ -68,6 +69,7 @@ ACBoss::ACBoss()
 	CHelpers::CreateActorComponent<UBossStateComponent>(this,&BossStateComponent,"StateComp");
 	CHelpers::CreateActorComponent<UCBossMovementComponent>(this,&BossMovementComponent,"MovementComp");
 	CHelpers::CreateActorComponent<UCBossWeaponComponent>(this,&BossWeaponComponent,"WeaponComp");
+	CHelpers::CreateActorComponent<UCBossStatusComponent>(this,&BossStatusComponent,"StatusComp");
 	
 }
 
@@ -82,6 +84,7 @@ ACBoss::ACBoss()
 void ACBoss::AttackTest(FGameplayTag StateTag)
 {
 	GetMesh()->GetAnimInstance()->Montage_Play(AttackOptions[StateTag]);
+	// BossWeaponComponent->BossDoAction(StateTag);
 }
 
 /**
@@ -92,5 +95,4 @@ void ACBoss::AttackTest(FGameplayTag StateTag)
 void ACBoss::BeginPlay()
 {
 	Super::BeginPlay();
-	AttackOptions.GetKeys(AttackTags);
 }

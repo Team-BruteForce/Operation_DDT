@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "CBossWeaponStuctures.h"
-#include "UObject/NoExportTypes.h"
+#include "GameplayTagContainer.h"
 #include "CBossDoAction.generated.h"
 
 /**
@@ -21,12 +21,12 @@ public:
 		class ACBossWeapon* InAttachment ,
 		class UCBossEquipment* InEquipment ,
 		class ACharacter* InOwner ,
-		class TArray<FBossDoActionData>& InDoActionData,
-		class TArray<FBossHitData>& InHitData
+		class TMap<FGameplayTag, FBossDoActionData>& InDoActionData,
+		class TMap<FGameplayTag,FBossHitData>& InHitData
 	);
 
 public:
-	virtual void DoAction ();
+	virtual void DoAction (FGameplayTag Tag);
 	virtual void Begin_DoAction ( );
 	virtual void End_DoAction ( );
 
@@ -45,13 +45,17 @@ public:
 
 protected:
 	bool bBeginAction;
-
+	
+	UPROPERTY()
 	class ACharacter* OwnerCharacter;
+	UPROPERTY()
 	class UWorld* World;
 
+	UPROPERTY()
 	class UCBossMovementComponent* Movement;
+	UPROPERTY()
 	class UBossStateComponent* State;
 
-	TArray<FBossDoActionData> BossDoActionDatas;
-	TArray<FBossHitData> BossHitDatas;
+	TMap<FGameplayTag,FBossDoActionData> BossDoActionDatas;
+	TMap<FGameplayTag,FBossHitData> BossHitDatas;
 };

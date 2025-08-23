@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "CBossWeaponStuctures.h"
-#include "UObject/NoExportTypes.h"
+#include "GameplayTagContainer.h"
 #include "CBossEquipment.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE ( FBossEquipmentBeginEquip );
@@ -15,11 +15,11 @@ class OPERRATION_DDT_API UCBossEquipment : public UObject
 {
 	GENERATED_BODY()
 public:
-	void BeginPlay ( class ACharacter* InOwner , TArray<FBossEquipmentData>& );
+	void BeginPlay ( class ACharacter* InOwner , TMap<FGameplayTag,FBossEquipmentData>& );
 
 public:
 	UFUNCTION ( BlueprintNativeEvent )
-	void Equip ();
+	void Equip (FGameplayTag PlayTag);
 
 	UFUNCTION ( BlueprintNativeEvent )
 	void Begin_Equip ( );
@@ -28,14 +28,14 @@ public:
 	void End_Equip();
 
 	UFUNCTION ( BlueprintNativeEvent )
-	void Unequip();
+	void Unequip(FGameplayTag PlayTag);
 public:
 	FBossEquipmentBeginEquip OnBossEquipmentBeginEquip;
 	FBossEquipmentUnequip OnBossEquipmentUnequip;
 
 private:
 	class ACharacter* OwnerCharacter;
-	TArray<FBossEquipmentData> Data;
+	TMap<FGameplayTag,FBossEquipmentData> Data;
 
 private:
 	class UCBossMovementComponent* Movement;

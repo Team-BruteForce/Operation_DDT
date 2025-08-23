@@ -24,7 +24,6 @@ public:
 USTRUCT()
 struct FBossDoActionData {
 	GENERATED_BODY ( )
-
 public:
 	UPROPERTY(EditAnywhere)
 	class UAnimMontage* Montage;
