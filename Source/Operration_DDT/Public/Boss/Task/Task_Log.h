@@ -1,4 +1,14 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+/**
+ * @file Task_Log.h
+ * @brief 보스 로그 태스크 헤더 파일
+ * 
+ * @details
+ * StateTree에서 디버깅 및 상태 모니터링을 위한 로그를 출력하는 태스크를 정의합니다.
+ * 현재 활성화된 상태의 이름을 로그로 출력합니다.
+ * 
+ * @author [개발자명]
+ * @date 2024-12-19
+ */
 
 #pragma once
 
@@ -7,7 +17,7 @@
 #include "Task_Log.generated.h"
 
 /**
- * @brief 로그를 출력하는 StateTree 태스크 클래스
+ * @brief 보스 로그 태스크
  * 
  * StateTree에서 디버깅 및 상태 모니터링을 위한 로그를 출력하는 태스크입니다.
  * 현재 활성화된 상태의 이름을 로그로 출력합니다.

@@ -6,7 +6,7 @@
 #include "Boss/Component/CBossMovementComponent.h"
 #include "GameFramework/Character.h"
 
-FString FBossDoActionData::DoAction ( class ACharacter* InOwner )
+void FBossMeleeLightAttack::PlayPaseOneMontage ( class ACharacter* InOwner )
 {
 	UCBossMovementComponent* movement = CHelpers::GetComponent<UCBossMovementComponent> ( InOwner );
 
@@ -19,7 +19,6 @@ FString FBossDoActionData::DoAction ( class ACharacter* InOwner )
 	}
 	if ( !!Montage )
 		InOwner->PlayAnimMontage ( Montage , PlayRate );
-	return TEXT ( "Left" );
 }
 void FBossHitData::SendDamage ( class ACharacter* InAttacker , AActor* InAttackCauser , class ACharacter* InOther )
 {

@@ -6,10 +6,13 @@
 #include "UObject/NoExportTypes.h"
 #include "Engine/DamageEvents.h"
 #include "CBossWeaponStuctures.generated.h"
+
+// 공통 몽타주 실행 함수 (헬퍼 함수)
+void PlayBossAttackMontage(class ACharacter* InOwner, class UAnimMontage* Montage, float PlayRate, bool bCanMove, bool bFixedCamera);
+
 USTRUCT()
 struct FBossEquipmentData {
 	GENERATED_BODY ( )
-
 public:
 	UPROPERTY(EditAnywhere)
 	class UAnimMontage* Montage;
@@ -22,7 +25,7 @@ public:
 };
 
 USTRUCT()
-struct FBossDoActionData {
+struct FBossMeleeLightAttack {
 	GENERATED_BODY ( )
 public:
 	UPROPERTY(EditAnywhere)
@@ -41,7 +44,7 @@ public:
 	FVector EffectScale = FVector::OneVector;
 
 public:
-	FString DoAction ( class ACharacter* InOwner );
+	void PlayPaseOneMontage(class ACharacter* InOwner) ;
 };
 
 USTRUCT()

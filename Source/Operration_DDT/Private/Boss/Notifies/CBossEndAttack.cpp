@@ -1,27 +1,39 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 /**
  * @file CBossEndAttack.cpp
- * @brief 보스 공격 종료 애니메이션 노티파이 구현 파일
+ * @brief 보스 공격 종료 노티파이 구현 파일
  * 
- * 이 파일은 보스 캐릭터의 공격 애니메이션이 끝날 때 호출되는 애니메이션 노티파이를 구현합니다.
+ * @details
+ * 보스 캐릭터의 공격 애니메이션이 끝날 때 호출되는 애니메이션 노티파이의 구현 파일입니다.
  * 몽타주 재생이 완료되면 StateTree에 이벤트를 보내어 다음 상태로 전환할 수 있도록 합니다.
  * 
- * 주요 기능:
- * - 공격 애니메이션 완료 감지
- * - StateTree 이벤트 전송 (Action.NextAttack 태그)
- * - AI 컨트롤러와 StateTree 컴포넌트 연동
+ * @author [개발자명]
+ * @date 2024-12-19
  */
 
 #include "Boss/Notifies/CBossEndAttack.h"
 #include "AIController.h"
 #include "Components/StateTreeComponent.h"
 
+/**
+ * @brief 노티파이 이름 반환
+ * 
+ * @return 노티파이의 이름 문자열
+ * 
+ * 이 노티파이의 이름을 반환합니다.
+ */
 FString UCBossEndAttack::GetNotifyName_Implementation() const
 {
 	return "BossEndAttack";
 }
 
+/**
+ * @brief 노티파이 실행 함수
+ * 
+ * @param MeshComp 스켈레탈 메시 컴포넌트
+ * @param Animation 애니메이션 시퀀스
+ * 
+ * 공격 애니메이션이 완료되면 StateTree에 이벤트를 전송합니다.
+ */
 void UCBossEndAttack::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation)
 {
 	Super::Notify(MeshComp, Animation);

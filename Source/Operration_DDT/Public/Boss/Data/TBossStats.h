@@ -85,7 +85,7 @@ public:
 	 * - 에디터에서 수정 가능
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Boss Stats")
-	int32 MaxAP;
+	float MaxAP;
 	
 	/**
 	 * @brief 공격력
@@ -97,6 +97,9 @@ public:
 	 * - 기본값: 100.0f
 	 * - 에디터에서 수정 가능
 	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Boss Stats")
+	float IncreaseAP;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Boss Stats")
 	float ATK;
 	

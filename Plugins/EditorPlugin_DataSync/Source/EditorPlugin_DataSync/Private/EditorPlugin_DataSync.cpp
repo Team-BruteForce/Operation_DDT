@@ -1,54 +1,15 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
-
 /**
  * @file EditorPlugin_DataSync.cpp
  * @brief 언리얼 엔진 에디터용 데이터 동기화 플러그인 구현 파일
  * 
- * @date 2024-12-19
- * @author [이효원]
- * @version 1.0
- * 
- * @section overview 개요
+ * @details
  * 이 플러그인은 언리얼 엔진 에디터에서 외부 데이터베이스나 API와의
  * 실시간 데이터 동기화를 담당하는 핵심 시스템입니다.
  * 기획자가 데이터를 변경할 때 즉시 게임에 반영되도록 하여
  * 개발 효율성을 극대화하는 것이 주요 목적입니다.
  * 
- * @section purpose 개발 목적
- * - 기획자가 데이터를 변경할 때 즉시 게임에 반영되도록 실시간 데이터 동기화 시스템 구축
- * - 외부 API와의 HTTP 통신을 통한 데이터 동적 로딩
- * - 언리얼 엔진의 데이터 테이블 시스템과 연동하여 게임 데이터 자동 업데이트
- * - 개발자와 기획자 간의 협업 효율성 향상
- * 
- * @section features 주요 기능
- * - HTTP API를 통한 외부 데이터 실시간 동기화
- * - GameplayTags 데이터 테이블 자동 업데이트
- * - 언리얼 엔진 에디터 UI 통합 (메뉴, 툴바, 독립 탭)
- * - JSON 데이터 파싱 및 언리얼 엔진 데이터 구조 변환
- * - 에러 처리 및 로깅 시스템
- * 
- * @section technical_details 기술적 세부사항
- * - 언리얼 엔진 플러그인 아키텍처 활용
- * - HTTP 모듈을 통한 REST API 통신
- * - JSON 파싱 및 데이터 테이블 시스템 연동
- * - 언리얼 엔진 에디터 UI 프레임워크 활용
- * - 모듈 기반 아키텍처로 확장성 및 유지보수성 확보
- * 
- * @section architecture 시스템 아키텍처
- * - FEditorPlugin_DataSyncModule: 메인 모듈 클래스
- * - HTTP 요청/응답 처리 시스템
- * - 데이터 파싱 및 변환 엔진
- * - 에디터 UI 통합 시스템
- * 
- * @section portfolio_highlight 포트폴리오 하이라이트
- * 이 플러그인은 게임 개발에서 가장 중요한 실시간 데이터 동기화와
- * 개발 효율성 향상을 위한 핵심 시스템입니다. 특히 언리얼 엔진의
- * 플러그인 아키텍처를 활용한 확장 가능한 시스템 설계와,
- * HTTP 통신을 통한 외부 시스템 연동 능력을 보여줍니다.
- * 
- * 기획자가 데이터를 변경할 때마다 게임을 재시작할 필요 없이
- * 즉시 반영되는 시스템은 현대 게임 개발에서 요구되는
- * 빠른 반복 개발과 실시간 협업의 핵심 요소입니다.
+ * @author [이효원]
+ * @date 2024-12-19
  */
 
 #include "EditorPlugin_DataSync.h"
@@ -61,6 +22,7 @@
 #include "ToolMenus.h"
 
 // 데이터 동기화를 위한 추가 include
+#include "GameplayTagsManager.h"
 #include "HttpModule.h"
 #include "Interfaces/IHttpRequest.h"
 #include "Interfaces/IHttpResponse.h"
@@ -73,6 +35,11 @@ static const FName EditorPlugin_DataSyncTabName("EditorPlugin_DataSync");
 
 #define LOCTEXT_NAMESPACE "FEditorPlugin_DataSyncModule"
 
+/**
+ * @brief 모듈 시작 시 호출되는 함수
+ * 
+ * 플러그인이 로드될 때 초기화 작업을 수행합니다.
+ */
 void FEditorPlugin_DataSyncModule::StartupModule()
 {
 	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
@@ -96,6 +63,11 @@ void FEditorPlugin_DataSyncModule::StartupModule()
 		.SetMenuType(ETabSpawnerMenuType::Hidden);
 }
 
+/**
+ * @brief 모듈 종료 시 호출되는 함수
+ * 
+ * 플러그인이 언로드될 때 정리 작업을 수행합니다.
+ */
 void FEditorPlugin_DataSyncModule::ShutdownModule()
 {
 	// This function may be called during shutdown to clean up your module. For modules that support dynamic reloading,
@@ -112,6 +84,14 @@ void FEditorPlugin_DataSyncModule::ShutdownModule()
 	FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(EditorPlugin_DataSyncTabName);
 }
 
+/**
+ * @brief 플러그인 탭 생성 함수
+ * 
+ * @param SpawnTabArgs 탭 생성 인수
+ * @return TSharedRef<SDockTab> 생성된 탭 위젯
+ * 
+ * 플러그인의 메인 UI 탭을 생성합니다.
+ */
 TSharedRef<SDockTab> FEditorPlugin_DataSyncModule::OnSpawnPluginTab(const FSpawnTabArgs& SpawnTabArgs)
 {
 	return SNew(SDockTab)
@@ -160,11 +140,21 @@ TSharedRef<SDockTab> FEditorPlugin_DataSyncModule::OnSpawnPluginTab(const FSpawn
 		];
 }
 
+/**
+ * @brief 플러그인 버튼 클릭 처리 함수
+ * 
+ * 플러그인 UI에서 버튼이 클릭되었을 때 호출되는 함수입니다.
+ */
 void FEditorPlugin_DataSyncModule::PluginButtonClicked()
 {
 	FGlobalTabmanager::Get()->TryInvokeTab(EditorPlugin_DataSyncTabName);
 }
 
+/**
+ * @brief 에디터 메뉴 등록 함수
+ * 
+ * 언리얼 엔진 에디터에 플러그인 메뉴를 등록합니다.
+ */
 void FEditorPlugin_DataSyncModule::RegisterMenus()
 {
 	// Owner will be used for cleanup in call to UToolMenus::UnregisterOwner
@@ -191,6 +181,12 @@ void FEditorPlugin_DataSyncModule::RegisterMenus()
 }
 
 // 데이터 동기화 함수들
+/**
+ * @brief GameplayTags 동기화 함수
+ * 
+ * 외부 API에서 GameplayTags 데이터를 가져와서
+ * 언리얼 엔진의 데이터 테이블에 동기화합니다.
+ */
 void FEditorPlugin_DataSyncModule::SyncGameplayTags()
 {
 	UE_LOG(LogTemp, Log, TEXT("GameplayTags 동기화 시작..."));
@@ -199,6 +195,12 @@ void FEditorPlugin_DataSyncModule::SyncGameplayTags()
 	MakeAPIRequest("/api/tags", "GameplayTags");
 }
 
+/**
+ * @brief Boss Stats 동기화 함수
+ * 
+ * 외부 API에서 보스 스탯 데이터를 가져와서
+ * 언리얼 엔진의 데이터 테이블에 동기화합니다.
+ */
 void FEditorPlugin_DataSyncModule::SyncBossStats()
 {
 	UE_LOG(LogTemp, Log, TEXT("Boss Stats 동기화 시작..."));
@@ -207,6 +209,14 @@ void FEditorPlugin_DataSyncModule::SyncBossStats()
 	MakeAPIRequest("/api/stats", "BossStats");
 }
 
+/**
+ * @brief HTTP API 요청 함수
+ * 
+ * @param Endpoint API 엔드포인트 (예: "tags", "stats")
+ * @param DataType 데이터 타입 식별자
+ * 
+ * 지정된 엔드포인트로 HTTP GET 요청을 전송합니다.
+ */
 void FEditorPlugin_DataSyncModule::MakeAPIRequest(const FString& Endpoint, const FString& DataType)
 {
 	// HTTP 모듈 확인
@@ -229,6 +239,15 @@ void FEditorPlugin_DataSyncModule::MakeAPIRequest(const FString& Endpoint, const
 	Request->ProcessRequest();
 }
 
+/**
+ * @brief HTTP 응답 처리 함수
+ * 
+ * @param Request HTTP 요청 객체
+ * @param Response HTTP 응답 객체
+ * @param bWasSuccessful 요청 성공 여부
+ * 
+ * HTTP 요청에 대한 응답을 처리합니다.
+ */
 void FEditorPlugin_DataSyncModule::OnDataReceived(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful)
 {
 	if (!bWasSuccessful || !Response.IsValid())
@@ -321,6 +340,15 @@ void FEditorPlugin_DataSyncModule::OnDataReceived(FHttpRequestPtr Request, FHttp
 		UE_LOG(LogTemp, Log, TEXT("JSON 파싱 실패"));
 	}
 }
+
+/**
+ * @brief GameplayTags 데이터 테이블 업데이트 함수
+ * 
+ * @param TagTable 업데이트할 데이터 테이블
+ * @param Data JSON 데이터 배열
+ * 
+ * JSON 데이터를 파싱하여 GameplayTags 데이터 테이블을 업데이트합니다.
+ */
 void FEditorPlugin_DataSyncModule::UpdateGameplayTagsTable(UDataTable* TagTable, const TArray<TSharedPtr<FJsonValue>>& Data)
 {
 	if (!TagTable)
@@ -379,6 +407,15 @@ void FEditorPlugin_DataSyncModule::UpdateGameplayTagsTable(UDataTable* TagTable,
 	UE_LOG(LogTemp, Log, TEXT("GameplayTags 테이블 업데이트 완료: 성공 %d개, 실패 %d개"), SuccessCount, ErrorCount);
 }
 
+/**
+ * @brief GameplayTag 데이터 파싱 함수
+ * 
+ * @param RowData JSON 객체
+ * @return FGameplayTagTableRow 파싱된 태그 데이터
+ * 
+ * JSON 객체에서 GameplayTag 데이터를 추출하여
+ * FGameplayTagTableRow 구조체로 변환합니다.
+ */
 FGameplayTagTableRow FEditorPlugin_DataSyncModule::ParseGameplayTagData(const TSharedPtr<FJsonObject>& RowData)
 {
 	FGameplayTagTableRow TagRow;
@@ -416,6 +453,14 @@ FGameplayTagTableRow FEditorPlugin_DataSyncModule::ParseGameplayTagData(const TS
 	return TagRow;
 }
 
+/**
+ * @brief 보스 스탯 데이터 테이블 업데이트 함수 (간단 버전)
+ * 
+ * @param BossTable 업데이트할 데이터 테이블
+ * @param Data JSON 데이터 배열
+ * 
+ * JSON 데이터를 파싱하여 보스 스탯 데이터 테이블을 업데이트합니다.
+ */
 void FEditorPlugin_DataSyncModule::UpdateBossStatsTableSimple(UDataTable* BossTable, const TArray<TSharedPtr<FJsonValue>>& Data)
 {
 	if (!BossTable)
@@ -443,7 +488,8 @@ void FEditorPlugin_DataSyncModule::UpdateBossStatsTableSimple(UDataTable* BossTa
 			// JSON에서 각 변수 직접 가져오기 (API 응답 필드명에 맞춤)
 			FString BossName = RowObject->GetStringField("name");
 			int32 MaxHP = RowObject->GetIntegerField("maxHP");
-			int32 MaxAP = RowObject->GetIntegerField("maxAP");
+			float MaxAP = RowObject->GetNumberField("maxAP");
+			float IncreaseAP = RowObject->GetNumberField("IncreaseAP");
 			float ATK = RowObject->GetNumberField("atk");
 			float DEF = RowObject->GetNumberField("def");
 			int32 Speed = RowObject->GetIntegerField("speed");
@@ -455,7 +501,8 @@ void FEditorPlugin_DataSyncModule::UpdateBossStatsTableSimple(UDataTable* BossTa
 			struct FBossStatSimple : public FTableRowBase
 			{
 				int32 MaxHP;
-				int32 MaxAP;
+				float MaxAP;
+				float IncreaseAP;
 				float ATK;
 				float DEF;
 				int32 Speed;
@@ -464,6 +511,7 @@ void FEditorPlugin_DataSyncModule::UpdateBossStatsTableSimple(UDataTable* BossTa
 			FBossStatSimple BossStat;
 			BossStat.MaxHP = MaxHP;
 			BossStat.MaxAP = MaxAP;
+			BossStat.IncreaseAP = IncreaseAP;
 			BossStat.ATK = ATK;
 			BossStat.DEF = DEF;
 			BossStat.Speed = Speed;
@@ -472,7 +520,7 @@ void FEditorPlugin_DataSyncModule::UpdateBossStatsTableSimple(UDataTable* BossTa
 			BossTable->AddRow(RowName, BossStat);
 			SuccessCount++;
 			
-			UE_LOG(LogTemp, Log, TEXT("보스 스탯 추가 성공: %s (HP:%d, AP:%d, ATK:%.1f, DEF:%.1f, Speed:%d)"), 
+			UE_LOG(LogTemp, Log, TEXT("보스 스탯 추가 성공: %s (HP:%d, AP:%f, ATK:%.1f, DEF:%.1f, Speed:%d)"), 
 				*BossName, MaxHP, MaxAP, ATK, DEF, Speed);
 		}
 		catch (...)
@@ -487,8 +535,6 @@ void FEditorPlugin_DataSyncModule::UpdateBossStatsTableSimple(UDataTable* BossTa
 	
 	UE_LOG(LogTemp, Log, TEXT("Boss Stats 테이블 업데이트 완료: 성공 %d개, 실패 %d개"), SuccessCount, ErrorCount);
 }
-
-
 
 #undef LOCTEXT_NAMESPACE
 	

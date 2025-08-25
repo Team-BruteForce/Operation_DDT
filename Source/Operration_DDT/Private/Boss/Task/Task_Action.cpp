@@ -1,16 +1,13 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 /**
  * @file Task_Action.cpp
- * @brief StateTree 액션 태스크 구현 파일
+ * @brief 보스 액션 태스크 구현 파일
  * 
- * 이 파일은 StateTree에서 액션 상태를 관리하는 태스크를 구현합니다.
- * 액션 상태 진입 시 IsAction 플래그를 설정하여 다른 시스템에서
- * 현재 액션 상태임을 알 수 있도록 합니다.
+ * @details
+ * 보스의 액션을 관리하는 태스크의 구현 파일입니다.
+ * StateTree 기반 태스크 시스템을 사용하여 액션 상태를 관리합니다.
  * 
- * 주요 기능:
- * - 액션 상태 진입 시 IsAction 플래그 설정
- * - StateTree와의 연동을 위한 기본 액션 태스크
+ * @author [개발자명]
+ * @date 2024-12-19
  */
 
 #include "Boss/Task/Task_Action.h"
@@ -19,6 +16,11 @@
 #include "Boss/StateTree/CBossEnemyStateTreeEvaluator.h"
 #include "Utilities/CLog.h"
 
+/**
+ * @brief 상태 진입 시 호출되는 함수
+ * 
+ * 액션 상태를 설정합니다.
+ */
 EStateTreeRunStatus UTask_Action::EnterState(FStateTreeExecutionContext& Context,
                                              const FStateTreeTransitionResult& Transition)
 {

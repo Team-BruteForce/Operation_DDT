@@ -30,7 +30,7 @@ private:
 	TSubclassOf<class UCBossDoAction> BossDoActionClass;
 
 	UPROPERTY(EditAnywhere)
-	TMap<FGameplayTag,FBossDoActionData> BossDoActionDatas;
+	TMap<FGameplayTag,FBossMeleeLightAttack> BossDoActionDatas;
 	
 	UPROPERTY(EditAnywhere)
 	TMap<FGameplayTag,FBossHitData> HitDatas;

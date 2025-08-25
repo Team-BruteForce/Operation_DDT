@@ -10,6 +10,7 @@
 #include "GameFramework/PawnMovementComponent.h"
 
 
+
 EStateTreeRunStatus UTask_KeepingDistance::EnterState(FStateTreeExecutionContext& Context,
                                                       const FStateTreeTransitionResult& Transition)
 {
@@ -30,29 +31,34 @@ EStateTreeRunStatus UTask_KeepingDistance::Tick(FStateTreeExecutionContext& Cont
 	// 거리 계산
 	PlayerDistanceCalculate();
 	
+	// 거리 허용 오차 설정 (50 유닛 정도의 여유)
+	float DistanceTolerance = 50.0f;
+	float AdjustedMinDistance = MinDistance - DistanceTolerance;
+	float AdjustedMaxDistance = MaxDistance + DistanceTolerance;
+	
 	// 보스가 적절한 거리에 있으면 원형 궤도로 움직임
-	if (CurrentDistance <= MaxDistance &&CurrentDistance >= MinDistance)
+	if (CurrentDistance <= AdjustedMaxDistance && CurrentDistance >= AdjustedMinDistance)
 	{
 		MoveInOrbit(DeltaTime);
-		Boss->GetCharacterMovement()->MaxWalkSpeed=150;
+		Boss->GetCharacterMovement()->MaxWalkSpeed = 150;
 	}
 	else
 	{
-		Boss->GetCharacterMovement()->MaxWalkSpeed=400;
+		Boss->GetCharacterMovement()->MaxWalkSpeed = 400;
 		
 		// 거리가 맞지 않으면 목표 위치로 이동
-		if (CurrentDistance < MinDistance)
+		if (CurrentDistance < AdjustedMinDistance)
 		{
 			ClosestPosition = TargetLocation - DirectionToTarget * MinDistance;
 		}
-		else if (CurrentDistance > MaxDistance)
+		else if (CurrentDistance > AdjustedMaxDistance)
 		{
 			ClosestPosition = TargetLocation - DirectionToTarget * MaxDistance;
 		}
 	}
 	if (Controller)
 	{
-		Controller->MoveToLocation(ClosestPosition);
+		Controller->MoveToLocation(ClosestPosition,0);
 		LookAtTarget();
 	}
 	
@@ -69,7 +75,7 @@ void UTask_KeepingDistance::ExitState(FStateTreeExecutionContext& Context, const
 {
 	Super::ExitState(Context, Transition);
 	CLog::Log("UTask_KeepingDistance : ExitState");
-	
+		Boss->GetCharacterMovement()->MaxWalkSpeed = 400;
 	// 이동 중지
 	if (Controller)
 	{
@@ -106,8 +112,19 @@ void UTask_KeepingDistance::MoveInOrbit(float DeltaTime)
 	float StartAngle = -30.0f; // 보스 방향 기준 왼쪽 30도
 	float EndAngle = 30.0f;    // 보스 방향 기준 오른쪽 30도
 	
-	// 호의 반지름을 보스의 현재 위치 거리로 설정
-	ArcRadius = CurrentDistance;
+	// 호의 반지름을 적절한 거리로 설정
+	if (CurrentDistance < MinDistance)
+	{
+		ArcRadius = MinDistance; // 너무 가까우면 최소 거리로
+	}
+	else if (CurrentDistance > MaxDistance)
+	{
+		ArcRadius = MaxDistance; // 너무 멀면 최대 거리로
+	}
+	else
+	{
+		ArcRadius = CurrentDistance; // 적절한 거리면 현재 거리 사용
+	}
 	
 	// 호의 시작점과 끝점 계산
 	ArcStart = TargetLocation + BossBackward.RotateAngleAxis(StartAngle, FVector::UpVector) * ArcRadius;

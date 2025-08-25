@@ -1,12 +1,23 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+/**
+ * @file Task_PlayMontage.h
+ * @brief 보스 몽타주 재생 태스크 헤더 파일
+ * 
+ * @details
+ * StateTree에서 보스 캐릭터의 공격 애니메이션을 재생하는 태스크를 정의합니다.
+ * 상태 진입 시 공격 애니메이션을 시작하고, 애니메이션이 완료될 때까지 상태를 유지합니다.
+ * 
+ * @author [개발자명]
+ * @date 2024-12-19
+ */
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "Blueprint/StateTreeTaskBlueprintBase.h"
 #include "Task_PlayMontage.generated.h"
+
 /**
- * @brief 애니메이션 몽타주를 재생하는 StateTree 태스크 클래스
+ * @brief 보스 몽타주 재생 태스크
  * 
  * StateTree에서 보스 캐릭터의 공격 애니메이션을 재생하는 태스크입니다.
  * 상태 진입 시 공격 애니메이션을 시작하고, 애니메이션이 완료될 때까지 상태를 유지합니다.
@@ -44,14 +55,23 @@ public:
 	 * @brief 태스크를 소유하는 Pawn 객체
 	 * 
 	 * 애니메이션을 재생할 보스 캐릭터의 Pawn 객체입니다.
-	 * 에디터에서 수정 가능하며 블루프린트에서 읽기/쓰기가 가능합니다.
 	 */
 	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="MontageData")
 	class APawn* Owner;
 
+	/**
+	 * @brief 선택된 태그
+	 * 
+	 * 재생할 몽타주를 식별하는 게임플레이 태그입니다.
+	 */
 	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="Tag")
 	FGameplayTag SelectedTag;
 
+	/**
+	 * @brief 시작 여부
+	 * 
+	 * 몽타주가 시작되었는지 여부를 나타냅니다.
+	 */
 	UPROPERTY(VisibleAnywhere)
 	bool bStarted=false;
 	

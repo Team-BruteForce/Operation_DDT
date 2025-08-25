@@ -1,4 +1,14 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+/**
+ * @file CEnemyAnimInstance.h
+ * @brief 적 캐릭터 애니메이션 인스턴스 헤더 파일
+ * 
+ * @details
+ * 적 캐릭터들의 애니메이션을 관리하는 클래스입니다.
+ * 적의 상태에 따른 애니메이션 전환을 처리합니다.
+ * 
+ * @author [개발자명]
+ * @date 2024-12-19
+ */
 
 #pragma once
 
