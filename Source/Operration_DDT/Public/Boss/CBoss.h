@@ -79,6 +79,13 @@ public:
 	UPROPERTY(VisibleAnywhere)
 	class UMotionWarpingComponent* BossMotionWarping;
 
+	/**
+	 *@brief 보스 프로젝타일(투사체) 컴포넌트
+	 */
+	UPROPERTY(VisibleAnywhere)
+	class UBossProjectileComponent* ProjectileComp;
+	
+
 protected:
 	
 	/**

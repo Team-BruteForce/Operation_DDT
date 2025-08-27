@@ -46,6 +46,7 @@ ACBoss::ACBoss()
 	CHelpers::CreateActorComponent<UCBossWeaponComponent>(this,&BossWeaponComponent,"WeaponComp");
 	CHelpers::CreateActorComponent<UCBossStatusComponent>(this,&BossStatusComponent,"StatusComp");
 	CHelpers::CreateActorComponent<UMotionWarpingComponent>(this,&BossMotionWarping,"MotionWarpComp");
+	CHelpers::CreateActorComponent<UBossProjectileComponent>(this,&ProjectileComp,"ProjectileComp");
 	
 }
 

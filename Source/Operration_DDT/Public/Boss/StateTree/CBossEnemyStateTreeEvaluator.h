@@ -49,7 +49,7 @@ public:
 	// ========================================
 	// Public Functions
 	// ========================================
-	
+
 	/**
 	 * @brief 매 프레임 호출되는 틱 함수
 	 * 
@@ -97,7 +97,7 @@ public:
 	
 	/** 거리별 범위 기준값들 (에디터에서 각각 설정 가능) */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Distance Settings", meta=(ClampMin="100.0", ClampMax="1000.0", ToolTip="거리별 범위 기준값들입니다.\n[0]: TooClose 범위 (300)\n[1]: Melee 범위 (400)\n[2]: Dash 범위 (1200) - 백스탭 거리와 연동\n[3]: Ranged 범위 (1600)\n[4]: OutOfRange 범위 (2000)"))
-	TArray<float> DistanceThresholds = { 300.0f, 400.0f, 1200.0f, 1600.0f, 2000.0f };
+	TArray<float> DistanceThresholds = { 200.0f, 600.0f, 1600.0f, 2000.0f, 2000.0f };
 	
 	/** 액션 실행 여부 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Tag", meta=(ToolTip="보스가 현재 액션을 실행 중인지 여부를 나타냅니다.\nTrue일 때 새로운 액션을 시작하지 않습니다."))
@@ -117,6 +117,14 @@ public:
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Tag", meta=(ToolTip="보스가 회피 할 수있는 안전한 좌표입니다."))
 	FVector SafePosition;
+	
+	/** 회피 위치 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Tag", meta=(ToolTip="보스가 회피할 위치입니다. 모션워핑에서 사용됩니다."))
+	FVector DodgeLocation;
+
+	/** 타겟 예측 위치 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Tag", meta=(ToolTip="보스가 공격할 예측한 위치입니다. 모션워핑에서 사용됩니다."))
+	FVector TagetLocation;
 
 private:
 	// ========================================

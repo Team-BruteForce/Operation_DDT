@@ -29,12 +29,12 @@ void UCBossEnemyStateTreeEvaluator::Tick(FStateTreeExecutionContext& Context, co
 	FVector TargetLoc;
 	FRotator TargetRot;
 	CalculatePredictedTargetLocation(TargetLoc, TargetRot, DeltaTime);
-	
-	UMotionWarpingComponent* Motion=CHelpers::GetComponent<UMotionWarpingComponent>(Boss);
-	Motion->AddOrUpdateWarpTargetFromLocationAndRotation(TEXT("Target"), TargetLoc, TargetRot);
+	TagetLocation=TargetLoc;
 	
 	// 백스탭 위치 찾기 (디버그용)
 	FVector BackstepPos = FindBackstepPosition(DistanceThresholds.Num() >= 3 ? DistanceThresholds[2] : 1200.0f);
+
+	DodgeLocation = BackstepPos;
 	DrawBackstepDebugInfo(BackstepPos);
 }
 
