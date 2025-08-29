@@ -16,6 +16,7 @@
 #include "Boss/Component/CBossWeaponComponent.h"
 #include "MotionWarpingComponent.h"
 #include "Boss/Component/CBossStatusComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "Components/StateTreeComponent.h"
 
 /**
@@ -26,13 +27,14 @@
 ACBoss::ACBoss()
 {
 	// 스켈레탈 메시 에셋 로드 및 설정
-	USkeletalMesh* mesh;
-	CHelpers::GetAsset<USkeletalMesh>(&mesh, AssetPaths::Boss_MESH);
-	GetMesh()->SetSkeletalMesh(mesh);
+	USkeletalMesh* Bodymesh;
+	CHelpers::GetAsset<USkeletalMesh>(&Bodymesh, AssetPaths::Boss_MESH);
+	GetMesh()->SetSkeletalMesh(Bodymesh);
 	GetMesh()->SetRelativeLocation(FVector(0.0f, 0.0f, -90.0f));
 	GetMesh()->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f));
 	GetMesh()->SetRelativeScale3D(FVector(1.8f));
-	
+
+
 	// 애님 인스턴스 클래스 에셋 로드 및 설정
 	TSubclassOf<UAnimInstance> Anim;
 	CHelpers::GetClass<UAnimInstance>(&Anim, AssetPaths::Boss_ANIM);
@@ -51,7 +53,16 @@ ACBoss::ACBoss()
 	CHelpers::CreateActorComponent<UBossProjectileComponent>(this,&ProjectileComp,"ProjectileComp");
 	CHelpers::CreateActorComponent<UCBossTargetingComponent>(this,&TargetingComp,"TargetingComp");
 	CHelpers::CreateActorComponent<UBossDebugComponent>(this,&DebugComp,"DebugComp");
-	
+
+	// USkeletalMesh* WingsMesh;
+	// CHelpers::GetAsset<USkeletalMesh>(&WingsMesh, AssetPaths::Boss_Wings);
+	// CHelpers::CreateComponent<USkeletalMeshComponent>(this,&WingMeshComp,"WingMeshComp");
+	// WingMeshComp->SetSkeletalMesh(WingsMesh);
+	// WingMeshComp->SetupAttachment(GetMesh(), FName("Wings_Socket"));
+	//
+	// TSubclassOf<UAnimInstance> WingAnim;
+	// CHelpers::GetClass<UAnimInstance>(&WingAnim, AssetPaths::Boss_WingsAnim);
+	// WingMeshComp->SetAnimInstanceClass(WingAnim);
 }
 
 float ACBoss::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator,

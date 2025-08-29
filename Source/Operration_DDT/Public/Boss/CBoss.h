@@ -39,13 +39,9 @@ public:
 	 */
 	UFUNCTION()
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
-	
 
-	/**
-	 * @brief 공격 애니메이션 몽타주 맵
-	 */
-	UPROPERTY(EditAnywhere, Category = "Montage")
-	TMap<FGameplayTag, TObjectPtr<UAnimMontage>> AttackOptions;
+	// UPROPERTY(EditAnywhere, BlueprintReadWrite,Category="Wings")
+	// class USkeletalMeshComponent* WingMeshComp; 
 
 	/**
 	 * @brief 보스 상태 컴포넌트

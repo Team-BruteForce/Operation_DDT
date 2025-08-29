@@ -26,5 +26,6 @@ bool USTC_IsBossDistanceGreaterThan::TestCondition(FStateTreeExecutionContext& C
 {
 	// Evaluator에서 설정된 CurrentRangeTag와 비교
 	// OutOfRange 범위 태그인지 확인
+
 	return CurrentRangeTag.MatchesTag(RangeTags.OutOfRange);
 }

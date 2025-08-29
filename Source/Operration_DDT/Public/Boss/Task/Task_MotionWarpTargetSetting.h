@@ -13,7 +13,7 @@ UCLASS()
 class OPERRATION_DDT_API UTask_MotionWarpTargetSetting : public UStateTreeTaskBlueprintBase
 {
 	GENERATED_BODY()
-	virtual EStateTreeRunStatus EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) override;
+	virtual EStateTreeRunStatus Tick(FStateTreeExecutionContext& Context, const float DeltaTime) override;
 
 	UPROPERTY(EditAnywhere, meta=(ToolTip="보스 객체"))
 	class APawn* Boss;

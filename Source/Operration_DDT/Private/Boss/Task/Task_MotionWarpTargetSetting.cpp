@@ -4,11 +4,12 @@
 #include "Boss/Task/Task_MotionWarpTargetSetting.h"
 #include "Global.h"
 #include "MotionWarpingComponent.h"
+#include "Boss/Component/CBossTargetingComponent.h"
 
-EStateTreeRunStatus UTask_MotionWarpTargetSetting::EnterState(FStateTreeExecutionContext& Context,
-                                                              const FStateTreeTransitionResult& Transition)
+EStateTreeRunStatus UTask_MotionWarpTargetSetting::Tick(FStateTreeExecutionContext& Context, const float DeltaTime)
 {
 	UMotionWarpingComponent* Motion= CHelpers::GetComponent<UMotionWarpingComponent>(Boss);
-	Motion->AddOrUpdateWarpTargetFromLocation( TargetName,TargetLocation);
-	return EStateTreeRunStatus::Running;
+	UCBossTargetingComponent* TargetingComponent= CHelpers::GetComponent<UCBossTargetingComponent>(Boss);
+	Motion->AddOrUpdateWarpTargetFromLocation( TargetName,TargetingComponent->FindPlayer()->GetActorLocation());
+	return Super::Tick(Context, DeltaTime);
 }

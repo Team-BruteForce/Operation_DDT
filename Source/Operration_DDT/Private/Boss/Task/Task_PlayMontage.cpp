@@ -45,7 +45,7 @@ EStateTreeRunStatus UTask_PlayMontage::EnterState(FStateTreeExecutionContext& Co
 	{
 		WeaponComp->BossDoAction(SelectedTag);
 		// ProjectileComp->ShotProjectile();
-		// ProjectileComp->ShotProjectileToLocation(TargetingComp->FindPlayer(), 1.0f);
+		ProjectileComp->ShotProjectileToLocation(TargetingComp->FindPlayer(), 1.0f);
 	}
 	
 	return EStateTreeRunStatus::Running;

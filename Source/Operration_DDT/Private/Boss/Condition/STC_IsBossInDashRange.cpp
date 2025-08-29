@@ -13,7 +13,10 @@
 
 #include "Boss/Condition/STC_IsBossInDashRange.h"
 
-#include "Utilities/CLog.h"
+#include "AIController.h"
+#include "Global.h"
+#include "StateTreeExecutionContext.h"
+#include "Components/StateTreeComponent.h"
 
 /**
  * @brief 조건을 테스트하는 함수
@@ -25,5 +28,8 @@
  */
 bool USTC_IsBossInDashRange::TestCondition(FStateTreeExecutionContext& Context) const
 {
+	AAIController* AIC=Cast<AAIController>(Context.GetOwner());
+	UStateTreeComponent* StateTreeComp=CHelpers::GetComponent<UStateTreeComponent>(AIC);
+	StateTreeComp->SendStateTreeEvent(RangeTags.Dash);
 	return CurrentRangeTag.MatchesTag(RangeTags.Dash);
 }
