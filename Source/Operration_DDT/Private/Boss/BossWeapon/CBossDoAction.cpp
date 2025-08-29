@@ -52,6 +52,11 @@ void UCBossDoAction::DoAction (FGameplayTag Tag)
 	BossDoActionDatas[Tag].PlayPaseOneMontage(OwnerCharacter);
 }
 
+void UCBossDoAction::HitAction(FGameplayTag Tag)
+{
+	BossHitDatas[Tag].PlayMontage(OwnerCharacter);
+}
+
 /**
  * @brief 액션 시작
  * 

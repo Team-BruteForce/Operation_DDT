@@ -198,3 +198,11 @@ void UCBossWeaponComponent::BossDoAction(FGameplayTag Tag)
 		DoAction->DoAction(Tag);
 	}
 }
+
+void UCBossWeaponComponent::BossHitAction(FGameplayTag Tag)
+{
+	if (UCBossDoAction* DoAction = GetBossDoAction())
+	{
+		DoAction->HitAction(Tag);
+	}
+}

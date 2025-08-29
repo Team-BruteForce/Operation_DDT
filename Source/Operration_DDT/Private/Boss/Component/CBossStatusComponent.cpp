@@ -71,9 +71,7 @@ void UCBossStatusComponent::TickComponent(float DeltaTime, ELevelTick TickType, 
 		StateTreeComp->SendStateTreeEvent(FGameplayTag::RequestGameplayTag("BOSS.Flag.IsActing"));
 	}
 	IncreaseAP(BossCurrentStats.IncreaseAP);
-	CLog::Log(BossCurrentStats.IncreaseAP);
-	CLog::Log(BossCurrentStats.MaxAP);
-	CLog::Log(BossCurrentStats.CurrentAP);
+	// CLog::Log(BossCurrentStats.CurrentHP);
 }
 
 /**

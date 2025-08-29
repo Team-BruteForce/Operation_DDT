@@ -15,6 +15,8 @@
 #include "Boss/CBossAIC.h"
 #include "Boss/Component/CBossWeaponComponent.h"
 #include "MotionWarpingComponent.h"
+#include "Boss/Component/CBossStatusComponent.h"
+#include "Components/StateTreeComponent.h"
 
 /**
  * @brief 보스 캐릭터 생성자
@@ -47,19 +49,23 @@ ACBoss::ACBoss()
 	CHelpers::CreateActorComponent<UCBossStatusComponent>(this,&BossStatusComponent,"StatusComp");
 	CHelpers::CreateActorComponent<UMotionWarpingComponent>(this,&BossMotionWarping,"MotionWarpComp");
 	CHelpers::CreateActorComponent<UBossProjectileComponent>(this,&ProjectileComp,"ProjectileComp");
+	CHelpers::CreateActorComponent<UCBossTargetingComponent>(this,&TargetingComp,"TargetingComp");
+	CHelpers::CreateActorComponent<UBossDebugComponent>(this,&DebugComp,"DebugComp");
 	
 }
 
-/**
- * @brief 공격 애니메이션을 재생하는 테스트 함수
- * 
- * @param StateTag 재생할 공격 애니메이션을 식별하는 게임플레이 태그
- */
-void ACBoss::AttackTest(FGameplayTag StateTag)
+float ACBoss::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator,
+	AActor* DamageCauser)
 {
-	GetMesh()->GetAnimInstance()->Montage_Play(AttackOptions[StateTag]);
-	// BossWeaponComponent->BossDoAction(StateTag);
+	BossStatusComponent->SetDamage(DamageAmount);
+	if (BossStatusComponent->BossCurrentStats.CurrentHP<=0)
+	{
+		UStateTreeComponent* StateTreeComp = GetController()->FindComponentByClass<UStateTreeComponent>();
+		StateTreeComp->SendStateTreeEvent(FGameplayTag::RequestGameplayTag("BOSS.State.Dead"));
+	}
+	return DamageAmount;
 }
+
 
 /**
  * @brief 게임 시작 또는 스폰 시 호출되는 함수

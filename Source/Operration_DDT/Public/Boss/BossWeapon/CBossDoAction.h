@@ -58,6 +58,8 @@ public:
 	 * 지정된 태그에 해당하는 액션을 실행합니다.
 	 */
 	virtual void DoAction (FGameplayTag Tag);
+
+	virtual void HitAction(FGameplayTag Tag);
 	
 	/**
 	 * @brief 액션 시작

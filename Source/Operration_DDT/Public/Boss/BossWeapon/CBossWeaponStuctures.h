@@ -44,7 +44,7 @@ public:
 	FVector EffectScale = FVector::OneVector;
 
 public:
-	void PlayPaseOneMontage(class ACharacter* InOwner) ;
+	void PlayPaseOneMontage(class ACharacter* InOwner);
 };
 
 USTRUCT()

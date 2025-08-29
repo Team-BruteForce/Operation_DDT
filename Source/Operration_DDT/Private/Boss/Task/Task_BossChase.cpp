@@ -4,6 +4,9 @@
 #include "Global.h"
 #include "Engine/World.h"
 #include "AIController.h"
+#include "Boss/Component/CBossMovementComponent.h"
+#include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PawnMovementComponent.h"
 #include "Navigation/PathFollowingComponent.h"
 
@@ -59,14 +62,16 @@ EStateTreeRunStatus UTask_BossChase::EnterState(FStateTreeExecutionContext& Cont
     if (!Owner) return EStateTreeRunStatus::Failed;
     Movement=CHelpers::GetComponent<UCBossMovementComponent>(Owner);
     if (!Movement) return EStateTreeRunStatus::Failed;
-    
+    ACharacter* Boss=Cast<ACharacter>(Owner);
+    Boss->GetCharacterMovement()->MaxWalkSpeed=800;
     return EStateTreeRunStatus::Running;
 }
 
 void UTask_BossChase::ExitState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition)
 {
     Super::ExitState(Context, Transition);
-    
+    ACharacter* Boss=Cast<ACharacter>(Owner);
+    Boss->GetCharacterMovement()->MaxWalkSpeed=400;
     // AI MoveTo 중지
     if (Controller)
     {
@@ -87,7 +92,8 @@ EStateTreeRunStatus UTask_BossChase::Tick(FStateTreeExecutionContext& Context, c
     // if (DistanceToTarget > MAX_CHASE_DISTANCE) return EStateTreeRunStatus::Failed;
 
     // 작은 AcceptanceRadius로 정확한 도착
-    EPathFollowingRequestResult::Type MoveResult = Controller->MoveToActor(Target, ACCEPTANCE_RADIUS);
+    EPathFollowingRequestResult::Type MoveResult = Controller->MoveToActor(Movement->FindPlayer(), ACCEPTANCE_RADIUS);
+    Movement->RotateTowardsPlayer(DeltaTime,1);
 
     // 경로 찾기 실패 시 Failed 반환
     if (MoveResult == EPathFollowingRequestResult::Failed)
@@ -99,18 +105,17 @@ EStateTreeRunStatus UTask_BossChase::Tick(FStateTreeExecutionContext& Context, c
     // 가까워질수록 속도 조절
     float SpeedFactor = FMath::Clamp(DistanceToTarget / DistanceThreshold, 0.3f, 1.0f);
     float CurrentSpeed = Owner->GetMovementComponent()->GetMaxSpeed() * SpeedFactor;
-
+    
     // 부드러운 가속/감속
     static float CurrentVelocity = 0.0f;
     CurrentVelocity = FMath::Lerp(CurrentVelocity, CurrentSpeed, 0.1f);
-
+    
     // 속도 적용
     if (Owner->GetMovementComponent())
     {
         FVector Direction = (Target->GetActorLocation() - Owner->GetActorLocation()).GetSafeNormal();
         Owner->GetMovementComponent()->Velocity = Direction * CurrentVelocity;
     }
-
     return EStateTreeRunStatus::Running;
 }
 

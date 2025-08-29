@@ -107,6 +107,7 @@ public:
 	 * @brief 보스 액션 객체 반환
 	 */
 	class UCBossDoAction* GetBossDoAction();
+
 	
 	/**
 	 * @brief 보스 액션 실행
@@ -114,6 +115,7 @@ public:
 	 * @param Tag 실행할 액션 태그
 	 */
 	void BossDoAction(FGameplayTag Tag);
+	void BossHitAction(FGameplayTag Tag);
 	
 	/**
 	 * @brief 태그로 데이터 에셋 반환

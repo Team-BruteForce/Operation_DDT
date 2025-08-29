@@ -49,42 +49,6 @@ public:
 	virtual void ExitState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) override;
 
 protected:
-	/**
-	 * @brief 플레이어 거리 계산
-	 * 
-	 * 플레이어와의 거리를 계산합니다.
-	 */
-	void PlayerDistanceCalculate();
-	
-	/**
-	 * @brief 궤도 이동
-	 * 
-	 * @param DeltaTime 델타 타임
-	 * 
-	 * 플레이어를 중심으로 한 궤도를 따라 이동합니다.
-	 */
-	void MoveInOrbit(float DeltaTime);
-	
-	/**
-	 * @brief 타겟 바라보기
-	 * 
-	 * 플레이어를 향해 회전합니다.
-	 */
-	void LookAtTarget();
-	
-	/**
-	 * @brief 궤도 디버그 그리기
-	 * 
-	 * 궤도 이동을 시각적으로 표시합니다.
-	 */
-	void DrawOrbitDebug();
-	
-	/**
-	 * @brief 호 디버그 그리기
-	 * 
-	 * 호 이동을 시각적으로 표시합니다.
-	 */
-	void DrawArcDebug();
 
 	// 거리 관련 변수들
 	/**
@@ -180,6 +144,18 @@ protected:
 	UPROPERTY()
 	class AActor* Owner;
 
+	// ========================================
+	// Component References
+	// ========================================
+	
+	/** 이동 컴포넌트 참조 */
+	UPROPERTY()
+	class UCBossMovementComponent* MovementComponent;
+	
+	/** 디버그 컴포넌트 참조 */
+	UPROPERTY()
+	class UBossDebugComponent* DebugComponent;
+
 	// 상태 태그 관련 변수들
 	/**
 	 * @brief 현재 타겟 상태 태그
@@ -192,5 +168,13 @@ protected:
 	 */
 	UPROPERTY(EditAnywhere)
 	FBossTargetState TargetStateTag;
+	
+private:
+	/**
+	 * @brief 플레이어의 움직임 상태에 따른 태그를 반환하는 함수
+	 * 
+	 * @return 플레이어 움직임 상태 태그
+	 */
+	FGameplayTag GetPlayerMovementStateTag();
 	
 };

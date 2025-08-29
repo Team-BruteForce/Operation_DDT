@@ -128,6 +128,8 @@ public:
 	 * @param AP 증가할 액션 포인트량
 	 */
 	void IncreaseAP(float AP);
+
+	void SetDamage(float Damage){BossCurrentStats.CurrentHP-=Damage;};
 	
 	/**
 	 * @brief 보스 스탯 데이터 테이블

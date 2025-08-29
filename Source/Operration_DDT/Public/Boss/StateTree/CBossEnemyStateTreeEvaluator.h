@@ -1,39 +1,13 @@
-// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "Blueprint/StateTreeEvaluatorBlueprintBase.h"
+#include "Boss/Data/BossTagStructure.h"
 #include "CBossEnemyStateTreeEvaluator.generated.h"
 
-// 전역 상수 정의
-namespace BackstepConstants
-{
-	const int32 MAX_ANGLE_STEPS = 9;
-	const float ANGLE_STEPS[MAX_ANGLE_STEPS] = { 0.0f, 15.0f, 30.0f, 45.0f, 60.0f, 90.0f, 120.0f, 150.0f, 180.0f };
-	const FColor DEBUG_COLORS[MAX_ANGLE_STEPS] = { 
-		FColor::Green, FColor::Yellow, FColor::Orange, FColor::Red, FColor::Purple, 
-		FColor::Blue, FColor::Cyan, FColor::Magenta, FColor::White 
-	};
-}
 
-USTRUCT(BlueprintType)
-struct FBossRangeTags {
-	GENERATED_BODY()
-	UPROPERTY(EditDefaultsOnly, meta=(Categories="BOSS.Flag.Range.Bucket")) FGameplayTag TooClose;
-	UPROPERTY(EditDefaultsOnly, meta=(Categories="BOSS.Flag.Range.Bucket")) FGameplayTag Melee;
-	UPROPERTY(EditDefaultsOnly, meta=(Categories="BOSS.Flag.Range.Bucket")) FGameplayTag Dash;
-	UPROPERTY(EditDefaultsOnly, meta=(Categories="BOSS.Flag.Range.Bucket")) FGameplayTag Ranged;
-	UPROPERTY(EditDefaultsOnly, meta=(Categories="BOSS.Flag.Range.Bucket")) FGameplayTag OutOfRange;
-};
 
-USTRUCT(BlueprintType)
-struct FBossTargetState {
-	GENERATED_BODY()
-	UPROPERTY(EditDefaultsOnly, meta=(Categories="BOSS.Flag.TargetDirection.Right")) FGameplayTag Right;
-	UPROPERTY(EditDefaultsOnly, meta=(Categories="BOSS.Flag.TargetDirection.Center")) FGameplayTag Center;
-	UPROPERTY(EditDefaultsOnly, meta=(Categories="BOSS.Flag.TargetDirection.Left")) FGameplayTag Left;
-};
 /**
  * @brief 보스 적 StateTree 평가자 클래스
  * 
@@ -83,6 +57,29 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Target")
 	class APawn* Target;
 
+	// ========================================
+	// Component References
+	// ========================================
+
+	/** 보스 상태 컴포넌트 참조 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Components")
+	class UBossStateComponent* State;
+	/** 보스 능력치 컴포넌트 참조*/
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Components")
+	class UCBossStatusComponent* Status;
+	
+	/** 타겟팅 컴포넌트 참조 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Components")
+	class UCBossTargetingComponent* TargetingComponent;
+	
+	/** 이동 컴포넌트 참조 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Components")
+	class UCBossMovementComponent* MovementComponent;
+	
+	/** 디버그 컴포넌트 참조 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Components")
+	class UBossDebugComponent* DebugComponent;
+
 	/** 플레이어와 보스 간의 거리 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Distance", meta=(ToolTip="현재 플레이어와 보스 간의 실시간 거리입니다.\n이 값에 따라 CurrentRangeTag가 자동으로 결정됩니다."))
 	float player_ai_dist = 0.0f;
@@ -95,9 +92,7 @@ public:
 	UPROPERTY(EditAnywhere, Category="Tags")
 	FBossTargetState DirectionTag;
 	
-	/** 거리별 범위 기준값들 (에디터에서 각각 설정 가능) */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Distance Settings", meta=(ClampMin="100.0", ClampMax="1000.0", ToolTip="거리별 범위 기준값들입니다.\n[0]: TooClose 범위 (300)\n[1]: Melee 범위 (400)\n[2]: Dash 범위 (1200) - 백스탭 거리와 연동\n[3]: Ranged 범위 (1600)\n[4]: OutOfRange 범위 (2000)"))
-	TArray<float> DistanceThresholds = { 200.0f, 600.0f, 1600.0f, 2000.0f, 2000.0f };
+
 	
 	/** 액션 실행 여부 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Tag", meta=(ToolTip="보스가 현재 액션을 실행 중인지 여부를 나타냅니다.\nTrue일 때 새로운 액션을 시작하지 않습니다."))
@@ -140,63 +135,5 @@ private:
 	 * 플레이어와 보스 간의 거리 등 의사결정에 필요한 데이터를 수집합니다.
 	 */
 	void Get_Decision_Data(FStateTreeExecutionContext& Context, const float DeltaTime);
-	
-	/**
-	 * @brief 타겟의 이동 방향을 계산하고 보스 기준으로 좌우 판단합니다.
-	 */
-	void CalculateTargetMovementDirection();
-	
-	/**
-	 * @brief 예측된 타겟 위치를 계산하는 함수
-	 * 
-	 * @param OutTargetLocation 계산된 목표 위치
-	 * @param OutTargetRotation 계산된 목표 회전
-	 * @param DeltaTime 델타 타임
-	 * 
-	 * 플레이어의 속도, 가속도, 움직임 패턴을 분석하여 미래 위치를 예측합니다.
-	 */
-	void CalculatePredictedTargetLocation(FVector& OutTargetLocation, FRotator& OutTargetRotation, const float DeltaTime);
-	
-	// 고급 예측 함수들
-	FVector CalculateAdvancedPrediction(const FVector& PlayerVelocity, const FVector& PlayerAcceleration, const float DeltaTime);
-	FVector CalculatePatternBasedPrediction(const FVector& PlayerVelocity, float PlayerSpeed);
-	float CalculateDistanceBasedPredictionTime();
-	FRotator CalculatePredictedRotation(const FVector& PlayerVelocity, float PlayerSpeed);
-	
-	/**
-	 * 플레이어 기준 360도 영역에서 백스탭 가능한 위치를 찾습니다.
-	 * Nav Mesh를 사용하여 안전한 위치를 찾습니다.
-	 */
-	FVector FindBackstepPosition(float BackstepDistance = 1200.0f);
-	
-	/**
-	 * Nav Mesh를 사용하여 특정 방향에서 안전한 위치를 찾습니다.
-	 */
-	FVector FindSafePositionOnNavMesh(const FVector& Direction, float Distance);
-	
-	/**
-	 * 위치가 플레이어로부터 충분히 떨어져 있는지 확인합니다.
-	 */
-	bool IsPositionFarFromPlayer(const FVector& Position, float MinDistanceFromPlayer = 1200.0f);
-	
-	/**
-	 * 백스탭 디버그 정보를 출력합니다.
-	 */
-	void DrawBackstepDebugInfo(const FVector& BackstepPos);
-	
-	/**
-	 * 백스탭 위치 디버그 시각화를 수행합니다.
-	 */
-	void DrawBackstepPositionDebug(const FVector& SafePosition, const FVector& PlayerLocation, int32 StepIndex);
-	
-	/**
-	 * 백스탭 실패 시 디버그 시각화를 수행합니다.
-	 */
-	void DrawBackstepFailureDebug(const FVector& BossLocation);
-	
-	/**
-	 * 거리에 따라 적절한 범위 태그를 반환합니다.
-	 */
-	FGameplayTag EvaluateDistanceState(float Distance);
 	
 };

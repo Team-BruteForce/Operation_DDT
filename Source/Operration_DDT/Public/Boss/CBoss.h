@@ -34,14 +34,12 @@ public:
 	 * @brief 보스 캐릭터 생성자
 	 */
 	ACBoss();
-
 	/**
-	 * @brief 공격 애니메이션을 재생하는 테스트 함수
-	 * 
-	 * @param StateTag 재생할 공격 애니메이션을 식별하는 게임플레이 태그
+	 *@brief 데미지 함수
 	 */
 	UFUNCTION()
-	void AttackTest(FGameplayTag StateTag);
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
+	
 
 	/**
 	 * @brief 공격 애니메이션 몽타주 맵
@@ -76,14 +74,26 @@ public:
 	/**
 	 * @brief 보스 모션 워핑 컴포넌트
 	 */
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(EditAnywhere)
 	class UMotionWarpingComponent* BossMotionWarping;
 
 	/**
 	 *@brief 보스 프로젝타일(투사체) 컴포넌트
 	 */
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(EditAnywhere)
 	class UBossProjectileComponent* ProjectileComp;
+
+	/**
+ *@brief 보스 타겟 연산 관련 컴포넌트
+ */
+	UPROPERTY(EditAnywhere)
+	class UCBossTargetingComponent* TargetingComp;
+
+	/**
+ *@brief 보스 디버그 컴포넌트
+ */
+	UPROPERTY(VisibleAnywhere)
+	class UBossDebugComponent* DebugComp;
 	
 
 protected:

@@ -15,6 +15,8 @@
 #include "Global.h"
 #include "StateTreeExecutionContext.h"
 #include "Boss/CBoss.h"
+#include "Boss/Component/BossProjectileComponent.h"
+#include "Boss/Component/CBossTargetingComponent.h"
 #include "Boss/Component/CBossWeaponComponent.h"
 
 /**
@@ -35,13 +37,15 @@ EStateTreeRunStatus UTask_PlayMontage::EnterState(FStateTreeExecutionContext& Co
 	// 몽타주 실행
 	if(bStarted) return EStateTreeRunStatus::Running;
 	bStarted=true;
-	ACBoss* Boss= Cast<ACBoss>(Owner);
-	// = CHelpers::GetComponent<UCBossWeaponComponent>(Boss);
-	UCBossWeaponComponent* WeaponComp=Boss->GetComponentByClass<UCBossWeaponComponent>();
-	// Boss->AttackTest(SelectedTag);
+	UCBossWeaponComponent* WeaponComp=CHelpers::GetComponent<UCBossWeaponComponent>(Owner);
+	UBossProjectileComponent* ProjectileComp=CHelpers::GetComponent<UBossProjectileComponent>(Owner);
+	UCBossTargetingComponent* TargetingComp=CHelpers::GetComponent<UCBossTargetingComponent>(Owner);
+	
 	if (WeaponComp)
 	{
 		WeaponComp->BossDoAction(SelectedTag);
+		// ProjectileComp->ShotProjectile();
+		// ProjectileComp->ShotProjectileToLocation(TargetingComp->FindPlayer(), 1.0f);
 	}
 	
 	return EStateTreeRunStatus::Running;
