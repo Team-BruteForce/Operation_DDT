@@ -12,7 +12,7 @@ ACAttachment::ACAttachment()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	CHelpers::CreateComponent (this, &Root, "Root");
-
+	CHelpers::CreateComponent(this, &MeshComp, "Mesh", Root);
 }
 
 // Called when the game starts or when spawned
@@ -33,6 +33,6 @@ void ACAttachment::Tick(float DeltaTime)
 
 void ACAttachment::AttachTo(FName InSocketName)
 {
-	CLog::Print(InSocketName.ToString());
+	//CLog::Print(InSocketName.ToString());
 	AttachToComponent (OwnerCharacter->GetMesh (), FAttachmentTransformRules(EAttachmentRule::KeepRelative, true), InSocketName);
 }

@@ -29,8 +29,11 @@ private:
 	
 	UPROPERTY(EditAnywhere, Category = "Weapon")
 	class UStaticMeshComponent* SwordHolster;
+public:
+	FORCEINLINE USpringArmComponent* GetSpringArm() const { return this->SpringArm; }
 
 #pragma region InputActions
+private:
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	class UInputMappingContext* IMC_Player;
 	
@@ -45,10 +48,13 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	class UInputAction* IA_Attack;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	class UInputAction* IA_AimRifle;
 	
 #pragma endregion 
  
-private:
+public:
 	UPROPERTY(VisibleAnywhere)
 		class UCMontageComponent* Montages;
  
@@ -60,9 +66,18 @@ private:
 	
 	UPROPERTY(visibleAnywhere)
 		class UCWeaponComponent* WeaponComp;
+	
+	UPROPERTY(VisibleAnywhere)
+	class UCCameraActionComponent* CameraActionComp;
+
+	UPROPERTY(VisibleAnywhere)
+	class UCFireComponent* FireComp;
   
 protected:
 	virtual void BeginPlay() override;
+
+public:
+	virtual void Tick(float DeltaTime) override;
 
 public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;

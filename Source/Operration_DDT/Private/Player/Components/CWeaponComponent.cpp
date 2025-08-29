@@ -16,7 +16,8 @@ UCWeaponComponent::UCWeaponComponent()
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
 
-	// ...
+	//CLog::Print("UCWeaponComponent Constructor - Initial Type: " + FString::FromInt((int32)Type));
+	UE_LOG(LogTemp, Log, TEXT("UCWeaponComponent Constructor - Initial Type: %d"),(int32)Type );
 }
 
 
@@ -32,6 +33,30 @@ void UCWeaponComponent::BeginPlay()
 			DataAssets[i]->BeginPlay(OwnerCharacter);
 	}
 	
+	// 기본적으로 Sword 모드로 설정
+	CLog::Print("Setting up default Sword mode");
+	CLog::Print("Initial Type: " + FString::FromInt((int32)Type));
+	CLog::Print("Sword DataAsset exists: " + FString::FromInt(!!DataAssets[(int8)EWeaponType::Sword]));
+	
+	// 모든 DataAssets 상태 확인
+	for (int8 i = 0; i < (int8)EWeaponType::Max; ++i)
+	{
+		CLog::Print("DataAsset[" + FString::FromInt(i) + "]: " + FString::FromInt(!!DataAssets[i]));
+	}
+	
+	if (!!DataAssets[(int8)EWeaponType::Sword])
+	{
+		CLog::Print("Equipping Sword");
+		DataAssets[(int8)EWeaponType::Sword]->GetEquipment()->Equip();
+		ChangeType(EWeaponType::Sword);
+		CLog::Print("Sword mode set successfully");
+	}
+	else
+	{
+		CLog::Print("Sword DataAsset is null - but keeping Sword mode as default");
+		// Sword DataAsset이 없어도 기본 상태는 Sword로 유지
+		ChangeType(EWeaponType::Sword);
+	}
 }
 
 bool UCWeaponComponent::IsIdleMode()
@@ -41,7 +66,7 @@ bool UCWeaponComponent::IsIdleMode()
 
 class ACAttachment* UCWeaponComponent::GetAttachment()
 {
-	CheckTrueResult(IsUnarmedMode(), nullptr);
+	//CheckTrueResult(IsUnarmedMode(), nullptr);
 	CheckFalseResult(!!DataAssets[(int8)Type], nullptr);
 
 	return DataAssets[(int8)Type]->GetAttachment();
@@ -49,7 +74,6 @@ class ACAttachment* UCWeaponComponent::GetAttachment()
 
 class UCEquipment* UCWeaponComponent::GetEquipment()
 {
-	CheckTrueResult(IsUnarmedMode(), nullptr);
 	CheckFalseResult(!!DataAssets[(int8)Type], nullptr);
 
 	return DataAssets[(int8)Type]->GetEquipment();
@@ -57,15 +81,35 @@ class UCEquipment* UCWeaponComponent::GetEquipment()
 
 class UCDoAction* UCWeaponComponent::GetDoAction()
 {
-	CheckTrueResult(IsUnarmedMode(), nullptr);
-	CheckFalseResult(!!DataAssets[(int32)Type], nullptr);
-
-	return DataAssets[(int32)Type]->GetDoAction();
+	CLog::Print("GetDoAction - Type: " + FString::FromInt((int32)Type));
+	
+	// Unarmed 모드일 때는 nullptr 반환
+	if (IsUnarmedMode())
+	{
+		CLog::Print("Unarmed mode - returning nullptr");
+		return nullptr;
+	}
+	
+	CLog::Print("DataAssets check: " + FString::FromInt(!!DataAssets[(int32)Type]));
+	
+	// DataAsset이 없으면 nullptr 반환
+	if (!DataAssets[(int32)Type])
+	{
+		CLog::Print("DataAsset is null - returning nullptr");
+		return nullptr;
+	}
+	UCDoAction* result = DataAssets[(int32)Type]->GetDoAction();
+	CLog::Print("GetDoAction result: " + FString::FromInt(!!result));
+	
+	return result;
 }
 
 void UCWeaponComponent::SetUnarmedMode()
 {
-	GetEquipment()->UnEquip();
+	if (!IsUnarmedMode())
+	{
+		GetEquipment()->UnEquip();
+	}
 	ChangeType(EWeaponType::Max);
 }
 
@@ -92,8 +136,25 @@ void UCWeaponComponent::SetRevolverMode()
 
 void UCWeaponComponent::DoAction()
 {
-	if (GetDoAction())
-		GetDoAction()->DoAction();
+	CLog::Print("DoAction Called - Type: " + FString::FromInt((int32)Type));
+	
+	// Unarmed 모드일 때는 아무것도 하지 않음
+	if (IsUnarmedMode())
+	{
+		CLog::Print("Unarmed mode - no action available");
+		return;
+	}
+	
+	UCDoAction* doAction = GetDoAction();
+	if (doAction)
+	{
+		CLog::Print("DoAction Found - Executing");
+		doAction->DoAction();
+	}
+	else
+	{
+		CLog::Print("DoAction is nullptr - Check if Sword DataAsset is assigned in editor");
+	}
 }
 
 void UCWeaponComponent::SetMode(EWeaponType InType)
@@ -120,6 +181,8 @@ void UCWeaponComponent::ChangeType(EWeaponType InType)
 {
 	EWeaponType prevType = Type;
 	Type = InType;
+	CLog::Print("ChangeType: " + FString::FromInt((int32)prevType) + " -> " + FString::FromInt((int32)Type));
+	
 	if (OnWeaponTypeChanged.IsBound())
 		OnWeaponTypeChanged.Broadcast(prevType, Type);
 }

@@ -9,6 +9,7 @@
 void FDoActionData::DoAction(class ACharacter* InOwner)
 {
 	UCMovementComponent* movement = CHelpers::GetComponent<UCMovementComponent>(InOwner);
+	//CLog::Log("DoAction : ");
 
 	if (!!movement)
 	{
@@ -20,4 +21,5 @@ void FDoActionData::DoAction(class ACharacter* InOwner)
 	}
 	if (!!Montage)
 		InOwner->PlayAnimMontage(Montage, PlayRate);
+	
 }

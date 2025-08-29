@@ -103,8 +103,6 @@ void UCMovementComponent::OnHorizontalLook(const struct FInputActionValue& InAxi
 	CheckTrue(bFixedCamera);
 
 	float value = InAxis.Get<float>();
-
-	GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("Hor : %.2f"), value));
 	
 	OwnerCharacter->AddControllerYawInput (value);
 
@@ -115,9 +113,7 @@ void UCMovementComponent::OnVerticalLook(const struct FInputActionValue& InAxis)
 	CheckTrue(bFixedCamera);
 
 	float value = InAxis.Get<float>();
-
-	GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Red, FString::Printf(TEXT("Ver : %.2f"), value));
-
+	
 	OwnerCharacter->AddControllerPitchInput (value);
 }
 
