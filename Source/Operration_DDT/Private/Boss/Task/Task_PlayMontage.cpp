@@ -16,6 +16,7 @@
 #include "StateTreeExecutionContext.h"
 #include "Boss/CBoss.h"
 #include "Boss/Component/BossProjectileComponent.h"
+#include "Boss/Component/CBossStatusComponent.h"
 #include "Boss/Component/CBossTargetingComponent.h"
 #include "Boss/Component/CBossWeaponComponent.h"
 
@@ -40,12 +41,14 @@ EStateTreeRunStatus UTask_PlayMontage::EnterState(FStateTreeExecutionContext& Co
 	UCBossWeaponComponent* WeaponComp=CHelpers::GetComponent<UCBossWeaponComponent>(Owner);
 	UBossProjectileComponent* ProjectileComp=CHelpers::GetComponent<UBossProjectileComponent>(Owner);
 	UCBossTargetingComponent* TargetingComp=CHelpers::GetComponent<UCBossTargetingComponent>(Owner);
+	UCBossStatusComponent* StatusComp=CHelpers::GetComponent<UCBossStatusComponent>(Owner);
+	StatusComp->ResetAp();
 	
 	if (WeaponComp)
 	{
 		WeaponComp->BossDoAction(SelectedTag);
 		// ProjectileComp->ShotProjectile();
-		ProjectileComp->ShotProjectileToLocation(TargetingComp->FindPlayer(), 1.0f);
+		// ProjectileComp->ShotProjectileToLocation(TargetingComp->FindPlayer(), 1.0f);
 	}
 	
 	return EStateTreeRunStatus::Running;

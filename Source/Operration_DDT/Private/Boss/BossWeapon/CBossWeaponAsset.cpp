@@ -36,10 +36,10 @@ void UCBossWeaponAsset::BeginPlay ( class ACharacter* InOwner )
 		BossDoAction->BeginPlay ( BossWeapon , BossEquipment , InOwner , BossDoActionDatas ,HitDatas );
 
 		if ( !!BossWeapon ) {
-			BossWeapon->OnBossAttachmentBeginCollision.AddDynamic ( BossDoAction , &UCBossDoAction::OnAttachmentBeginCollision );
-			BossWeapon->OnBossAttachmentEndCollision.AddDynamic ( BossDoAction , &UCBossDoAction::OnAttachmentEndCollision );
-			BossWeapon->OnBossAttachmentBeginOverlap.AddDynamic ( BossDoAction , &UCBossDoAction::OnAttachmentBeginOverlap );
-			BossWeapon->OnBossAttachmentEndOverlap.AddDynamic ( BossDoAction , &UCBossDoAction::OnAttachmentEndOverlap );
+			BossWeapon->OnBossAttachmentBeginCollision.AddDynamic ( BossDoAction , &UCBossDoAction::OnBossWeaponBeginCollision );
+			BossWeapon->OnBossAttachmentEndCollision.AddDynamic ( BossDoAction , &UCBossDoAction::OnBossWeaponEndCollision );
+			BossWeapon->OnBossAttachmentBeginOverlap.AddDynamic ( BossDoAction , &UCBossDoAction::OnBossWeaponBeginOverlap );
+			BossWeapon->OnBossAttachmentEndOverlap.AddDynamic ( BossDoAction , &UCBossDoAction::OnBossWeaponEndOverlap );
 		}
 	}
 }

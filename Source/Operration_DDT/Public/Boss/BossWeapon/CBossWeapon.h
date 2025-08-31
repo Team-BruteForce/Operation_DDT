@@ -61,58 +61,18 @@ protected:
 	UPROPERTY ( BlueprintReadOnly , Category = "Game" )
 	class ACharacter* OwnerCharacter;
 	
-	// UPROPERTY ( BlueprintReadOnly , Category = "Game" )
-	// class UCStatusComponent* Status;
-
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	class USkeletalMeshComponent* SkeletalMesh;
 
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	class USkeletalMeshComponent* ColorMesh;
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class UNiagaraSystem* HitEffect;
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class UNiagaraSystem* HitEffect2;
 
 	UFUNCTION(BlueprintCallable, Category = "Attach")
-	void BossAttachToCollision(FName InCollisionName);
+	void BossAttachToCollision(FName InCollisionName, FName InSocketName);
 
-// private:
-// 	bool bCollisionTraceEnabled = false;
-//
-// 	FVector PrevStartLocation;
-// 	FVector PrevEndLocation;
-// 	FVector CurrentStartLocation;
-// 	FVector CurrentEndLocation;
-//
-//
-// 	TArray<FHitResult> HitResults;
-// 	void PerformTriangleTrace(
-// 		const FVector& A,
-// 		const FVector& B,
-// 		const FVector& C,
-// 		TArray<FHitResult>& OutHits);
-// 	FVector BezierCurve(const FVector& P0, const FVector& P1, const FVector& P2, float T);
-// 	bool bInitialized = false;
-//
-// 	class AActor* EnemyActor;
-//
-// 	FTimerHandle ScaleTimerHandle;
-// 	float ScaleTime;
-// 	UPROPERTY() // UPROPERTY 매크로를 붙여 GC가 관리하도록 합니다.
-// 	TSet<AActor*> HitActorsThisSwing; 
-//
-// 	// 베지어 곡선 접선 계산 함수 (필요 시 선언)
-// 	FVector GetBezierCurveTangent(const FVector& P0, const FVector& P1, const FVector& P2, float T);
-//
-// 	void ResetTimeDilation();
-//
-// 	void OnHitEvent();
 public:
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	FRotator HorizontalRotation;
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	FRotator VerticalRotation;
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	TArray<USoundCue*> HitSoundCues;
 };

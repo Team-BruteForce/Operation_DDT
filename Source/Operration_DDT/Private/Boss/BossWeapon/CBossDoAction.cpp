@@ -50,6 +50,7 @@ void UCBossDoAction::BeginPlay(class ACBossWeapon* InAttachment, class UCBossEqu
 void UCBossDoAction::DoAction (FGameplayTag Tag)
 {
 	BossDoActionDatas[Tag].PlayPaseOneMontage(OwnerCharacter);
+	CurrentWeaponActionTag=Tag;
 }
 
 void UCBossDoAction::HitAction(FGameplayTag Tag)
@@ -78,4 +79,26 @@ void UCBossDoAction::End_DoAction ( )
 
 	// State->SetIdleMode ( );
 
+}
+
+void UCBossDoAction::OnBossWeaponBeginCollision()
+{
+	
+}
+
+void UCBossDoAction::OnBossWeaponEndCollision()
+{
+	
+}
+
+void UCBossDoAction::OnBossWeaponBeginOverlap(class ACharacter* InAttacker, AActor* InAttackCuaser,
+                                              class ACharacter* InOther)
+{
+	UGameplayStatics::ApplyDamage(InOther,BossDoActionDatas[CurrentWeaponActionTag].Damage,InOther->GetController(),InOther,nullptr);
+	
+}
+
+void UCBossDoAction::OnBossWeaponEndOverlap(class ACharacter* InAttacker, class ACharacter* InOther)
+{
+	CLog::Log("OnBossWeaponEndOverlap");
 }

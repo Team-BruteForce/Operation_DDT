@@ -41,5 +41,8 @@ class OPERRATION_DDT_API UTask_RotateTowardsPlayer : public UStateTreeTaskBluepr
 	 */
 	UPROPERTY(EditAnywhere,Category="Owner")
 	class APawn* Owner;
+public:
+	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="RotationSpeed",meta=(ToolTip="회전 속도"))
+	float RotationSpeed=1.0f;
 	
 };

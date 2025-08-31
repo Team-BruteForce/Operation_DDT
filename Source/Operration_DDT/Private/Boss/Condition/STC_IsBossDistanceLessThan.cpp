@@ -13,6 +13,8 @@
 
 #include "Boss/Condition/STC_IsBossDistanceLessThan.h"
 #include "StateTreeExecutionContext.h"
+#include "Boss/Component/CBossStatusComponent.h"
+#include "Global.h"
 
 /**
  * @brief 조건을 테스트하는 함수
@@ -26,5 +28,7 @@ bool USTC_IsBossDistanceLessThan::TestCondition(FStateTreeExecutionContext& Cont
 {
 	// Evaluator에서 설정된 CurrentRangeTag와 비교
 	// TooClose 범위 태그인지 확인
+	UCBossStatusComponent* StatusComp= CHelpers::GetComponent<UCBossStatusComponent>(Boss);
+	StatusComp->IncreaseAP(50);
 	return CurrentRangeTag.MatchesTag(RangeTags.TooClose);
 }

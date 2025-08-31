@@ -115,8 +115,8 @@ public:
 	FGameplayTag EvaluateDistanceState(float Distance);
 
 	/** 거리별 범위 기준값들 (에디터에서 각각 설정 가능) */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Distance Settings", meta=(ClampMin="100.0", ClampMax="1000.0", ToolTip="거리별 범위 기준값들입니다.\n[0]: TooClose 범위 (300)\n[1]: Melee 범위 (400)\n[2]: Dash 범위 (1200) - 백스탭 거리와 연동\n[3]: Ranged 범위 (1600)\n[4]: OutOfRange 범위 (2000)"))
-	TArray<float> DistanceThresholds = { 200.0f, 600.0f, 1600.0f, 2000.0f, 2000.0f };
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Distance Settings", meta=(ClampMin="100.0", ClampMax="10000.0", ToolTip="거리별 범위 기준값들입니다.\n[0]: TooClose 범위 (300)\n[1]: Melee 범위 (400)\n[2]: Dash 범위 (1200) - 백스탭 거리와 연동\n[3]: Ranged 범위 (1600)\n[4]: OutOfRange 범위 (2000)"))
+	TArray<float> DistanceThresholds = { 200.0f, 600.0f, 1200.0f, 2000.0f, 2000.0f };
 	// ===== 거리 상태 태그들 =====
 	
 	/** 거리 상태 태그들 */

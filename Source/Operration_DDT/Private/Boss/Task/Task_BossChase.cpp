@@ -63,7 +63,7 @@ EStateTreeRunStatus UTask_BossChase::EnterState(FStateTreeExecutionContext& Cont
     Movement=CHelpers::GetComponent<UCBossMovementComponent>(Owner);
     if (!Movement) return EStateTreeRunStatus::Failed;
     ACharacter* Boss=Cast<ACharacter>(Owner);
-    Boss->GetCharacterMovement()->MaxWalkSpeed=800;
+    Boss->GetCharacterMovement()->MaxWalkSpeed=600;
     return EStateTreeRunStatus::Running;
 }
 

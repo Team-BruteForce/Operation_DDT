@@ -539,10 +539,10 @@ void UBossDebugComponent::ExecuteDebugVisualization()
 	float CurrentDistance = MovementComponent->GetDebugCurrentDistance();
 	
 	// 거리 디버그 그리기
-	DrawOrbitDistanceDebug(TargetLocation, OwnerLocation, 200.0f, 400.0f, ClosestPosition);
-	
-	// 호 디버그 그리기
-	DrawArcDebug(TargetLocation, OwnerLocation, ArcStart, ArcEnd, ArcRadius, BossForward, BossBackward, ClosestPosition);
+	// DrawOrbitDistanceDebug(TargetLocation, OwnerLocation, 200.0f, 400.0f, ClosestPosition);
+	//
+	// // 호 디버그 그리기
+	// DrawArcDebug(TargetLocation, OwnerLocation, ArcStart, ArcEnd, ArcRadius, BossForward, BossBackward, ClosestPosition);
 }
 
    

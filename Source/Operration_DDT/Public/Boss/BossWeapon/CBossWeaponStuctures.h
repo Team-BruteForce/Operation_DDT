@@ -31,6 +31,8 @@ public:
 	UPROPERTY(EditAnywhere)
 	class UAnimMontage* Montage;
 	UPROPERTY(EditAnywhere)
+	float Damage=1;
+	UPROPERTY(EditAnywhere)
 	float PlayRate =1;
 	UPROPERTY(EditAnywhere)
 	bool bCanMove =true;
@@ -84,8 +86,6 @@ struct FActionDamageEvent:public FDamageEvent
 	GENERATED_BODY ( )
 public:
 	FBossHitData* HitData;
-
-
 };
 UCLASS()
 class OPERRATION_DDT_API UCBossWeaponStuctures : public UObject

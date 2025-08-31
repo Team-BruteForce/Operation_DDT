@@ -85,21 +85,6 @@ public:
 	 */
 	bool IsPositionFarFromPlayer(const FVector& Position, float MinDistanceFromPlayer);
 
-	// ===== 궤도 이동 함수들 =====
-	
-	/**
-	 * @brief 플레이어 주변에서 궤도 이동 위치를 계산합니다.
-	 * 
-	 * @param DeltaTime 델타 타임
-	 * @param MinDistance 최소 거리
-	 * @param MaxDistance 최대 거리
-	 * @param CurrentTargetStateTag 현재 타겟 상태 태그
-	 * @param OutClosestPosition 계산된 궤도 위치
-	 */
-	UFUNCTION(BlueprintCallable, Category="Orbit Movement")
-	void CalculateOrbitPosition(float DeltaTime, float MinDistance, float MaxDistance, 
-		const FGameplayTag& CurrentTargetStateTag, FVector& OutClosestPosition);
-
 	/**
 	 * @brief 플레이어와의 거리를 계산합니다.
 	 * 
@@ -112,19 +97,24 @@ public:
 	void CalculatePlayerDistance(FVector& OutTargetLocation, FVector& OutOwnerLocation, 
 		FVector& OutDirectionToTarget, float& OutCurrentDistance);
 	
-	UFUNCTION(BlueprintCallable, Category="Orbit Movement")
-	void MoveInOrbit(float DeltaTime, float MinDistance, float MaxDistance, 
-		const FGameplayTag& CurrentTargetStateTag,
-		FVector& OutClosestPosition, FVector& OutArcStart, FVector& OutArcEnd, 
-		float& OutArcRadius, FVector& OutBossForward, FVector& OutBossBackward);
-	
 	UFUNCTION(BlueprintCallable, Category="Target Look")
 	void LookAtTarget(const FVector& DirectionToTarget);
-	
-	// 궤도 이동 전체 처리 함수
-	UFUNCTION(BlueprintCallable, Category="Orbit Movement")
 	void ExecuteOrbitMovement(float DeltaTime, float MinDistance, float MaxDistance);
-	
+	void CalculateOrbitPosition(float DeltaTime, float MinDistance, float MaxDistance,
+	                            const FGameplayTag& CurrentTargetStateTag, FVector& OutClosestPosition);
+	void MoveInOrbit(float DeltaTime, float MinDistance, float MaxDistance, const FGameplayTag& CurrentTargetStateTag,
+	                 FVector& OutClosestPosition, FVector& OutArcStart, FVector& OutArcEnd, float& OutArcRadius,
+	                 FVector& OutBossForward, FVector& OutBossBackward);
+	FVector GetDebugTargetLocation() const;
+	FVector GetDebugOwnerLocation() const;
+	FVector GetDebugClosestPosition() const;
+	FVector GetDebugArcStart() const;
+	FVector GetDebugArcEnd() const;
+	float GetDebugArcRadius() const;
+	FVector GetDebugBossForward() const;
+	FVector GetDebugBossBackward() const;
+	float GetDebugCurrentDistance() const;
+
 	/**
 	 * @brief 플레이어 움직임 상태 태그를 반환하는 함수
 	 * 
@@ -132,34 +122,7 @@ public:
 	 */
 	FGameplayTag GetPlayerMovementStateTag();
 	
-	// ===== 디버그 데이터 Getter 함수들 =====
-	
-	/** @brief 타겟 위치 반환 */
-	FVector GetDebugTargetLocation() const;
-	
-	/** @brief 소유자 위치 반환 */
-	FVector GetDebugOwnerLocation() const;
-	
-	/** @brief 가장 가까운 위치 반환 */
-	FVector GetDebugClosestPosition() const;
-	
-	/** @brief 호 시작점 반환 */
-	FVector GetDebugArcStart() const;
-	
-	/** @brief 호 끝점 반환 */
-	FVector GetDebugArcEnd() const;
-	
-	/** @brief 호 반지름 반환 */
-	float GetDebugArcRadius() const;
-	
-	/** @brief 보스 전방 방향 반환 */
-	FVector GetDebugBossForward() const;
-	
-	/** @brief 보스 후방 방향 반환 */
-	FVector GetDebugBossBackward() const;
-	
-	/** @brief 현재 거리 반환 */
-	float GetDebugCurrentDistance() const;
+
 
 	/**
 	 * @brief 플레이어를 찾는 함수
@@ -188,33 +151,16 @@ public:
 	UPROPERTY()
 	FVector SafePosition;
 	
-	// ===== 디버그 데이터 멤버 변수들 =====
-	
-	/** 디버그용 타겟 위치 */
+private:
+	// 디버그 데이터 변수들
 	FVector DebugTargetLocation;
-	
-	/** 디버그용 소유자 위치 */
 	FVector DebugOwnerLocation;
-	
-	/** 디버그용 가장 가까운 위치 */
 	FVector DebugClosestPosition;
-	
-	/** 디버그용 호 시작점 */
 	FVector DebugArcStart;
-	
-	/** 디버그용 호 끝점 */
 	FVector DebugArcEnd;
-	
-	/** 디버그용 호 반지름 */
 	float DebugArcRadius;
-	
-	/** 디버그용 보스 전방 방향 */
 	FVector DebugBossForward;
-	
-	/** 디버그용 보스 후방 방향 */
 	FVector DebugBossBackward;
-	
-	/** 디버그용 현재 거리 */
 	float DebugCurrentDistance;
 };
 // ===== 백스탭 상수들 =====

@@ -34,4 +34,7 @@ class OPERRATION_DDT_API USTC_IsBossDistanceLessThan : public UStateTreeConditio
 	
 	UPROPERTY(EditAnywhere, Category="Current Tag")
 	FGameplayTag CurrentRangeTag;
+
+	UPROPERTY(EditAnywhere)
+	class APawn* Boss;
 };

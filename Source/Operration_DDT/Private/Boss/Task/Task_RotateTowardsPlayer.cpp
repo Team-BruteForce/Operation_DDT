@@ -27,6 +27,6 @@ EStateTreeRunStatus UTask_RotateTowardsPlayer::Tick(FStateTreeExecutionContext& 
 {
 	// 로그로 Tick 호출 확인
 	UCBossMovementComponent* Movement= CHelpers::GetComponent<UCBossMovementComponent>(Owner);
-	Movement->RotateTowardsPlayer(DeltaTime,1.0f);
+	Movement->RotateTowardsPlayer(DeltaTime,RotationSpeed);
 	return EStateTreeRunStatus::Running;
 }

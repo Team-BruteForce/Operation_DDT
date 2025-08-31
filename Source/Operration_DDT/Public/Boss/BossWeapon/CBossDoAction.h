@@ -80,13 +80,13 @@ public:
 	 * @brief 첨부물 충돌 시작 이벤트
 	 */
 	UFUNCTION()
-		virtual void OnAttachmentBeginCollision() { }
+		virtual void OnBossWeaponBeginCollision();
 
 	/**
 	 * @brief 첨부물 충돌 종료 이벤트
 	 */
 	UFUNCTION()
-		virtual void OnAttachmentEndCollision() { }
+		virtual void OnBossWeaponEndCollision();
 
 	/**
 	 * @brief 첨부물 오버랩 시작 이벤트
@@ -96,7 +96,7 @@ public:
 	 * @param InOther 대상 캐릭터
 	 */
 	UFUNCTION()
-		virtual void OnAttachmentBeginOverlap(class ACharacter* InAttacker, AActor* InAttackCuaser, class ACharacter* InOther) { }
+		virtual void OnBossWeaponBeginOverlap(class ACharacter* InAttacker, AActor* InAttackCuaser, class ACharacter* InOther);
 
 	/**
 	 * @brief 첨부물 오버랩 종료 이벤트
@@ -105,7 +105,7 @@ public:
 	 * @param InOther 대상 캐릭터
 	 */
 	UFUNCTION()
-		virtual void OnAttachmentEndOverlap(class ACharacter* InAttacker, class ACharacter* InOther) { }
+		virtual void OnBossWeaponEndOverlap(class ACharacter* InAttacker, class ACharacter* InOther);
 
 protected:
 	/**
@@ -136,6 +136,9 @@ protected:
 	 */
 	UPROPERTY()
 	class UBossStateComponent* State;
+
+	UPROPERTY()
+	FGameplayTag CurrentWeaponActionTag;
 
 	/**
 	 * @brief 보스 액션 데이터 맵

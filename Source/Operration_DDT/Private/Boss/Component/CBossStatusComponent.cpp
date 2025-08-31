@@ -67,11 +67,11 @@ void UCBossStatusComponent::TickComponent(float DeltaTime, ELevelTick TickType, 
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 	if (BossCurrentStats.CurrentAP>=BossCurrentStats.MaxAP){
-		BossCurrentStats.CurrentAP=0;
 		StateTreeComp->SendStateTreeEvent(FGameplayTag::RequestGameplayTag("BOSS.Flag.IsActing"));
 	}
-	IncreaseAP(BossCurrentStats.IncreaseAP);
-	// CLog::Log(BossCurrentStats.CurrentHP);
+	else{
+		IncreaseAP(BossCurrentStats.IncreaseAP);
+	}
 }
 
 /**
@@ -83,6 +83,14 @@ void UCBossStatusComponent::TickComponent(float DeltaTime, ELevelTick TickType, 
  */
 void UCBossStatusComponent::IncreaseAP(float AP)
 {
-	BossCurrentStats.CurrentAP = BossCurrentStats.CurrentAP + AP;
+	if (BossCurrentStats.CurrentAP>=BossCurrentStats.MaxAP)
+		BossCurrentStats.CurrentAP = BossCurrentStats.MaxAP;
+	else
+		BossCurrentStats.CurrentAP += AP;
+}
+
+void UCBossStatusComponent::ResetAp()
+{
+	BossCurrentStats.CurrentAP =0;
 }
 

@@ -130,6 +130,8 @@ public:
 	void IncreaseAP(float AP);
 
 	void SetDamage(float Damage){BossCurrentStats.CurrentHP-=Damage;};
+
+	void ResetAp();
 	
 	/**
 	 * @brief 보스 스탯 데이터 테이블

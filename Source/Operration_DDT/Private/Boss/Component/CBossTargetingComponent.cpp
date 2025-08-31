@@ -20,6 +20,7 @@
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/Pawn.h"
 #include "DrawDebugHelpers.h"
+#include "Boss/Component/CBossStatusComponent.h"
 #include "Engine/Engine.h"
 
 // Sets default values for this component's properties

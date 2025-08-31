@@ -37,7 +37,7 @@ ACBoss::ACBoss()
 
 	// 애님 인스턴스 클래스 에셋 로드 및 설정
 	TSubclassOf<UAnimInstance> Anim;
-	CHelpers::GetClass<UAnimInstance>(&Anim, AssetPaths::Boss_ANIM);
+	// CHelpers::GetClass<UAnimInstance>(&Anim, AssetPaths::Boss_ANIM);
 	GetMesh()->SetAnimInstanceClass(Anim);
 
 	// AI 컨트롤러 클래스 에셋 로드 및 설정
@@ -69,10 +69,11 @@ float ACBoss::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEv
 	AActor* DamageCauser)
 {
 	BossStatusComponent->SetDamage(DamageAmount);
+	BossStatusComponent->IncreaseAP(DamageAmount*0.1);
 	if (BossStatusComponent->BossCurrentStats.CurrentHP<=0)
 	{
-		UStateTreeComponent* StateTreeComp = GetController()->FindComponentByClass<UStateTreeComponent>();
-		StateTreeComp->SendStateTreeEvent(FGameplayTag::RequestGameplayTag("BOSS.State.Dead"));
+		// UStateTreeComponent* StateTreeComp = GetController()->FindComponentByClass<UStateTreeComponent>();
+		// StateTreeComp->SendStateTreeEvent(FGameplayTag::RequestGameplayTag("BOSS.State.Dead"));
 	}
 	return DamageAmount;
 }

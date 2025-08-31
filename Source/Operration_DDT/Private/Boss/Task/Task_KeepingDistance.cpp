@@ -41,13 +41,13 @@ EStateTreeRunStatus UTask_KeepingDistance::Tick(FStateTreeExecutionContext& Cont
 	if (!Target || !Owner) return EStateTreeRunStatus::Failed;
 	
 	// 컴포넌트에서 모든 계산 수행
-	MovementComponent->ExecuteOrbitMovement(DeltaTime, MinDistance, MaxDistance);
-	
+	// MovementComponent->MaintainOptimalDistance(DeltaTime, 600, 1600);
+	MovementComponent->ExecuteOrbitMovement(DeltaTime, 600, 1600);
 	// 디버그 컴포넌트에서 시각화
 	DebugComponent->ExecuteDebugVisualization();
 
 	// 컴포넌트를 사용하여 백스탭 위치 계산
-	if (MovementComponent)
+	if (MovementComponent) 
 	{
 		MovementComponent->FindBackstepPosition();
 	}
