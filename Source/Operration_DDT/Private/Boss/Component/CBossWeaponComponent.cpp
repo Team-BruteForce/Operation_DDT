@@ -48,7 +48,7 @@ void UCBossWeaponComponent::BeginPlay()
 		}
 	}
 	
-	State = CHelpers::GetComponent<UBossStateComponent>(OwnerCharacter);
+	//State = CHelpers::GetComponent<UBossStateComponent>(OwnerCharacter);
 	
 	// 무기 모드 초기화 - BeginPlay에서 확실하게 설정
 	UnarmedTag = BossTags.PaseZero;

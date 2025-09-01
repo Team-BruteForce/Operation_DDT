@@ -158,7 +158,7 @@ private:
 	/**
 	 * @brief 상태 컴포넌트 참조
 	 */
-	class UBossStateComponent* State;
+	//class UBossStateComponent* State;
 	
 
 	/**
