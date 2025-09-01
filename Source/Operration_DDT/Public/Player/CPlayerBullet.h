@@ -42,6 +42,9 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "Default")
 	float Speed = 1500.f;
 
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Default")
+	float BulletDamage = 25.f
+
 	void SetVelocity(FVector value);
 
 	class ADDTPlayer* OwnerCharacter;
