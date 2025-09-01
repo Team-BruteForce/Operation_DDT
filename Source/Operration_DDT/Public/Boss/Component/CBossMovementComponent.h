@@ -101,7 +101,7 @@ public:
 	void LookAtTarget(const FVector& DirectionToTarget);
 	
 	/**
-	 * @brief 거리 유지와 궤도 이동을 상황에 맞게 자동으로 전환하는 통합 함수
+	 * @brief 거리 유지 기능을 수행하는 함수
 	 * 
 	 * @param DeltaTime 델타 타임
 	 * @param MinDistance 최소 거리
@@ -109,19 +109,9 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category="Movement")
 	void ExecuteSmartMovement(float DeltaTime, float MinDistance, float MaxDistance);
-	void CalculateOrbitPosition(float DeltaTime, float MinDistance, float MaxDistance,
-	                            const FGameplayTag& CurrentTargetStateTag, FVector& OutClosestPosition);
-	void MoveInOrbit(float DeltaTime, float MinDistance, float MaxDistance, const FGameplayTag& CurrentTargetStateTag,
-	                 FVector& OutClosestPosition, FVector& OutArcStart, FVector& OutArcEnd, float& OutArcRadius,
-	                 FVector& OutBossForward, FVector& OutBossBackward);
 	FVector GetDebugTargetLocation() const;
 	FVector GetDebugOwnerLocation() const;
 	FVector GetDebugClosestPosition() const;
-	FVector GetDebugArcStart() const;
-	FVector GetDebugArcEnd() const;
-	float GetDebugArcRadius() const;
-	FVector GetDebugBossForward() const;
-	FVector GetDebugBossBackward() const;
 	float GetDebugCurrentDistance() const;
 
 	/**
@@ -165,11 +155,6 @@ private:
 	FVector DebugTargetLocation;
 	FVector DebugOwnerLocation;
 	FVector DebugClosestPosition;
-	FVector DebugArcStart;
-	FVector DebugArcEnd;
-	float DebugArcRadius;
-	FVector DebugBossForward;
-	FVector DebugBossBackward;
 	float DebugCurrentDistance;
 };
 // ===== 백스탭 상수들 =====

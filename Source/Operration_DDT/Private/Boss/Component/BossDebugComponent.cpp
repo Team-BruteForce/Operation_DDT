@@ -528,15 +528,15 @@ void UBossDebugComponent::ExecuteDebugVisualization()
 	if (!GetWorld() || !MovementComponent) return;
 	
 	// MovementComponent에서 디버그 데이터 가져오기
-	FVector TargetLocation = MovementComponent->GetDebugTargetLocation();
-	FVector OwnerLocation = MovementComponent->GetDebugOwnerLocation();
-	FVector ClosestPosition = MovementComponent->GetDebugClosestPosition();
-	FVector ArcStart = MovementComponent->GetDebugArcStart();
-	FVector ArcEnd = MovementComponent->GetDebugArcEnd();
-	float ArcRadius = MovementComponent->GetDebugArcRadius();
-	FVector BossForward = MovementComponent->GetDebugBossForward();
-	FVector BossBackward = MovementComponent->GetDebugBossBackward();
-	float CurrentDistance = MovementComponent->GetDebugCurrentDistance();
+	// FVector TargetLocation = MovementComponent->GetDebugTargetLocation();
+	// FVector OwnerLocation = MovementComponent->GetDebugOwnerLocation();
+	// FVector ClosestPosition = MovementComponent->GetDebugClosestPosition();
+	// FVector ArcStart = MovementComponent->GetDebugArcStart();
+	// FVector ArcEnd = MovementComponent->GetDebugArcEnd();
+	// float ArcRadius = MovementComponent->GetDebugArcRadius();
+	// FVector BossForward = MovementComponent->GetDebugBossForward();
+	// FVector BossBackward = MovementComponent->GetDebugBossBackward();
+	// float CurrentDistance = MovementComponent->GetDebugCurrentDistance();
 	
 	// 거리 디버그 그리기
 	// DrawOrbitDistanceDebug(TargetLocation, OwnerLocation, 200.0f, 400.0f, ClosestPosition);
