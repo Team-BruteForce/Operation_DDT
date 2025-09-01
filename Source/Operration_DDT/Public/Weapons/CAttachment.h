@@ -27,6 +27,9 @@ protected:
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	class USceneComponent* Root;
 
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+	class USkeletalMeshComponent* MeshComp;
+
 	UFUNCTION(BlueprintCallable, Category = "Attach")
 	void AttachTo(FName InSocketName);
 
@@ -39,5 +42,7 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnUnEquip();
+
+	FORCEINLINE USkeletalMeshComponent* GetMeshComp() { return MeshComp; }
 
 };

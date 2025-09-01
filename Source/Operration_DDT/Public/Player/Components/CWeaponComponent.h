@@ -66,7 +66,7 @@ public:
 
 private:
 	class ACharacter* OwnerCharacter;
-	EWeaponType Type = EWeaponType::Max;
+	EWeaponType Type = EWeaponType::Sword;
 
 
 		

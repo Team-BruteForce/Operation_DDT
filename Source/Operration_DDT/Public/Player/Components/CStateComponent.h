@@ -12,8 +12,12 @@ enum class EStateType : uint8
 {
 	Idle = 0,
 	Sliding,
-	BackStep,
+	RifleAim,
+	RifleAtt,
+	SwordAtt,
+	RevolverAtt,
 	Equip,
+	BackStep,
 	Hitted,
 	Dead,
 	Action,
@@ -46,6 +50,12 @@ public:
 	FORCEINLINE bool IsHittedMode() { return Type == EStateType::Hitted; }
 	FORCEINLINE bool IsDeadMode() { return Type == EStateType::Dead; }
 	FORCEINLINE bool IsActionMode() { return Type == EStateType::Action; }
+	FORCEINLINE bool IsRifleAimMode() { return bRifleAimMode; }
+	
+
+	FORCEINLINE EStateType GetType() {return Type;}
+
+	FString GetTypeString();
 
 	void SetIdleMode();
 	void SetSlidingMode();
@@ -53,6 +63,7 @@ public:
 	void SetHittedMode();
 	void SetDeadMode();
 	void SetActionMode();
+	FORCEINLINE void SetRifleAimMode(bool inBool) { bRifleAimMode = inBool; }
 
 	FStateTypeChanged OnStateTypeChanged;
 
@@ -61,6 +72,8 @@ private:
 	void ChangeType(EStateType InType);
 
 	EStateType Type;
+
+	bool bRifleAimMode = false;
 
 
 		

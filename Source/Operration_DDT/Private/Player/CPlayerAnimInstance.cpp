@@ -4,11 +4,12 @@
 #include "Player/CPlayerAnimInstance.h"
 #include "Global.h"
 #include "GameFramework/Character.h"
+#include "Player/DDTPlayer.h"
 
 void UCPlayerAnimInstance::NativeBeginPlay()
 {
 	Super::NativeBeginPlay();
-	OwnerCharacter = Cast<ACharacter>(TryGetPawnOwner());
+	OwnerCharacter = Cast<ADDTPlayer>(TryGetPawnOwner());
 	CheckNull(OwnerCharacter);
 
 	Weapon = CHelpers::GetComponent<UCWeaponComponent>(OwnerCharacter);
@@ -35,6 +36,8 @@ void UCPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	Direction = FVector::DotProduct(OwnerCharacter->GetVelocity(),OwnerCharacter->GetActorRightVector());
 
 	Pitch = UKismetMathLibrary::FInterpTo(Pitch, OwnerCharacter->GetBaseAimRotation().Pitch, DeltaSeconds, 25.f);
+
+	bAimMode = OwnerCharacter->State->IsRifleAimMode();
 	
 }
 

@@ -19,7 +19,8 @@ void UCStateComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// ...
+	// 기본 상태를 Idle로 설정
+	SetIdleMode();
 	
 }
 
@@ -30,6 +31,14 @@ void UCStateComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	// ...
+}
+
+FString UCStateComponent::GetTypeString()
+{
+	UEnum* Enum = StaticEnum<EStateType>();
+	FString result = "State : ";
+	result += Enum->GetNameStringByValue((int64)Type);
+	return result;
 }
 
 void UCStateComponent::SetIdleMode()
