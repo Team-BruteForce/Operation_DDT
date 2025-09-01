@@ -78,7 +78,6 @@ void UCBossEnemyStateTreeEvaluator::Get_Decision_Data(FStateTreeExecutionContext
 	
 	// 컴포넌트를 사용하여 거리 상태 평가
 	CurrentRangeTag = TargetingComponent->EvaluateDistanceState(player_ai_dist);
-	CLog::Log(CurrentRangeTag.ToString());
 }
 
 

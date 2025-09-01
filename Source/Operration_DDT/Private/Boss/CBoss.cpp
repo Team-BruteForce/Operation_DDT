@@ -72,8 +72,8 @@ float ACBoss::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEv
 	BossStatusComponent->IncreaseAP(DamageAmount*0.1);
 	if (BossStatusComponent->BossCurrentStats.CurrentHP<=0)
 	{
-		// UStateTreeComponent* StateTreeComp = GetController()->FindComponentByClass<UStateTreeComponent>();
-		// StateTreeComp->SendStateTreeEvent(FGameplayTag::RequestGameplayTag("BOSS.State.Dead"));
+		UStateTreeComponent* StateTreeComp = GetController()->FindComponentByClass<UStateTreeComponent>();
+		StateTreeComp->SendStateTreeEvent(FGameplayTag::RequestGameplayTag("BOSS.State.Dead"));
 	}
 	return DamageAmount;
 }

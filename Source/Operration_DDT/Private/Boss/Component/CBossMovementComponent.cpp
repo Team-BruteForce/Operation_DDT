@@ -14,6 +14,8 @@
 
 #include "Boss/Component/CBossMovementComponent.h"
 
+#include <string>
+
 #include "AIController.h"
 #include "Global.h"
 #include "GameFramework/Pawn.h"
@@ -79,32 +81,57 @@ void UCBossMovementComponent::RotateTowardsPlayer(float DeltaTime, float Rotatio
 
 FGameplayTag UCBossMovementComponent::GetPlayerMovementStateTag()
 {
+	APawn* Player = FindPlayer();
+	if (!Player || !Owner) return TargetStateTag.Center;
 	
-	static FVector PreviousTargetLocation = FindPlayer()->GetActorLocation();
-	FVector CurrentTargetLocation = FindPlayer()->GetActorLocation();
+	static FVector PreviousTargetLocation = FVector::ZeroVector;
+	static bool bIsFirstCall = true;
+	
+	FVector CurrentTargetLocation = Player->GetActorLocation();
+	
+	// 첫 번째 호출이면 초기화
+	if (bIsFirstCall)
+	{
+		PreviousTargetLocation = CurrentTargetLocation;
+		bIsFirstCall = false;
+		return TargetStateTag.Center;
+	}
+	
+	// 플레이어 이동 거리 계산
+	float MovementDistance = FVector::Dist(CurrentTargetLocation, PreviousTargetLocation);
+	
+	// 최소 이동 거리 임계값 (너무 작은 움직임은 무시)
+	float MinMovementThreshold = 10.0f;
+	
+	if (MovementDistance < MinMovementThreshold)
+	{
+		// 플레이어가 거의 움직이지 않으면 현재 상태 유지
+		return TargetStateTag.Center;
+	}
+	
 	FVector TargetMovementDirection = (CurrentTargetLocation - PreviousTargetLocation).GetSafeNormal();
 	
+	// 보스의 오른쪽 벡터와 DotProduct 계산
 	FVector BossRight = Owner->GetActorRightVector();
-	
 	float DotProduct = FVector::DotProduct(TargetMovementDirection, BossRight);
 	
+	// 디버그 출력
+	
+	// 이전 위치 업데이트
+	PreviousTargetLocation = CurrentTargetLocation;
 	
 	if (DotProduct > 0.1f)
 	{
-		PreviousTargetLocation = CurrentTargetLocation;
 		return TargetStateTag.Right;
 	}
 	else if (DotProduct < -0.1f)
 	{
-		PreviousTargetLocation = CurrentTargetLocation;
 		return TargetStateTag.Left;
 	}
 	else
 	{
-		PreviousTargetLocation = CurrentTargetLocation;
 		return TargetStateTag.Center;
 	}
-	
 }
 
 APawn* UCBossMovementComponent::FindPlayer()
@@ -215,12 +242,6 @@ bool UCBossMovementComponent::IsPositionFarFromPlayer(const FVector& Position, f
 	APawn* Player = FindPlayer();
 	if (!Player) return false;
 	
-	// MinDistanceFromPlayer가 0이면 기본값 사용
-	// if (MinDistanceFromPlayer <= 0.0f)
-	// {
-	// 	MinDistanceFromPlayer = 600.0f; // 기본 최소 거리
-	// }
-	
 	// 플레이어와의 거리 확인
 	float DistanceToPlayer = FVector::Dist(Position, Player->GetActorLocation());
 	return DistanceToPlayer >= MinDistanceFromPlayer;
@@ -232,6 +253,7 @@ bool UCBossMovementComponent::IsPositionFarFromPlayer(const FVector& Position, f
 void UCBossMovementComponent::CalculatePlayerDistance(FVector& OutTargetLocation, FVector& OutOwnerLocation, 
 	FVector& OutDirectionToTarget, float& OutCurrentDistance)
 {
+	
 	if (!Owner) return;
 	
 	APawn* Player = FindPlayer();
@@ -261,82 +283,87 @@ void UCBossMovementComponent::LookAtTarget(const FVector& DirectionToTarget)
 	Owner->SetActorRotation(NewRotation);
 }
 
-// ===== 궤도 이동 함수들 =====
-void UCBossMovementComponent::ExecuteOrbitMovement(float DeltaTime, float MinDistance, float MaxDistance)
+/**
+ * @brief 거리 유지와 궤도 이동을 상황에 맞게 자동으로 전환하는 통합 함수
+ */
+void UCBossMovementComponent::ExecuteSmartMovement(float DeltaTime, float MinDistance, float MaxDistance)
 {
 	if (!Owner) return;
-	
 	// 거리 계산
 	FVector TargetLocation, OwnerLocation, DirectionToTarget;
 	float CurrentDistance;
 	CalculatePlayerDistance(TargetLocation, OwnerLocation, DirectionToTarget, CurrentDistance);
-	
 	// 거리 허용 오차 설정
 	float DistanceTolerance = 50.0f;
 	float AdjustedMinDistance = MinDistance - DistanceTolerance;
 	float AdjustedMaxDistance = MaxDistance + DistanceTolerance;
 	
 	// 목표 위치 변수
-	FVector ClosestPosition;
+	FVector TargetPosition;
 	
-	// 보스가 적절한 거리에 있으면 원형 궤도로 움직임
-	if (CurrentDistance <= AdjustedMaxDistance or CurrentDistance >= AdjustedMinDistance)
+	// 거리에 따른 이동 로직 결정
+	if (CurrentDistance < AdjustedMinDistance)
 	{
-		// 플레이어 움직임 방향 감지 및 태그 결정
-		FGameplayTag PlayerStateTag = GetPlayerMovementStateTag();
-		// 플레이어 상태에 따른 궤도 위치 계산
-		CalculateOrbitPosition(DeltaTime, MinDistance, MaxDistance, PlayerStateTag, ClosestPosition);
+		// 너무 가까우면 뒤로 이동 (거리 유지)
+		TargetPosition = TargetLocation - DirectionToTarget * MinDistance;
 		
-		// 속도 조정
-		if (ACharacter* BossChar = Cast<ACharacter>(Owner))
-		{
-			BossChar->GetCharacterMovement()->MaxWalkSpeed = 200;
-		}
-	}
-	else
-	{
-		// 속도 조정
+		// 속도 조정 (빠른 이동)
 		if (ACharacter* BossChar = Cast<ACharacter>(Owner))
 		{
 			BossChar->GetCharacterMovement()->MaxWalkSpeed = 400;
 		}
 		
-		if (CurrentDistance < AdjustedMinDistance)
+		// AI 컨트롤러로 이동
+		if (AIC)
 		{
-			ClosestPosition = TargetLocation - DirectionToTarget * MinDistance;
+			AIC->MoveToLocation(TargetPosition, 0);
 		}
-		else if (CurrentDistance > AdjustedMaxDistance)
-		{
-			ClosestPosition = TargetLocation - DirectionToTarget * MaxDistance;
-		}
-		// 거리가 맞지 않으면 목표 위치로 이동
-
 	}
-	// AI 컨트롤러로 이동
-	if (AIC)
+	else if (CurrentDistance > AdjustedMaxDistance)
 	{
-		AIC->MoveToLocation(ClosestPosition, 0);
+		// 너무 멀면 앞으로 이동 (거리 유지)
+		TargetPosition = TargetLocation - DirectionToTarget * MaxDistance;
 		
-		// 타겟 바라보기
-		// LookAtTarget(DirectionToTarget);
+		// 속도 조정 (빠른 이동)
+		if (ACharacter* BossChar = Cast<ACharacter>(Owner))
+		{
+			BossChar->GetCharacterMovement()->MaxWalkSpeed = 400;
+		}
+		
+		// AI 컨트롤러로 이동
+		if (AIC)
+		{
+			AIC->MoveToLocation(TargetPosition, 0);
+		}
 	}
-	
-	// 디버그 데이터 저장
-	DebugTargetLocation = TargetLocation;
-	DebugOwnerLocation = OwnerLocation;
-	DebugClosestPosition = ClosestPosition;
-	DebugCurrentDistance = CurrentDistance;
-	
-	// 호 정보 계산 및 저장
-	FVector ArcStart, ArcEnd;
-	float ArcRadius;
-	FVector BossForward, BossBackward;
-	
-	if (CurrentDistance <= AdjustedMaxDistance && CurrentDistance >= AdjustedMinDistance)
+	else
 	{
+		// 적절한 거리에 있으면 궤도 이동 실행
 		FGameplayTag PlayerStateTag = GetPlayerMovementStateTag();
+		
+		// 플레이어 상태에 따른 궤도 위치 계산
+		CalculateOrbitPosition(DeltaTime, MinDistance, MaxDistance, PlayerStateTag, TargetPosition);
+		
+		// 속도 조정 (궤도 이동 속도)
+		if (ACharacter* BossChar = Cast<ACharacter>(Owner))
+		{
+			BossChar->GetCharacterMovement()->MaxWalkSpeed = 200;
+		}
+		
+		// AI 컨트롤러로 이동
+		if (AIC)
+		{
+			AIC->MoveToLocation(TargetPosition, 0);
+		}
+		
+		// 호 정보 계산 및 저장 (궤도 이동일 때만)
+		FVector ArcStart, ArcEnd;
+		float ArcRadius;
+		FVector BossForward, BossBackward;
+		
+		CalculateOrbitPosition(DeltaTime, MinDistance, MaxDistance, PlayerStateTag, TargetPosition);
 		MoveInOrbit(DeltaTime, MinDistance, MaxDistance, PlayerStateTag,
-			ClosestPosition, ArcStart, ArcEnd, ArcRadius, BossForward, BossBackward);
+			TargetPosition, ArcStart, ArcEnd, ArcRadius, BossForward, BossBackward);
 		
 		DebugArcStart = ArcStart;
 		DebugArcEnd = ArcEnd;
@@ -344,6 +371,12 @@ void UCBossMovementComponent::ExecuteOrbitMovement(float DeltaTime, float MinDis
 		DebugBossForward = BossForward;
 		DebugBossBackward = BossBackward;
 	}
+	
+	// 디버그 데이터 저장
+	DebugTargetLocation = TargetLocation;
+	DebugOwnerLocation = OwnerLocation;
+	DebugClosestPosition = TargetPosition;
+	DebugCurrentDistance = CurrentDistance;
 }
 
 /**
@@ -362,13 +395,7 @@ void UCBossMovementComponent::CalculateOrbitPosition(float DeltaTime, float MinD
 	FVector DirectionToTarget = (TargetLocation - OwnerLocation).GetSafeNormal();
 	float CurrentDistance = FVector::Dist(OwnerLocation, TargetLocation);
 	
-	// 보스에서 플레이어로의 방향 벡터
-	FVector BossToTarget = (TargetLocation - OwnerLocation).GetSafeNormal();
-	
-	// 보스의 오른쪽 방향
-	FVector BossRight = Owner->GetActorRightVector();
-	
-	// 보스가 실제로 플레이어를 바라보는 방향 (보스의 전방 방향)
+	// 보스의 전방 방향
 	FVector BossForward = Owner->GetActorForwardVector();
 	
 	// 플레이어를 중심으로 호 그리기
@@ -396,6 +423,7 @@ void UCBossMovementComponent::CalculateOrbitPosition(float DeltaTime, float MinD
 	FVector ArcStart = TargetLocation + BossBackward.RotateAngleAxis(StartAngle, FVector::UpVector) * ArcRadius;
 	FVector ArcEnd = TargetLocation + BossBackward.RotateAngleAxis(EndAngle, FVector::UpVector) * ArcRadius;
 
+	CLog::Log("CurrentTargetStateTag : "+CurrentTargetStateTag.ToString());
 	// 궤도 위치를 호의 오른쪽 끝점으로 설정 (보스가 오른쪽으로 회전)
 	if (TargetStateTag.Left==CurrentTargetStateTag)
 		OutClosestPosition = ArcStart;
@@ -414,56 +442,44 @@ void UCBossMovementComponent::MoveInOrbit(float DeltaTime, float MinDistance, fl
 {
 	if (!Owner) return;
 	
-	FVector TargetLocation =  FindPlayer()->GetActorLocation();
+	FVector TargetLocation = FindPlayer()->GetActorLocation();
 	FVector OwnerLocation = Owner->GetActorLocation();
 	
-	// 보스에서 플레이어로의 방향 벡터
-	FVector BossToTarget = (TargetLocation - OwnerLocation).GetSafeNormal();
-	
-	// 보스의 오른쪽 방향
-	FVector BossRight = Owner->GetActorRightVector();
-	
-	// 보스가 실제로 플레이어를 바라보는 방향 (보스의 전방 방향)
+	// 보스의 전방 방향
 	OutBossForward = Owner->GetActorForwardVector();
+	OutBossBackward = -OutBossForward;
 	
-	// 플레이어를 중심으로 호 그리기
-	// 보스가 플레이어를 바라보는 방향의 반대 방향을 기준으로 좌우 30도씩 (총 60도)
-	OutBossBackward = -OutBossForward; // 보스 전방의 반대 방향
-	float StartAngle = -30.0f; // 보스 방향 기준 왼쪽 30도
-	float EndAngle = 30.0f;    // 보스 방향 기준 오른쪽 30도
-	
-	// 호의 반지름을 적절한 거리로 설정
+	// 호의 반지름 설정
 	float CurrentDistance = FVector::Dist(OwnerLocation, TargetLocation);
 	if (CurrentDistance < MinDistance)
 	{
-		OutArcRadius = MinDistance; // 너무 가까우면 최소 거리로
+		OutArcRadius = MinDistance;
 	}
 	else if (CurrentDistance > MaxDistance)
 	{
-		OutArcRadius = MaxDistance; // 너무 멀면 최대 거리로
+		OutArcRadius = MaxDistance;
 	}
 	else
 	{
-		OutArcRadius = CurrentDistance; // 적절한 거리면 현재 거리 사용
+		OutArcRadius = CurrentDistance;
 	}
 	
-	// 호의 시작점과 끝점 계산
+	// 호의 시작점과 끝점 계산 (더 넓은 각도)
+	float StartAngle = -30.0f;
+	float EndAngle = 30.0f;
 	OutArcStart = TargetLocation + OutBossBackward.RotateAngleAxis(StartAngle, FVector::UpVector) * OutArcRadius;
 	OutArcEnd = TargetLocation + OutBossBackward.RotateAngleAxis(EndAngle, FVector::UpVector) * OutArcRadius;
 
-	// 궤도 위치를 호의 오른쪽 끝점으로 설정 (보스가 오른쪽으로 회전)
+	// 궤도 위치 설정
 	if (TargetStateTag.Left == CurrentTargetStateTag){
 		OutClosestPosition = OutArcStart;
-		CLog::Print(TEXT("Changed to ArcStart (Left)"), 1);
 	}
 	else if (TargetStateTag.Right == CurrentTargetStateTag){
 		OutClosestPosition = OutArcEnd;
-		CLog::Print(TEXT("Changed to ArcEnd (Right)"), 2);
 	}
 	else
 	{
 		OutClosestPosition = OutArcStart;
-		CLog::Print(TEXT("Changed to ArcStart (Default)"), 3);
 	}
 }
 
