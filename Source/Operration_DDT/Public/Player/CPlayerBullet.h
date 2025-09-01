@@ -43,7 +43,7 @@ public:
 	float Speed = 1500.f;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Default")
-	float BulletDamage = 25.f
+	float BulletDamage = 25.f;
 
 	void SetVelocity(FVector value);
 

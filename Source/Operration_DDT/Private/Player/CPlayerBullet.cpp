@@ -71,7 +71,7 @@ void ACPlayerBullet::OnBulletOverlap(UPrimitiveComponent* OverlappedComponent, A
 		return;
 	
 	CLog::Log("Overlap Occured");
-	UGameplayStatics::ApplyDamage(OtherActor, Damage, OwnerCharacter->GetInstigatorController(), this, UDamageType::StaticClass());
+	UGameplayStatics::ApplyDamage(OtherActor, BulletDamage, OwnerCharacter->GetInstigatorController(), this, UDamageType::StaticClass());
 	
 	// 충돌 후 총알 제거
 	Destroy();
