@@ -2,13 +2,22 @@
 
 
 #include "ODH/ODH_Enemy/FlyingSkull/CFlyingSkull.h"
+#include "ODH/ODH_Enemy/Component/CEnemyStatusComponent.h"
+#include "ODH/ODH_Enemy/Component/CEnemyMeleeAttackComponent.h"
+#include "ODH/Component/CEnemyProjectileComp.h"
+#include "Engine/Engine.h"
 
 // Sets default values
 ACFlyingSkull::ACFlyingSkull()
 {
- 	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+ 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	// 스테이터스 컴포넌트 생성
+	StatusComponent = CreateDefaultSubobject<UCEnemyStatusComponent>(TEXT("StatusComponent"));
+	
+	// 근접 공격 컴포넌트 생성
+	MeleeAttackComponent = CreateDefaultSubobject<UCEnemyMeleeAttackComponent>(TEXT("MeleeAttackComponent"));
 }
 
 // Called when the game starts or when spawned
@@ -16,6 +25,32 @@ void ACFlyingSkull::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	// Flying Skull 전용 스테이터스 설정
+	if (StatusComponent)
+	{
+		// Flying Skull은 체력이 낮지만 공격력이 높음
+		StatusComponent->SetMaxHealth(80.0f);
+		StatusComponent->SetCurrentHealth(80.0f);
+		StatusComponent->SetAttackPower(35.0f);
+		StatusComponent->SetDefensePower(3.0f);
+		
+		// 사망 이벤트 바인딩
+		StatusComponent->OnDeath.AddDynamic(this, &ACFlyingSkull::OnDeath);
+		
+		// 디버그 출력
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Green, 
+				FString::Printf(TEXT("Flying Skull Spawned - Health: %.0f, Attack: %.0f"), 
+				StatusComponent->GetHealthPercent() * 100, StatusComponent->GetAttackPower()));
+		}
+	}
+	
+	// 근접 공격 컴포넌트의 히트 이벤트에 바인딩
+	if (MeleeAttackComponent)
+	{
+		MeleeAttackComponent->OnMeleeAttackHit.AddDynamic(this, &ACFlyingSkull::OnMeleeAttackHit);
+	}
 }
 
 // Called every frame
@@ -30,5 +65,170 @@ void ACFlyingSkull::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
+}
+
+// IDamageable 인터페이스 구현
+void ACFlyingSkull::TakeDamage_Implementation(float DamageAmount)
+{
+	if (StatusComponent)
+	{
+		StatusComponent->TakeDamage(DamageAmount);
+	}
+}
+
+bool ACFlyingSkull::CanTakeDamage_Implementation() const
+{
+	if (StatusComponent)
+	{
+		return !StatusComponent->IsDead();
+	}
+	return false;
+}
+
+bool ACFlyingSkull::IsDead_Implementation() const
+{
+	if (StatusComponent)
+	{
+		return StatusComponent->IsDead();
+	}
+	return false;
+}
+
+// 공격 함수들
+void ACFlyingSkull::PlayMeleeAttack()
+{
+	if (MeleeAttackComponent)
+	{
+		MeleeAttackComponent->ActivateMeleeAttack();
+		
+		// 디버그 출력
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Yellow, TEXT("Flying Skull Melee Attack!"));
+		}
+	}
+}
+
+void ACFlyingSkull::PlayRangedAttack()
+{
+	// 원거리 공격 로직
+	// 예: 프로젝타일 발사, 원거리 공격 애니메이션 등
+	
+	// 디버그 출력
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Cyan, TEXT("Flying Skull Ranged Attack!"));
+	}
+}
+
+// 원거리 공격 오브젝트 소환 함수들
+void ACFlyingSkull::SpawnRangedProjectile(AActor* TargetPlayer)
+{
+	if (!TargetPlayer)
+		return;
+	
+	// 기본 발사 위치 계산
+	FVector SpawnLocation = GetActorLocation() + GetActorForwardVector() * 100.0f;
+	FRotator SpawnRotation = GetActorRotation();
+	
+	SpawnRangedProjectileAtLocation(TargetPlayer, SpawnLocation, SpawnRotation);
+}
+
+void ACFlyingSkull::SpawnRangedProjectileAtLocation(AActor* TargetPlayer, FVector SpawnLocation, FRotator SpawnRotation)
+{
+	if (!TargetPlayer)
+		return;
+	
+	// 프로젝타일 액터 스폰
+	UWorld* World = GetWorld();
+	if (!World)
+		return;
+	
+	// 프로젝타일 클래스 가져오기
+	TSubclassOf<AActor> ProjectileClassToUse = GetProjectileClass();
+	if (!ProjectileClassToUse)
+	{
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, 
+				TEXT("ProjectileClass not set in Flying Skull!"));
+		}
+		return;
+	}
+	
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.Owner = this;
+	SpawnParams.Instigator = this;
+	
+	AActor* SpawnedProjectile = World->SpawnActor<AActor>(
+		ProjectileClassToUse,
+		SpawnLocation,
+		SpawnRotation,
+		SpawnParams
+	);
+	
+	if (SpawnedProjectile)
+	{
+		// CEnemyProjectileComp 컴포넌트 찾기
+		UCEnemyProjectileComp* ProjectileComponent = SpawnedProjectile->FindComponentByClass<UCEnemyProjectileComp>();
+		if (ProjectileComponent)
+		{
+			// 타겟 설정
+			ProjectileComponent->InitializeTarget(TargetPlayer);
+			
+			// 디버그 출력
+			if (GEngine)
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, 
+					FString::Printf(TEXT("Flying Skull spawned projectile targeting %s"), *TargetPlayer->GetName()));
+			}
+		}
+		else
+		{
+			// 컴포넌트가 없으면 제거
+			SpawnedProjectile->Destroy();
+			
+			if (GEngine)
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, 
+					TEXT("Failed to find ProjectileComponent on spawned projectile"));
+			}
+		}
+	}
+}
+
+TSubclassOf<AActor> ACFlyingSkull::GetProjectileClass() const
+{
+	return ProjectileClass;
+}
+
+void ACFlyingSkull::OnDeath()
+{
+	// 사망 시 처리 로직
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Flying Skull Died!"));
+	}
+	
+	// 여기에 사망 애니메이션 재생, 사망 효과 등 추가 가능
+	// 예: Destroy(); // 즉시 제거
+	// 또는 사망 애니메이션 후 제거하는 로직
+}
+
+void ACFlyingSkull::OnMeleeAttackHit(AActor* HitActor)
+{
+	// 근접 공격이 플레이어에게 히트했을 때의 처리
+	if (HitActor && HitActor->IsA<APawn>())
+	{
+		if (GEngine)
+		{
+			float Damage = MeleeAttackComponent->GetMeleeDamage();
+			FString DebugMessage = FString::Printf(TEXT("Flying Skull Melee Attack Hit: %s with %.1f damage!"), *HitActor->GetName(), Damage);
+			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Orange, DebugMessage);
+		}
+		
+		// 여기에 플레이어에게 데미지를 주는 로직 추가
+		// 예: HitActor->TakeDamage(MeleeAttackComponent->GetMeleeDamage());
+	}
 }
 
