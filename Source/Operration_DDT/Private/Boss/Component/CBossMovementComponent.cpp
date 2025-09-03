@@ -81,56 +81,172 @@ void UCBossMovementComponent::RotateTowardsPlayer(float DeltaTime, float Rotatio
 
 FGameplayTag UCBossMovementComponent::GetPlayerMovementStateTag()
 {
+	CLog::Log("=== 플레이어 행동 패턴 예측 시작 ===");
 	APawn* Player = FindPlayer();
-	if (!Player || !Owner) return TargetStateTag.Center;
-	
-	static FVector PreviousTargetLocation = FVector::ZeroVector;
-	static bool bIsFirstCall = true;
+	if (!Player || !Owner) 
+	{
+		CLog::Log("Player 또는 Owner가 null - Center 반환");
+		return TargetStateTag.Center;
+	}
 	
 	FVector CurrentTargetLocation = Player->GetActorLocation();
+	FVector BossLocation = Owner->GetActorLocation();
 	
-	// 첫 번째 호출이면 초기화
-	if (bIsFirstCall)
-	{
-		PreviousTargetLocation = CurrentTargetLocation;
-		bIsFirstCall = false;
-		return TargetStateTag.Center;
-	}
-	
-	// 플레이어 이동 거리 계산
-	float MovementDistance = FVector::Dist(CurrentTargetLocation, PreviousTargetLocation);
-	
-	// 최소 이동 거리 임계값 (너무 작은 움직임은 무시)
-	float MinMovementThreshold = 10.0f;
-	
-	if (MovementDistance < MinMovementThreshold)
-	{
-		// 플레이어가 거의 움직이지 않으면 현재 상태 유지
-		return TargetStateTag.Center;
-	}
-	
-	FVector TargetMovementDirection = (CurrentTargetLocation - PreviousTargetLocation).GetSafeNormal();
-	
-	// 보스의 오른쪽 벡터와 DotProduct 계산
+	// 보스에서 플레이어로의 방향
+	FVector BossToPlayer = (CurrentTargetLocation - BossLocation).GetSafeNormal();
+	FVector BossForward = Owner->GetActorForwardVector();
 	FVector BossRight = Owner->GetActorRightVector();
-	float DotProduct = FVector::DotProduct(TargetMovementDirection, BossRight);
 	
-	// 디버그 출력
+	// 플레이어가 보스의 어느 쪽에 있는지 계산
+	float PlayerSideDot = FVector::DotProduct(BossToPlayer, BossRight);
 	
-	// 이전 위치 업데이트
-	PreviousTargetLocation = CurrentTargetLocation;
+	// 플레이어와 보스 사이의 거리
+	float DistanceToPlayer = FVector::Dist(BossLocation, CurrentTargetLocation);
 	
-	if (DotProduct > 0.1f)
+	// 플레이어의 속도 계산 (움직임 강도)
+	FVector PlayerVelocity = Player->GetVelocity();
+	float PlayerSpeed = PlayerVelocity.Size();
+	
+	CLog::Log("플레이어 속도: " + FString::SanitizeFloat(PlayerSpeed));
+	CLog::Log("플레이어 위치 (보스 기준): " + FString::SanitizeFloat(PlayerSideDot));
+	CLog::Log("거리: " + FString::SanitizeFloat(DistanceToPlayer));
+	
+	// 플레이어 움직임 히스토리 (static으로 유지)
+	static TArray<FVector> PlayerPositionHistory;
+	static TArray<float> PlayerSpeedHistory;
+	static int32 MaxHistorySize = 5;
+	
+	// 히스토리에 현재 정보 추가
+	PlayerPositionHistory.Add(CurrentTargetLocation);
+	PlayerSpeedHistory.Add(PlayerSpeed);
+	
+	// 히스토리 크기 제한
+	if (PlayerPositionHistory.Num() > MaxHistorySize)
 	{
-		return TargetStateTag.Right;
+		PlayerPositionHistory.RemoveAt(0);
+		PlayerSpeedHistory.RemoveAt(0);
 	}
-	else if (DotProduct < -0.1f)
+	
+	// 움직임 패턴 분석
+	float AverageSpeed = 0.0f;
+	FVector MovementTrend = FVector::ZeroVector;
+	
+	if (PlayerSpeedHistory.Num() >= 2)
 	{
-		return TargetStateTag.Left;
+		// 평균 속도 계산
+		for (float Speed : PlayerSpeedHistory)
+		{
+			AverageSpeed += Speed;
+		}
+		AverageSpeed /= PlayerSpeedHistory.Num();
+		
+		// 움직임 트렌드 계산 (최근 3프레임)
+		if (PlayerPositionHistory.Num() >= 3)
+		{
+			FVector RecentMovement = PlayerPositionHistory.Last() - PlayerPositionHistory[PlayerPositionHistory.Num() - 3];
+			MovementTrend = RecentMovement.GetSafeNormal();
+		}
 	}
-	else
+	
+	CLog::Log("평균 속도: " + FString::SanitizeFloat(AverageSpeed));
+	CLog::Log("움직임 트렌드: " + MovementTrend.ToString());
+	
+	// 시각적 디버그
+	if (GetWorld())
 	{
+		// 플레이어 속도에 따른 색상
+		FColor SpeedColor = FColor::Green;
+		if (PlayerSpeed > 400.0f) SpeedColor = FColor::Red;
+		else if (PlayerSpeed > 200.0f) SpeedColor = FColor::Orange;
+		else if (PlayerSpeed > 50.0f) SpeedColor = FColor::Yellow;
+		else SpeedColor = FColor::Blue;
+		
+		// 플레이어 위치 표시 (속도에 따른 크기)
+		float SphereSize = FMath::Clamp(PlayerSpeed * 0.5f, 30.0f, 150.0f);
+		DrawDebugSphere(GetWorld(), CurrentTargetLocation, SphereSize, 8, SpeedColor, false, -1.0f, 0, 3.0f);
+		
+		// 플레이어 속도 벡터 표시
+		if (PlayerSpeed > 10.0f)
+		{
+			FVector VelocityEnd = CurrentTargetLocation + PlayerVelocity * 0.1f;
+			DrawDebugLine(GetWorld(), CurrentTargetLocation, VelocityEnd, SpeedColor, false, -1.0f, 0, 4.0f);
+		}
+		
+		// 움직임 트렌드 표시
+		if (MovementTrend.Size() > 0.1f)
+		{
+			FVector TrendEnd = CurrentTargetLocation + MovementTrend * 200.0f;
+			DrawDebugLine(GetWorld(), CurrentTargetLocation, TrendEnd, FColor::Cyan, false, -1.0f, 0, 2.0f);
+		}
+		
+		// 보스에서 플레이어로의 방향 표시
+		DrawDebugLine(GetWorld(), BossLocation, CurrentTargetLocation, FColor::White, false, -1.0f, 0, 1.0f);
+	}
+	
+	// 행동 패턴 예측 로직
+	if (PlayerSpeed < 50.0f && AverageSpeed < 100.0f) // 정지 상태
+	{
+		CLog::Log("예측: 플레이어 정지 상태 - Center");
 		return TargetStateTag.Center;
+	}
+	else if (PlayerSpeed > 400.0f || AverageSpeed > 350.0f) // 매우 빠른 이동 (대시, 회피)
+	{
+		// 빠른 이동 시 움직임 트렌드 기반 예측
+		float TrendDot = FVector::DotProduct(MovementTrend, BossRight);
+		if (TrendDot > 0.4f)
+		{
+			CLog::Log("예측: 플레이어 대시 이동 - Right");
+			return TargetStateTag.Right;
+		}
+		else if (TrendDot < -0.4f)
+		{
+			CLog::Log("예측: 플레이어 대시 이동 - Left");
+			return TargetStateTag.Left;
+		}
+		else
+		{
+			CLog::Log("예측: 플레이어 대시 이동 - Center");
+			return TargetStateTag.Center;
+		}
+	}
+	else if (PlayerSpeed > 200.0f || AverageSpeed > 150.0f) // 빠른 이동
+	{
+		// 빠른 이동 시 현재 위치와 트렌드 조합
+		float CombinedDot = (PlayerSideDot + FVector::DotProduct(MovementTrend, BossRight)) * 0.5f;
+		if (CombinedDot > 0.3f)
+		{
+			CLog::Log("예측: 플레이어 빠른 이동 - Right");
+			return TargetStateTag.Right;
+		}
+		else if (CombinedDot < -0.3f)
+		{
+			CLog::Log("예측: 플레이어 빠른 이동 - Left");
+			return TargetStateTag.Left;
+		}
+		else
+		{
+			CLog::Log("예측: 플레이어 빠른 이동 - Center");
+			return TargetStateTag.Center;
+		}
+	}
+	else // 보통 속도 이동
+	{
+		// 보통 속도에서는 현재 위치 기반
+		if (PlayerSideDot > 0.25f)
+		{
+			CLog::Log("예측: 플레이어 보통 이동 - Right");
+			return TargetStateTag.Right;
+		}
+		else if (PlayerSideDot < -0.25f)
+		{
+			CLog::Log("예측: 플레이어 보통 이동 - Left");
+			return TargetStateTag.Left;
+		}
+		else
+		{
+			CLog::Log("예측: 플레이어 보통 이동 - Center");
+			return TargetStateTag.Center;
+		}
 	}
 }
 
@@ -289,87 +405,251 @@ void UCBossMovementComponent::LookAtTarget(const FVector& DirectionToTarget)
 void UCBossMovementComponent::ExecuteSmartMovement(float DeltaTime, float MinDistance, float MaxDistance)
 {
 	if (!Owner) return;
+	
+	// 최소 거리 도착 여부를 추적하는 static 변수
+	static bool bReachedMinDistance = false;
+	
+	// 목표 위치 도착 여부를 추적하는 static 변수
+	static bool bReachedTargetPosition = false;
+	
+	// 시간 기반 전환을 위한 변수들
+	static float TimeInOptimalRange = 0.0f;
+	static bool bWasInOptimalRange = false;
+	
+			// 플레이어 방향 추적을 위한 static 변수들
+		static FVector PreviousPlayerLocation = FVector::ZeroVector;
+		static bool bPlayerLocationInitialized = false;
+		static FVector LastMovementDirection = FVector::ZeroVector; // 이전 이동 방향 저장
+	
 	// 거리 계산
 	FVector TargetLocation, OwnerLocation, DirectionToTarget;
 	float CurrentDistance;
 	CalculatePlayerDistance(TargetLocation, OwnerLocation, DirectionToTarget, CurrentDistance);
+	
 	// 거리 허용 오차 설정
 	float DistanceTolerance = 50.0f;
 	float AdjustedMinDistance = MinDistance - DistanceTolerance;
 	float AdjustedMaxDistance = MaxDistance + DistanceTolerance;
 	
+	// 최소 거리에 도착했는지 확인 (시간 기반 전환)
+	// 적정 거리 범위에서 1.5초 동안 유지되면 궤도 이동 모드로 전환
+	if (!bReachedMinDistance)
+	{
+		// 거리 조건 확인
+		bool bInOptimalRange = (CurrentDistance >= MinDistance && CurrentDistance <= MaxDistance);
+		
+		if (bInOptimalRange) 
+		{
+			if (!bWasInOptimalRange) 
+			{
+				TimeInOptimalRange = 0.0f;  // 처음 진입 시 타이머 리셋
+			}
+			TimeInOptimalRange += DeltaTime;  // 시간 누적
+			
+			// 1.5초 동안 유지되면 전환
+			if (TimeInOptimalRange >= 1.5f) 
+			{
+				bReachedMinDistance = true;
+			}
+		} 
+		else 
+		{
+			TimeInOptimalRange = 0.0f;  // 범위 벗어나면 타이머 리셋
+		}
+		
+		bWasInOptimalRange = bInOptimalRange;
+	}
+	
+	// 플레이어 방향 추적 초기화
+	if (!bPlayerLocationInitialized)
+	{
+		PreviousPlayerLocation = TargetLocation;
+		bPlayerLocationInitialized = true;
+	}
+	
+			// 플레이어 이동 방향 계산
+		FVector PlayerMovementDirection = FVector::ZeroVector;
+		if (bPlayerLocationInitialized)
+		{
+			PlayerMovementDirection = (TargetLocation - PreviousPlayerLocation).GetSafeNormal();
+			PreviousPlayerLocation = TargetLocation;
+			
+			// 이동 방향이 유효하면 저장
+			if (PlayerMovementDirection.Size() > 0.1f)
+			{
+				LastMovementDirection = PlayerMovementDirection;
+			}
+		}
+	
+	// 최소 거리에 도착했으면 더 이상 거리 유지하지 않음
+	
 	// 목표 위치 변수
 	FVector TargetPosition;
 	
-	// 거리에 따른 이동 로직 결정
-	if (CurrentDistance < AdjustedMinDistance)
+	// 항상 타겟을 바라보기 (기존 함수 사용)
+	RotateTowardsPlayer(DeltaTime, 5.0f);
+	
+	// 최소 거리에 도착했으면 목표 위치로 이동 후 방향 추적 시작
+	if (bReachedMinDistance)
 	{
-		// 너무 가까우면 뒤로 이동 (거리 유지)
-		TargetPosition = TargetLocation - DirectionToTarget * MinDistance;
+		// 목표 위치에 도착했는지 확인 (한번만 체크)
+		if (!bReachedTargetPosition)
+		{
+			FVector CurrentTargetPosition = TargetLocation - DirectionToTarget * MinDistance;
+			float DistanceToTarget = FVector::Dist(OwnerLocation, CurrentTargetPosition);
+			
+			if (DistanceToTarget <= 50.0f)
+			{
+				bReachedTargetPosition = true;
+			}
+		}
 		
-		// 속도 조정 (빠른 이동)
+		if (bReachedTargetPosition)
+		{
+			// 목표 위치에 도착했으면 플레이어 방향에 따른 지능형 이동
+			FVector BossRight = Owner->GetActorRightVector();
+			FVector BossForward = Owner->GetActorForwardVector();
+			
+			// 플레이어 이동 방향을 보스 기준 좌표계로 변환
+			float RightDot = FVector::DotProduct(PlayerMovementDirection, BossRight);
+			float ForwardDot = FVector::DotProduct(PlayerMovementDirection, BossForward);
+			
+			// 플레이어가 정지했는지 확인
+			bool bPlayerStopped = (PlayerMovementDirection.Size() < 0.1f);
+			
+			TargetPosition = OwnerLocation; // 기본값: 현재 위치 유지
+			
+			// 플레이어가 정지했고 이전 이동 방향이 있으면 이전 방향으로 계속 이동
+			if (bPlayerStopped && LastMovementDirection.Size() > 0.1f)
+			{
+				// 이전 이동 방향을 보스 기준 좌표계로 변환
+				float LastRightDot = FVector::DotProduct(LastMovementDirection, BossRight);
+				float LastForwardDot = FVector::DotProduct(LastMovementDirection, BossForward);
+				
+				// 이전 방향에 따라 이동
+				if (FMath::Abs(LastRightDot) > FMath::Abs(LastForwardDot))
+				{
+					// 이전에 좌우로 움직였다면 반대 방향으로 계속
+					FVector SideDirection = (LastRightDot > 0) ? -BossRight : BossRight;
+					TargetPosition = OwnerLocation + (SideDirection * 200.0f);
+				}
+				else if (LastForwardDot > 0.1f)
+				{
+					// 이전에 앞으로 움직였다면 앞으로 계속
+					FVector ForwardDirection = BossForward;
+					TargetPosition = OwnerLocation + (ForwardDirection * 200.0f);
+				}
+				else if (LastForwardDot < -0.1f)
+				{
+					// 이전에 뒤로 움직였다면 뒤로 계속
+					FVector BackwardDirection = -BossForward;
+					TargetPosition = OwnerLocation + (BackwardDirection * 200.0f);
+				}
+			}
+			// 플레이어가 움직이고 있으면 기존 로직 사용
+			else if (!bPlayerStopped)
+			{
+				// 좌우 방향 처리 (반대 방향으로 이동)
+				if (FMath::Abs(RightDot) > FMath::Abs(ForwardDot))
+				{
+					// 좌우 이동이 더 강함
+					FVector SideDirection = (RightDot > 0) ? -BossRight : BossRight; // 반대 방향
+					TargetPosition = OwnerLocation + (SideDirection * 200.0f);
+				}
+				// 앞뒤 방향 처리 (좌우보다 앞뒤가 더 강할 때)
+				else if (ForwardDot > 0.1f) // 앞으로 이동 (양수)
+				{
+					// 플레이어가 앞으로 가면 보스도 앞으로 이동
+					FVector ForwardDirection = BossForward;
+					TargetPosition = OwnerLocation + (ForwardDirection * 200.0f);
+				}
+				else if (ForwardDot < -0.1f) // 뒤로 이동 (음수)
+				{
+					// 플레이어가 뒤로 가면 보스도 뒤로 이동
+					FVector BackwardDirection = -BossForward;
+					TargetPosition = OwnerLocation + (BackwardDirection * 200.0f);
+				}
+			}
+			// 플레이어가 정지하고 이전 방향도 없으면 그대로 유지
+			
+			// AI MoveTo로 목표 좌표로 이동
+			if (AIC)
+			{
+				AIC->MoveToLocation(TargetPosition, 0);
+			}
+		}
+		else
+		{
+			// 아직 목표 위치에 도착하지 않았으면 계속 목표 위치로 이동
+			FVector CurrentTargetPosition = TargetLocation - DirectionToTarget * MinDistance;
+			TargetPosition = CurrentTargetPosition;
+			
+			// AI 컨트롤러로 이동
+			if (AIC)
+			{
+				AIC->MoveToLocation(TargetPosition, 0);
+			}
+		}
+		
+		// 속도 조정 (궤도 이동)
 		if (ACharacter* BossChar = Cast<ACharacter>(Owner))
 		{
-			BossChar->GetCharacterMovement()->MaxWalkSpeed = 400;
-		}
-		
-		// AI 컨트롤러로 이동
-		if (AIC)
-		{
-			AIC->MoveToLocation(TargetPosition, 0);
-		}
-	}
-	else if (CurrentDistance > AdjustedMaxDistance)
-	{
-		// 너무 멀면 앞으로 이동 (거리 유지)
-		TargetPosition = TargetLocation - DirectionToTarget * MaxDistance;
-		
-		// 속도 조정 (빠른 이동)
-		if (ACharacter* BossChar = Cast<ACharacter>(Owner))
-		{
-			BossChar->GetCharacterMovement()->MaxWalkSpeed = 400;
-		}
-		
-		// AI 컨트롤러로 이동
-		if (AIC)
-		{
-			AIC->MoveToLocation(TargetPosition, 0);
+			BossChar->GetCharacterMovement()->MaxWalkSpeed = 150;
 		}
 	}
 	else
 	{
-		// 적절한 거리에 있으면 궤도 이동 실행
-		FGameplayTag PlayerStateTag = GetPlayerMovementStateTag();
 		
-		// 플레이어 상태에 따른 궤도 위치 계산
-		CalculateOrbitPosition(DeltaTime, MinDistance, MaxDistance, PlayerStateTag, TargetPosition);
-		
-		// 속도 조정 (궤도 이동 속도)
-		if (ACharacter* BossChar = Cast<ACharacter>(Owner))
+		// 아직 최소 거리에 도착하지 않았으면 거리 유지
+		if (CurrentDistance < AdjustedMinDistance)
 		{
-			BossChar->GetCharacterMovement()->MaxWalkSpeed = 200;
+			TargetPosition = TargetLocation - DirectionToTarget * MinDistance;
+			
+			// 속도 조정 (거리 유지 - 빠른 이동)
+			if (ACharacter* BossChar = Cast<ACharacter>(Owner))
+			{
+				BossChar->GetCharacterMovement()->MaxWalkSpeed = 300;
+			}
+			
+			// AI 컨트롤러로 이동
+			if (AIC)
+			{
+				AIC->MoveToLocation(TargetPosition, 0);
+			}
 		}
-		
-		// AI 컨트롤러로 이동
-		if (AIC)
+		else if (CurrentDistance > AdjustedMaxDistance)
 		{
-			AIC->MoveToLocation(TargetPosition, 0);
+			TargetPosition = TargetLocation - DirectionToTarget * MaxDistance;
+			
+			// 속도 조정 (거리 유지 - 빠른 이동)
+			if (ACharacter* BossChar = Cast<ACharacter>(Owner))
+			{
+				BossChar->GetCharacterMovement()->MaxWalkSpeed = 300;
+			}
+			
+			// AI 컨트롤러로 이동
+			if (AIC)
+			{
+				AIC->MoveToLocation(TargetPosition, 0);
+			}
 		}
-		
-		// 호 정보 계산 및 저장 (궤도 이동일 때만)
-		FVector ArcStart, ArcEnd;
-		float ArcRadius;
-		FVector BossForward, BossBackward;
-		
-		CalculateOrbitPosition(DeltaTime, MinDistance, MaxDistance, PlayerStateTag, TargetPosition);
-		MoveInOrbit(DeltaTime, MinDistance, MaxDistance, PlayerStateTag,
-			TargetPosition, ArcStart, ArcEnd, ArcRadius, BossForward, BossBackward);
-		
-		DebugArcStart = ArcStart;
-		DebugArcEnd = ArcEnd;
-		DebugArcRadius = ArcRadius;
-		DebugBossForward = BossForward;
-		DebugBossBackward = BossBackward;
+		else
+		{
+			// 적정 거리면 최소 거리로 접근
+			TargetPosition = TargetLocation - DirectionToTarget * MinDistance;
+			
+			// 속도 조정 (거리 유지 - 부드러운 접근)
+			if (ACharacter* BossChar = Cast<ACharacter>(Owner))
+			{
+				BossChar->GetCharacterMovement()->MaxWalkSpeed = 300;
+			}
+			
+			// AI 컨트롤러로 이동
+			if (AIC)
+			{
+				AIC->MoveToLocation(TargetPosition, 0);
+			}
+		}
 	}
 	
 	// 디버그 데이터 저장
@@ -377,112 +657,81 @@ void UCBossMovementComponent::ExecuteSmartMovement(float DeltaTime, float MinDis
 	DebugOwnerLocation = OwnerLocation;
 	DebugClosestPosition = TargetPosition;
 	DebugCurrentDistance = CurrentDistance;
-}
-
-/**
- * 플레이어 주변에서 궤도 이동 위치를 계산합니다.
- */
-void UCBossMovementComponent::CalculateOrbitPosition(float DeltaTime, float MinDistance, float MaxDistance, 
-	const FGameplayTag& CurrentTargetStateTag, FVector& OutClosestPosition)
-{
-	if (!Owner) return;
 	
-	APawn* Player = FindPlayer();
-	if (!Player) return;
-	
-	FVector TargetLocation = Player->GetActorLocation();
-	FVector OwnerLocation = Owner->GetActorLocation();
-	FVector DirectionToTarget = (TargetLocation - OwnerLocation).GetSafeNormal();
-	float CurrentDistance = FVector::Dist(OwnerLocation, TargetLocation);
-	
-	// 보스의 전방 방향
-	FVector BossForward = Owner->GetActorForwardVector();
-	
-	// 플레이어를 중심으로 호 그리기
-	// 보스가 플레이어를 바라보는 방향의 반대 방향을 기준으로 좌우 30도씩 (총 60도)
-	FVector BossBackward = -BossForward; // 보스 전방의 반대 방향
-	float StartAngle = -15.0f; // 보스 방향 기준 왼쪽 30도
-	float EndAngle = 15.0f;    // 보스 방향 기준 오른쪽 30도
-	
-	// 호의 반지름을 적절한 거리로 설정
-	float ArcRadius;
-	if (CurrentDistance < MinDistance)
+	// 시각적 디버그 - 거리 범위 표시
+	if (GetWorld())
 	{
-		ArcRadius = MinDistance; // 너무 가까우면 최소 거리로
-	}
-	else if (CurrentDistance > MaxDistance)
-	{
-		ArcRadius = MaxDistance; // 너무 멀면 최대 거리로
-	}
-	else
-	{
-		ArcRadius = CurrentDistance; // 적절한 거리면 현재 거리 사용
-
-	}
-	// 호의 시작점과 끝점 계산
-	FVector ArcStart = TargetLocation + BossBackward.RotateAngleAxis(StartAngle, FVector::UpVector) * ArcRadius;
-	FVector ArcEnd = TargetLocation + BossBackward.RotateAngleAxis(EndAngle, FVector::UpVector) * ArcRadius;
-
-	CLog::Log("CurrentTargetStateTag : "+CurrentTargetStateTag.ToString());
-	// 궤도 위치를 호의 오른쪽 끝점으로 설정 (보스가 오른쪽으로 회전)
-	if (TargetStateTag.Left==CurrentTargetStateTag)
-		OutClosestPosition = ArcStart;
-	else if (TargetStateTag.Right==CurrentTargetStateTag)
-		OutClosestPosition = ArcEnd;
-	else
-		OutClosestPosition = ArcStart;
-
-	
-}
-
-void UCBossMovementComponent::MoveInOrbit(float DeltaTime, float MinDistance, float MaxDistance, 
-	const FGameplayTag& CurrentTargetStateTag,
-	FVector& OutClosestPosition, FVector& OutArcStart, FVector& OutArcEnd, 
-	float& OutArcRadius, FVector& OutBossForward, FVector& OutBossBackward)
-{
-	if (!Owner) return;
-	
-	FVector TargetLocation = FindPlayer()->GetActorLocation();
-	FVector OwnerLocation = Owner->GetActorLocation();
-	
-	// 보스의 전방 방향
-	OutBossForward = Owner->GetActorForwardVector();
-	OutBossBackward = -OutBossForward;
-	
-	// 호의 반지름 설정
-	float CurrentDistance = FVector::Dist(OwnerLocation, TargetLocation);
-	if (CurrentDistance < MinDistance)
-	{
-		OutArcRadius = MinDistance;
-	}
-	else if (CurrentDistance > MaxDistance)
-	{
-		OutArcRadius = MaxDistance;
-	}
-	else
-	{
-		OutArcRadius = CurrentDistance;
-	}
-	
-	// 호의 시작점과 끝점 계산 (더 넓은 각도)
-	float StartAngle = -30.0f;
-	float EndAngle = 30.0f;
-	OutArcStart = TargetLocation + OutBossBackward.RotateAngleAxis(StartAngle, FVector::UpVector) * OutArcRadius;
-	OutArcEnd = TargetLocation + OutBossBackward.RotateAngleAxis(EndAngle, FVector::UpVector) * OutArcRadius;
-
-	// 궤도 위치 설정
-	if (TargetStateTag.Left == CurrentTargetStateTag){
-		OutClosestPosition = OutArcStart;
-	}
-	else if (TargetStateTag.Right == CurrentTargetStateTag){
-		OutClosestPosition = OutArcEnd;
-	}
-	else
-	{
-		OutClosestPosition = OutArcStart;
+		// 플레이어 위치 (중앙)
+		DrawDebugSphere(GetWorld(), TargetLocation, 50.0f, 8, FColor::Yellow, false, -1.0f, 0, 3.0f);
+		
+		// 보스 위치
+		DrawDebugSphere(GetWorld(), OwnerLocation, 40.0f, 8, FColor::Magenta, false, -1.0f, 0, 3.0f);
+		
+		// 최소 거리 원 (빨간색)
+		DrawDebugCircle(GetWorld(), TargetLocation, MinDistance, 32, FColor::Red, false, -1.0f, 0, 2.0f);
+		
+		// 최대 거리 원 (파란색)
+		DrawDebugCircle(GetWorld(), TargetLocation, MaxDistance, 32, FColor::Blue, false, -1.0f, 0, 2.0f);
+		
+		// 현재 거리 원 (초록색)
+		DrawDebugCircle(GetWorld(), TargetLocation, CurrentDistance, 32, FColor::Green, false, -1.0f, 0, 1.0f);
+		
+		// 목표 위치 표시
+		DrawDebugSphere(GetWorld(), TargetPosition, 60.0f, 12, FColor::Cyan, false, -1.0f, 0, 4.0f);
+		
+		// 보스에서 목표 위치로의 선
+		DrawDebugLine(GetWorld(), OwnerLocation, TargetPosition, FColor::Cyan, false, -1.0f, 0, 3.0f);
+		
+		// 시각적 디버그만 유지 (텍스트 로그 제거)
+		if (bReachedMinDistance && bReachedTargetPosition)
+		{
+			// 플레이어 이동 방향 표시 (빨간색)
+			if (PlayerMovementDirection.Size() > 0.1f)
+			{
+				FVector PlayerDirectionEnd = TargetLocation + (PlayerMovementDirection * 150.0f);
+				DrawDebugLine(GetWorld(), TargetLocation, PlayerDirectionEnd, FColor::Red, false, -1.0f, 0, 3.0f);
+			}
+			
+			// 보스 지능형 이동 방향 표시
+			FVector BossRight = Owner->GetActorRightVector();
+			FVector BossForward = Owner->GetActorForwardVector();
+			
+			float RightDot = FVector::DotProduct(PlayerMovementDirection, BossRight);
+			float ForwardDot = FVector::DotProduct(PlayerMovementDirection, BossForward);
+			
+			FColor MovementColor = FColor::Blue;
+			FVector MovementEnd = OwnerLocation;
+			
+			// 좌우 방향 처리
+			if (FMath::Abs(RightDot) > FMath::Abs(ForwardDot))
+			{
+				// 좌우 이동 (반대 방향)
+				FVector SideDirection = (RightDot > 0) ? -BossRight : BossRight;
+				MovementEnd = OwnerLocation + (SideDirection * 150.0f);
+				MovementColor = FColor::Blue;
+			}
+			// 앞뒤 방향 처리
+			else if (ForwardDot < -0.1f) // 뒤로 이동
+			{
+				// 뒤로 따라가기
+				FVector BackwardDirection = -BossForward;
+				MovementEnd = OwnerLocation + (BackwardDirection * 150.0f);
+				MovementColor = FColor::Green;
+			}
+			else
+			{
+				// 앞으로 이동하거나 정지 (그대로 유지)
+				MovementColor = FColor::Yellow;
+			}
+			
+			// 보스 이동 방향 표시
+			if (MovementEnd != OwnerLocation)
+			{
+				DrawDebugLine(GetWorld(), OwnerLocation, MovementEnd, MovementColor, false, -1.0f, 0, 3.0f);
+			}
+		}
 	}
 }
-
 // ===== 디버그 데이터 Getter 함수들 =====
 
 FVector UCBossMovementComponent::GetDebugTargetLocation() const
@@ -498,31 +747,6 @@ FVector UCBossMovementComponent::GetDebugOwnerLocation() const
 FVector UCBossMovementComponent::GetDebugClosestPosition() const
 {
 	return DebugClosestPosition;
-}
-
-FVector UCBossMovementComponent::GetDebugArcStart() const
-{
-	return DebugArcStart;
-}
-
-FVector UCBossMovementComponent::GetDebugArcEnd() const
-{
-	return DebugArcEnd;
-}
-
-float UCBossMovementComponent::GetDebugArcRadius() const
-{
-	return DebugArcRadius;
-}
-
-FVector UCBossMovementComponent::GetDebugBossForward() const
-{
-	return DebugBossForward;
-}
-
-FVector UCBossMovementComponent::GetDebugBossBackward() const
-{
-	return DebugBossBackward;
 }
 
 float UCBossMovementComponent::GetDebugCurrentDistance() const

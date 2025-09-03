@@ -42,7 +42,7 @@ EStateTreeRunStatus UTask_KeepingDistance::Tick(FStateTreeExecutionContext& Cont
 	
 	// 컴포넌트에서 모든 계산 수행
 	// MovementComponent->MaintainOptimalDistance(DeltaTime, 600, 1600);
-	MovementComponent->ExecuteSmartMovement(DeltaTime, 600, 1600);
+	MovementComponent->ExecuteSmartMovement(DeltaTime, 400, 800);
 	// 디버그 컴포넌트에서 시각화
 	DebugComponent->ExecuteDebugVisualization();
 
