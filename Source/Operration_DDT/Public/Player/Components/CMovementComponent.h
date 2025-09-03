@@ -67,6 +67,8 @@ public:
 	FORCEINLINE	bool GetFixedCamera() { return bFixedCamera; }
 	FORCEINLINE void EnableFixedCamera() { bFixedCamera = true; }
 	FORCEINLINE void DisableFixedCamera() { bFixedCamera = false; }
+	
+	FORCEINLINE FVector GetCurrentDirection() { return Direction; }
 
 #pragma endregion Getter/Setter
 	
@@ -76,6 +78,8 @@ public:
 
 	void EnableControlRotation();
 	void DisableControlRotation();
+
+	FORCEINLINE FVector GetCachedDirection() { return CachedDirection; }
 
 #pragma region InputFunction
 	
@@ -91,10 +95,11 @@ private:
 private:
 	class ADDTPlayer* OwnerCharacter;
 
-	bool bCanMove = true;	//이동 가능한지
-	bool bFixedCamera;		//고정 카메라
+	bool bCanMove = true;	
+	bool bFixedCamera;
 
 	FVector Direction;
+	FVector CachedDirection;
 
 	UPROPERTY(EditAnywhere, Category = "Camera")
 	float MinPitch = -65.f;

@@ -17,7 +17,7 @@
 */
 #include "CMontageComponent.generated.h"
 
-USTRUCT()
+USTRUCT(BlueprintType)
 struct FMontageData : public FTableRowBase
 {
 	GENERATED_BODY()
@@ -59,16 +59,31 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	void PlaySlidingMode();
+	void PlayRollingMode();
+	void PlayRollingMode(FVector InDirection);
 
 
 private:
 	void PlayAnimMontage(EStateType InType);
 	class ACharacter* OwnerCharacter;
 
-	FMontageData* Data[(int32)EStateType::Max];
+	// 방향별 구르기 몽타주
+	UPROPERTY(EditDefaultsOnly)
+	class UAnimMontage* ForwardRollMontage;
+	
+	UPROPERTY(EditDefaultsOnly)
+	class UAnimMontage* BackwardRollMontage;
+	
+	UPROPERTY(EditDefaultsOnly)
+	class UAnimMontage* LeftRollMontage;
+	
+	UPROPERTY(EditDefaultsOnly)
+	class UAnimMontage* RightRollMontage;
+
 
 public:
+	UPROPERTY(EditDefaultsOnly)
+	FMontageData Data[(int32)EStateType::Max];
 	//FOnDataFetched OnDataFetched;
 
 protected:

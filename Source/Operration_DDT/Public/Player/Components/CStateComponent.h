@@ -11,13 +11,13 @@ UENUM()
 enum class EStateType : uint8
 {
 	Idle = 0,
-	Sliding,
+	Rolling,
 	RifleAim,
 	RifleAtt,
 	SwordAtt,
 	RevolverAtt,
 	Equip,
-	BackStep,
+	Healing,
 	Hitted,
 	Dead,
 	Action,
@@ -45,12 +45,15 @@ public:
 
 
 	FORCEINLINE bool IsIdleMode() { return Type == EStateType::Idle; }
-	FORCEINLINE bool IsSlidingMode() { return Type == EStateType::Sliding; }
+	FORCEINLINE bool IsRollingMode() { return Type == EStateType::Rolling; }
 	FORCEINLINE bool IsEquipMode() { return Type == EStateType::Equip; }
 	FORCEINLINE bool IsHittedMode() { return Type == EStateType::Hitted; }
 	FORCEINLINE bool IsDeadMode() { return Type == EStateType::Dead; }
 	FORCEINLINE bool IsActionMode() { return Type == EStateType::Action; }
+	
 	FORCEINLINE bool IsRifleAimMode() { return bRifleAimMode; }
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE bool IsCanDodge() { return bCanDodge; }
 	
 
 	FORCEINLINE EStateType GetType() {return Type;}
@@ -58,12 +61,13 @@ public:
 	FString GetTypeString();
 
 	void SetIdleMode();
-	void SetSlidingMode();
+	void SetRollingMode();
 	void SetEquipMode();
 	void SetHittedMode();
 	void SetDeadMode();
 	void SetActionMode();
 	FORCEINLINE void SetRifleAimMode(bool inBool) { bRifleAimMode = inBool; }
+	FORCEINLINE void SetCanDodge(bool inBool) { bCanDodge = inBool; }
 
 	FStateTypeChanged OnStateTypeChanged;
 
@@ -74,6 +78,8 @@ private:
 	EStateType Type;
 
 	bool bRifleAimMode = false;
+
+	bool bCanDodge = false;
 
 
 		

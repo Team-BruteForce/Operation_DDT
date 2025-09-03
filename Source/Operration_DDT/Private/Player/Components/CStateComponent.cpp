@@ -46,9 +46,9 @@ void UCStateComponent::SetIdleMode()
 	ChangeType (EStateType::Idle);
 }
 
-void UCStateComponent::SetSlidingMode()
+void UCStateComponent::SetRollingMode()
 {
-	ChangeType(EStateType::Sliding);
+	ChangeType(EStateType::Rolling);
 }
 
 void UCStateComponent::SetEquipMode()

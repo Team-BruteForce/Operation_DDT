@@ -2,11 +2,13 @@
 
 #include "Player/Components/CMontageComponent.h"
 #include "Global.h"
+#include "SkeletalDebugRendering.h"
 #include "Runtime/Online/HTTP/Public/HttpModule.h"
 #include "Runtime/Json/Public/Dom/JsonObject.h"
 #include "Runtime/Json/Public/Serialization/JsonReader.h"
 #include "Runtime/Json/Public/Serialization/JsonSerializer.h"
 #include "GameFramework/Character.h"
+#include "GameFramework/SpringArmComponent.h"
 
 // Sets default values for this component's properties
 UCMontageComponent::UCMontageComponent()
@@ -23,28 +25,29 @@ void UCMontageComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// ...
+	// OwnerCharacter ì´ˆê¸°í™”
+	OwnerCharacter = Cast<ACharacter>(GetOwner());
 	
 }
 
 void UCMontageComponent::FetchGoogleSheetData()
 {
-	// http module °¡Á®¿À±â
+	// http module ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	FHttpModule* Http = &FHttpModule::Get();
 
-	// http request »ý¼º 
+	// http request ï¿½ï¿½ï¿½ï¿½ 
 	//TSharedRef<IHttpRequest> Request = Http->CreateRequest ();
 	FHttpRequestRef Request = FHttpModule::Get().CreateRequest();
 
-	// Google Sheet API URL ¼³Á¤
+	// Google Sheet API URL ï¿½ï¿½ï¿½ï¿½
 
 	FString SheetID = TEXT("1sQaPJZixoOduqmINaVAUQymC_2Ca3PkdJ8h_2VYqZU8");
 	/*
 		Sheet ID
 		https://docs.google.com/spreadsheets/d/<SPREADSHEET_ID>/edit#gid=0
-		±¸±Û Sheet »çÀÌÆ®¿¡¼­ <> ³»ÀÇ ÀÖ´Â ºÎºÐÀÌ ID
+		ï¿½ï¿½ï¿½ï¿½ Sheet ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ <> ï¿½ï¿½ï¿½ï¿½ ï¿½Ö´ï¿½ ï¿½Îºï¿½ï¿½ï¿½ ID
 	*/
-	FString SheetRange = TEXT("Sheet1!A1:A4"); // <½ÃÆ®ÀÌ¸§>!<½ÃÀÛ¼¿>:<³¡¼¿>
+	FString SheetRange = TEXT("Sheet1!A1:A4"); // <ï¿½ï¿½Æ®ï¿½Ì¸ï¿½>!<ï¿½ï¿½ï¿½Û¼ï¿½>:<ï¿½ï¿½ï¿½ï¿½>
 	FString APIKey = TEXT("AIzaSyA1I36UVo9LXNpMos65iOV8IMTcFDzxWN4");
 	FString Url = FString::Printf(TEXT("https://sheets.googleapis.com/v4/spreadsheets/%s/values/%s?key=%s"), *SheetID, *SheetRange, *APIKey);
 
@@ -67,24 +70,81 @@ void UCMontageComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAc
 	// ...
 }
 
-void UCMontageComponent::PlaySlidingMode()
+void UCMontageComponent::PlayRollingMode()
 {
+	PlayAnimMontage(EStateType::Rolling);
+}
 
+void UCMontageComponent::PlayRollingMode(FVector InDirection)
+{
+	CheckNull(OwnerCharacter);
+	
+	// ìž…ë ¥ ë°©í–¥ì„ ì •ê·œí™”
+	FVector NormalizedDirection = InDirection.GetSafeNormal();
+	
+
+	FVector Forward = OwnerCharacter->GetActorForwardVector();
+	FVector Right = OwnerCharacter->GetActorRightVector();
+
+	float ForwardComponent = FVector::DotProduct(Forward, NormalizedDirection);
+	float RightComponent = FVector::DotProduct(Right, NormalizedDirection);
+	
+	// ì£¼ ë°©í–¥ì— ë”°ë¼ ì ì ˆí•œ ëª½íƒ€ì£¼ ì„ íƒ
+	UAnimMontage* SelectedMontage = nullptr;
+	
+	// ì ˆëŒ“ê°’ì´ ë” í° ë°©í–¥ì„ ìš°ì„ ìœ¼ë¡œ ì„ íƒ
+	if (FMath::Abs(ForwardComponent) > FMath::Abs(RightComponent))
+	{
+		// ì „í›„ ë°©í–¥ì´ ìš°ì„ 
+		if (ForwardComponent > 0.3f)
+		{
+			SelectedMontage = ForwardRollMontage;
+		}
+		else if (ForwardComponent < -0.3f)
+		{
+			SelectedMontage = BackwardRollMontage;
+		}
+	}
+	else
+	{
+		// ì¢Œìš° ë°©í–¥ì´ ìš°ì„ 
+		if (RightComponent > 0.3f)
+		{
+			SelectedMontage = RightRollMontage;
+
+		}
+		else if (RightComponent < -0.3f)
+		{
+			SelectedMontage = LeftRollMontage;
+		}
+	}
+	
+	// ê¸°ë³¸ ëª½íƒ€ì£¼ê°€ ì—†ìœ¼ë©´ ê¸°ì¡´ ë°©ì‹ ì‚¬ìš©
+	if (SelectedMontage == nullptr)
+	{
+		PlayAnimMontage(EStateType::Rolling);
+		return;
+	}
+	
+	// ì„ íƒëœ ëª½íƒ€ì£¼ ìž¬ìƒ
+	OwnerCharacter->PlayAnimMontage(SelectedMontage, 1.0f);
+
+	
 }
 
 void UCMontageComponent::PlayAnimMontage(EStateType InType)
 {
 	CheckNull(OwnerCharacter);
 
-	FMontageData* target = Data[(int8)InType];
+	FMontageData& target = Data[(int8)InType];
 	
-	if (target == nullptr || target->Montage == nullptr)
+	if (target.Montage == nullptr)
 	{
 		GLog->Log(ELogVerbosity::Error , "No Montage Data");
 		return;
 	}
 
-	OwnerCharacter->PlayAnimMontage(target->Montage, target->PlayRate);
+	OwnerCharacter->PlayAnimMontage(target.Montage, target.PlayRate);
 }
 
 void UCMontageComponent::OnResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful)
@@ -98,7 +158,7 @@ void UCMontageComponent::OnResponseReceived(FHttpRequestPtr Request, FHttpRespon
 
 	if (FJsonSerializer::Deserialize(Reader, JsonObject) && JsonObject.IsValid())
 	{
-		// JSON¿¡¼­ values ¹è¿­ °¡Á®¿À±â
+		// JSONï¿½ï¿½ï¿½ï¿½ values ï¿½è¿­ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 		const TArray<TSharedPtr<FJsonValue>>* Values;
 		if (JsonObject->TryGetArrayField(TEXT("values"), Values))
 		{
@@ -107,42 +167,40 @@ void UCMontageComponent::OnResponseReceived(FHttpRequestPtr Request, FHttpRespon
 				const TArray<TSharedPtr<FJsonValue>>* RowData;
 				if (Row->TryGetArray(RowData))
 				{
-					FMontageData* NewData = new FMontageData();
-
 					FString IndexStr;
 					if ((*RowData)[0]->TryGetString(IndexStr))
 					{	
-						// Å¸ÀÔ ¼³Á¤
+						// Å¸ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 						FString TypeStr;
 						EStateType newType = EStateType::Max;
 						if ((*RowData)[1]->TryGetString(TypeStr))
 						{
 							if (TypeStr == TEXT("Idle")) newType = EStateType::Idle;
-							else if(TypeStr == TEXT("Sliding")) newType = EStateType::Sliding;
-							else if (TypeStr == TEXT("BackStep")) newType = EStateType::BackStep;
+							else if(TypeStr == TEXT("Rolling")) newType = EStateType::Rolling;
+							//else if (TypeStr == TEXT("BackStep")) newType = EStateType::BackStep;
 							else if (TypeStr == TEXT("Hitted")) newType = EStateType::Hitted;
 							else if (TypeStr == TEXT("Dead")) newType = EStateType::Dead;
 							else if (TypeStr == TEXT("Action")) newType = EStateType::Action;
 
-							NewData->Type = newType;
+							Data[(int8)newType].Type = newType;
 
 						}
 
-						// ¸ùÅ¸ÁÖ °æ·Î ¼³Á¤
+						// ï¿½ï¿½Å¸ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 						FString MontagePath;
 						if ((*RowData)[2]->TryGetString(MontagePath))
 						{
-							NewData->Montage = LoadObject<UAnimMontage>(nullptr, *MontagePath);
+							Data[(int8)newType].Montage = LoadObject<UAnimMontage>(nullptr, *MontagePath);
 						}
 
 						// PlayRate
 						FString PlayRateStr;
 						if ((*RowData)[3]->TryGetString(PlayRateStr))
 						{
-							NewData->PlayRate = FCString::Atof(*PlayRateStr);
+							Data[(int8)newType].PlayRate = FCString::Atof(*PlayRateStr);
 						}
 
-						Data[(int8)NewData->Type] = NewData;
+
 
 					}
 					

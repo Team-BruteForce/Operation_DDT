@@ -52,6 +52,9 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	class UInputAction* IA_AimRifle;
 	
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	class UInputAction* IA_Roll;
+	
 #pragma endregion 
  
 public:
@@ -61,7 +64,7 @@ public:
 	UPROPERTY(VisibleAnywhere)
 		class UCMovementComponent* Movement;
  
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 		class UCStateComponent* State;
 	
 	UPROPERTY(visibleAnywhere)
@@ -72,6 +75,11 @@ public:
 
 	UPROPERTY(VisibleAnywhere)
 	class UCFireComponent* FireComp;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	class UCStatusComponent* Status;
+
+	
   
 protected:
 	virtual void BeginPlay() override;
@@ -79,17 +87,31 @@ protected:
 public:
 	virtual void Tick(float DeltaTime) override;
 
-public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	
+	/*UFUNCTION()
+	void OnPlayerOverlap(
+		UPrimitiveComponent* OverlappedComponent,
+		AActor* OtherActor,
+		UPrimitiveComponent* OtherComp,
+		int32 OtherBodyIndex,
+		bool bFromSweep,
+		const FHitResult& SweepResult
+	);*/
+	float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
+
+	
   
 private:
 	UFUNCTION()
 	void OnStateTypeChanged(EStateType InPrevType, EStateType InNewType);
- 
-private:
+
 	void OnAvoid();
- 
-private:
-	void BackStep();
+	FVector GetCurrentInputDirection();
+
+	void Roll();
+
+public:
+	void End_Rolling();
 
 };

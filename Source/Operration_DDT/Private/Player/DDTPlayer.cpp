@@ -12,11 +12,14 @@
 #include "Player/Components/CMontageComponent.h"
 #include "../../../../Plugins/EnhancedInput/Source/EnhancedInput/Public/EnhancedInputSubsystems.h"
 #include "../../../../Plugins/EnhancedInput/Source/EnhancedInput/Public/EnhancedInputComponent.h"
+#include "Boss/BossWeapon/CBossWeapon.h"
+#include "Boss/Component/CBossWeaponComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "DataWrappers/ChaosVDParticleDataWrapper.h"
 #include "Player/Components/CCameraActionComponent.h"
 #include "Player/Components/CWeaponComponent.h"
 #include "Player/Components/CFireComponent.h"
+#include "Player/Components/CStatusComponent.h"
 
 // Sets default values
 ADDTPlayer::ADDTPlayer()
@@ -39,13 +42,17 @@ ADDTPlayer::ADDTPlayer()
 	CHelpers::CreateComponent<UCameraComponent>(this, &Camera, "Camera", SpringArm);
 
 	// AddOn Components
+#pragma region Components
 	CHelpers::CreateActorComponent<UCMontageComponent>(this, &Montages, "Montage");
 	CHelpers::CreateActorComponent<UCMovementComponent>(this, &Movement, "Movement");
 	CHelpers::CreateActorComponent<UCStateComponent>(this, &State, "State");
 	CHelpers::CreateActorComponent<UCWeaponComponent>(this, &WeaponComp, "WeaponComp");
 	CHelpers::CreateActorComponent<UCCameraActionComponent>(this, &CameraActionComp, "CameraActionComp");
 	CHelpers::CreateActorComponent<UCFireComponent>(this, &FireComp, "FireComp");
-
+	CHelpers::CreateActorComponent<UCStatusComponent>(this, &Status, "Status");
+	
+#pragma endregion
+	
 	SpringArm->SetRelativeLocation(FVector(-60.f, 0.f, 180.f));
 	SpringArm->SetRelativeRotation(FRotator(0.f, 90.f, 0.f));
 	SpringArm->TargetArmLength = 200;
@@ -60,6 +67,12 @@ ADDTPlayer::ADDTPlayer()
 	bUseControllerRotationPitch = false;
 
 	Camera->bUsePawnControlRotation = false;
+
+	// 이동 방향이 아닌 컨트롤러 방향을 따르도록 설정
+	GetCharacterMovement()->bOrientRotationToMovement = false;
+
+	// 컨트롤러의 Desired Rotation을 사용 (필요 시, 기본적으로 true일 수 있음)
+	GetCharacterMovement()->bUseControllerDesiredRotation = true;
 
 	CHelpers::CreateComponent <UStaticMeshComponent>(this, &SwordHolster, "SwordHolster",GetMesh(), FName(TEXT("Holster_Sword")));
 	UStaticMesh* holster;
@@ -79,6 +92,9 @@ void ADDTPlayer::BeginPlay()
 	State->OnStateTypeChanged.AddDynamic(this, &ADDTPlayer::OnStateTypeChanged);
 	CameraActionComp->SetIdlePosition();
 
+	// BossWeapon과의 충돌 감지를 위한 콜리전 이벤트 바인딩
+	//GetMesh()->OnComponentBeginOverlap.AddDynamic(this, &ADDTPlayer::OnPlayerOverlap);
+	
 	APlayerController* pc = Cast<APlayerController>(GetController());
 	if (pc)
 	{
@@ -111,17 +127,79 @@ void ADDTPlayer::SetupPlayerInputComponent(class UInputComponent* PlayerInputCom
 		input->BindAction(IA_Sword, ETriggerEvent::Started, WeaponComp, &UCWeaponComponent::SetSwordMode);
 		input->BindAction(IA_Rifle, ETriggerEvent::Started, WeaponComp, &UCWeaponComponent::SetRifleMode);
 		input->BindAction(IA_Attack, ETriggerEvent::Started, WeaponComp, &UCWeaponComponent::DoAction);
-		input->BindAction(IA_AimRifle, ETriggerEvent::Started,CameraActionComp, &UCCameraActionComponent::SetAimPosition );
+		input->BindAction(IA_AimRifle, ETriggerEvent::Triggered,CameraActionComp, &UCCameraActionComponent::SetAimPosition );
 		input->BindAction(IA_AimRifle, ETriggerEvent::Completed, CameraActionComp, &UCCameraActionComponent::SetIdlePosition );
+		input->BindAction(IA_Roll, ETriggerEvent::Started, this, &ADDTPlayer::OnAvoid);
 	}
 
 }
 
+
+float ADDTPlayer::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
+	class AController* EventInstigator, AActor* DamageCauser)
+{
+
+	if (State->IsCanDodge())
+	{
+		CLog::Print("Dodge!");
+		return Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+	}
+	Status->GetDamage(DamageAmount);
+	CLog::Log("Player Take Damage" + FString::SanitizeFloat(DamageAmount));
+	return Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+}
+
 void ADDTPlayer::OnStateTypeChanged(EStateType InPrevType, EStateType InNewType)
 {
-	/*switch (InNewType)
+	switch (InNewType)
 	{
-		break;
-	}*/
+		case EStateType::Rolling:
+		{
+			// Roll() 호출 제거 - 이미 OnAvoid()에서 PlayRollingMode(InputDirection)로 처리됨
+			// 방향별 구르기가 기본 구르기로 덮어써지는 것을 방지
+			break;
+		}
+	}
+}
+
+void ADDTPlayer::OnAvoid()
+{
+	CheckFalse(State->IsIdleMode());
+	CheckFalse(Movement->CanMove());
+
+	// 현재 입력 방향 가져오기
+	FVector InputDirection = GetCharacterMovement()->GetLastInputVector();
+	InputDirection.Z = 0.f;
+	//FVector InputDirection = Movement->GetCachedDirection();
+	CLog::Log(InputDirection);
+	
+	// 입력 방향이 있으면 방향별 구르기, 없으면 기본 구르기
+	if (!InputDirection.IsNearlyZero())
+	{
+		Montages->PlayRollingMode(InputDirection);
+	}
+	else
+	{
+		CLog::Log("Just Forward Roll");
+		Montages->PlayRollingMode(); // 기존 방식
+	}
+
+	State->SetRollingMode();
+}
+
+void ADDTPlayer::Roll()
+{
+	Montages->PlayRollingMode();
+}
+
+void ADDTPlayer::End_Rolling()
+{
+	State->SetIdleMode();
+}
+
+FVector ADDTPlayer::GetCurrentInputDirection()
+{
+	// Movement 컴포넌트에서 현재 입력 방향 가져오기
+	return Movement->GetCurrentDirection();
 }
 

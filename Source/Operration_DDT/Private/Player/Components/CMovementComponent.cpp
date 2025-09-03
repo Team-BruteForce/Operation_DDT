@@ -96,6 +96,8 @@ void UCMovementComponent::OnMove(const struct FInputActionValue& InAxis)
 
 	Direction.X = inputValue.X;
 	Direction.Y = inputValue.Y;
+	CachedDirection = Direction;
+	CachedDirection.Z = 0.f;
 }
 
 void UCMovementComponent::OnHorizontalLook(const struct FInputActionValue& InAxis)
