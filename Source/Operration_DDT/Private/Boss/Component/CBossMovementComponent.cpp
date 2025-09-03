@@ -412,9 +412,14 @@ void UCBossMovementComponent::ExecuteSmartMovement(float DeltaTime, float MinDis
 	// 목표 위치 도착 여부를 추적하는 static 변수
 	static bool bReachedTargetPosition = false;
 	
-	// 플레이어 방향 추적을 위한 static 변수들
-	static FVector PreviousPlayerLocation = FVector::ZeroVector;
-	static bool bPlayerLocationInitialized = false;
+	// 시간 기반 전환을 위한 변수들
+	static float TimeInOptimalRange = 0.0f;
+	static bool bWasInOptimalRange = false;
+	
+			// 플레이어 방향 추적을 위한 static 변수들
+		static FVector PreviousPlayerLocation = FVector::ZeroVector;
+		static bool bPlayerLocationInitialized = false;
+		static FVector LastMovementDirection = FVector::ZeroVector; // 이전 이동 방향 저장
 	
 	// 거리 계산
 	FVector TargetLocation, OwnerLocation, DirectionToTarget;
@@ -426,10 +431,33 @@ void UCBossMovementComponent::ExecuteSmartMovement(float DeltaTime, float MinDis
 	float AdjustedMinDistance = MinDistance - DistanceTolerance;
 	float AdjustedMaxDistance = MaxDistance + DistanceTolerance;
 	
-	// 최소 거리에 도착했는지 확인 (한번만 체크)
-	if (!bReachedMinDistance && CurrentDistance <= MinDistance + DistanceTolerance)
+	// 최소 거리에 도착했는지 확인 (시간 기반 전환)
+	// 적정 거리 범위에서 1.5초 동안 유지되면 궤도 이동 모드로 전환
+	if (!bReachedMinDistance)
 	{
-		bReachedMinDistance = true;
+		// 거리 조건 확인
+		bool bInOptimalRange = (CurrentDistance >= MinDistance && CurrentDistance <= MaxDistance);
+		
+		if (bInOptimalRange) 
+		{
+			if (!bWasInOptimalRange) 
+			{
+				TimeInOptimalRange = 0.0f;  // 처음 진입 시 타이머 리셋
+			}
+			TimeInOptimalRange += DeltaTime;  // 시간 누적
+			
+			// 1.5초 동안 유지되면 전환
+			if (TimeInOptimalRange >= 1.5f) 
+			{
+				bReachedMinDistance = true;
+			}
+		} 
+		else 
+		{
+			TimeInOptimalRange = 0.0f;  // 범위 벗어나면 타이머 리셋
+		}
+		
+		bWasInOptimalRange = bInOptimalRange;
 	}
 	
 	// 플레이어 방향 추적 초기화
@@ -439,13 +467,19 @@ void UCBossMovementComponent::ExecuteSmartMovement(float DeltaTime, float MinDis
 		bPlayerLocationInitialized = true;
 	}
 	
-	// 플레이어 이동 방향 계산
-	FVector PlayerMovementDirection = FVector::ZeroVector;
-	if (bPlayerLocationInitialized)
-	{
-		PlayerMovementDirection = (TargetLocation - PreviousPlayerLocation).GetSafeNormal();
-		PreviousPlayerLocation = TargetLocation;
-	}
+			// 플레이어 이동 방향 계산
+		FVector PlayerMovementDirection = FVector::ZeroVector;
+		if (bPlayerLocationInitialized)
+		{
+			PlayerMovementDirection = (TargetLocation - PreviousPlayerLocation).GetSafeNormal();
+			PreviousPlayerLocation = TargetLocation;
+			
+			// 이동 방향이 유효하면 저장
+			if (PlayerMovementDirection.Size() > 0.1f)
+			{
+				LastMovementDirection = PlayerMovementDirection;
+			}
+		}
 	
 	// 최소 거리에 도착했으면 더 이상 거리 유지하지 않음
 	
@@ -480,23 +514,63 @@ void UCBossMovementComponent::ExecuteSmartMovement(float DeltaTime, float MinDis
 			float RightDot = FVector::DotProduct(PlayerMovementDirection, BossRight);
 			float ForwardDot = FVector::DotProduct(PlayerMovementDirection, BossForward);
 			
+			// 플레이어가 정지했는지 확인
+			bool bPlayerStopped = (PlayerMovementDirection.Size() < 0.1f);
+			
 			TargetPosition = OwnerLocation; // 기본값: 현재 위치 유지
 			
-			// 좌우 방향 처리 (반대 방향으로 이동)
-			if (FMath::Abs(RightDot) > FMath::Abs(ForwardDot))
+			// 플레이어가 정지했고 이전 이동 방향이 있으면 이전 방향으로 계속 이동
+			if (bPlayerStopped && LastMovementDirection.Size() > 0.1f)
 			{
-				// 좌우 이동이 더 강함
-				FVector SideDirection = (RightDot > 0) ? -BossRight : BossRight; // 반대 방향
-				TargetPosition = OwnerLocation + (SideDirection * 200.0f);
+				// 이전 이동 방향을 보스 기준 좌표계로 변환
+				float LastRightDot = FVector::DotProduct(LastMovementDirection, BossRight);
+				float LastForwardDot = FVector::DotProduct(LastMovementDirection, BossForward);
+				
+				// 이전 방향에 따라 이동
+				if (FMath::Abs(LastRightDot) > FMath::Abs(LastForwardDot))
+				{
+					// 이전에 좌우로 움직였다면 반대 방향으로 계속
+					FVector SideDirection = (LastRightDot > 0) ? -BossRight : BossRight;
+					TargetPosition = OwnerLocation + (SideDirection * 200.0f);
+				}
+				else if (LastForwardDot > 0.1f)
+				{
+					// 이전에 앞으로 움직였다면 앞으로 계속
+					FVector ForwardDirection = BossForward;
+					TargetPosition = OwnerLocation + (ForwardDirection * 200.0f);
+				}
+				else if (LastForwardDot < -0.1f)
+				{
+					// 이전에 뒤로 움직였다면 뒤로 계속
+					FVector BackwardDirection = -BossForward;
+					TargetPosition = OwnerLocation + (BackwardDirection * 200.0f);
+				}
 			}
-			// 앞뒤 방향 처리
-			else if (ForwardDot < -0.1f) // 뒤로 이동 (음수)
+			// 플레이어가 움직이고 있으면 기존 로직 사용
+			else if (!bPlayerStopped)
 			{
-				// 뒤로 가면 따라가기
-				FVector BackwardDirection = -BossForward;
-				TargetPosition = OwnerLocation + (BackwardDirection * 200.0f);
+				// 좌우 방향 처리 (반대 방향으로 이동)
+				if (FMath::Abs(RightDot) > FMath::Abs(ForwardDot))
+				{
+					// 좌우 이동이 더 강함
+					FVector SideDirection = (RightDot > 0) ? -BossRight : BossRight; // 반대 방향
+					TargetPosition = OwnerLocation + (SideDirection * 200.0f);
+				}
+				// 앞뒤 방향 처리 (좌우보다 앞뒤가 더 강할 때)
+				else if (ForwardDot > 0.1f) // 앞으로 이동 (양수)
+				{
+					// 플레이어가 앞으로 가면 보스도 앞으로 이동
+					FVector ForwardDirection = BossForward;
+					TargetPosition = OwnerLocation + (ForwardDirection * 200.0f);
+				}
+				else if (ForwardDot < -0.1f) // 뒤로 이동 (음수)
+				{
+					// 플레이어가 뒤로 가면 보스도 뒤로 이동
+					FVector BackwardDirection = -BossForward;
+					TargetPosition = OwnerLocation + (BackwardDirection * 200.0f);
+				}
 			}
-			// 앞으로 이동하거나 정지하면 그대로 유지 (TargetPosition = OwnerLocation)
+			// 플레이어가 정지하고 이전 방향도 없으면 그대로 유지
 			
 			// AI MoveTo로 목표 좌표로 이동
 			if (AIC)
@@ -517,10 +591,10 @@ void UCBossMovementComponent::ExecuteSmartMovement(float DeltaTime, float MinDis
 			}
 		}
 		
-		// 속도 조정
+		// 속도 조정 (궤도 이동)
 		if (ACharacter* BossChar = Cast<ACharacter>(Owner))
 		{
-			BossChar->GetCharacterMovement()->MaxWalkSpeed = 300;
+			BossChar->GetCharacterMovement()->MaxWalkSpeed = 150;
 		}
 	}
 	else
@@ -531,10 +605,10 @@ void UCBossMovementComponent::ExecuteSmartMovement(float DeltaTime, float MinDis
 		{
 			TargetPosition = TargetLocation - DirectionToTarget * MinDistance;
 			
-			// 속도 조정 (빠른 이동)
+			// 속도 조정 (거리 유지 - 빠른 이동)
 			if (ACharacter* BossChar = Cast<ACharacter>(Owner))
 			{
-				BossChar->GetCharacterMovement()->MaxWalkSpeed = 400;
+				BossChar->GetCharacterMovement()->MaxWalkSpeed = 300;
 			}
 			
 			// AI 컨트롤러로 이동
@@ -547,10 +621,10 @@ void UCBossMovementComponent::ExecuteSmartMovement(float DeltaTime, float MinDis
 		{
 			TargetPosition = TargetLocation - DirectionToTarget * MaxDistance;
 			
-			// 속도 조정 (빠른 이동)
+			// 속도 조정 (거리 유지 - 빠른 이동)
 			if (ACharacter* BossChar = Cast<ACharacter>(Owner))
 			{
-				BossChar->GetCharacterMovement()->MaxWalkSpeed = 400;
+				BossChar->GetCharacterMovement()->MaxWalkSpeed = 300;
 			}
 			
 			// AI 컨트롤러로 이동
@@ -564,10 +638,10 @@ void UCBossMovementComponent::ExecuteSmartMovement(float DeltaTime, float MinDis
 			// 적정 거리면 최소 거리로 접근
 			TargetPosition = TargetLocation - DirectionToTarget * MinDistance;
 			
-			// 속도 조정
+			// 속도 조정 (거리 유지 - 부드러운 접근)
 			if (ACharacter* BossChar = Cast<ACharacter>(Owner))
 			{
-				BossChar->GetCharacterMovement()->MaxWalkSpeed = 200;
+				BossChar->GetCharacterMovement()->MaxWalkSpeed = 300;
 			}
 			
 			// AI 컨트롤러로 이동

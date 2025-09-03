@@ -39,7 +39,6 @@ EStateTreeRunStatus UTask_PlayMontage::EnterState(FStateTreeExecutionContext& Co
 	if(bStarted) return EStateTreeRunStatus::Running;
 	bStarted=true;
 	UCBossWeaponComponent* WeaponComp=CHelpers::GetComponent<UCBossWeaponComponent>(Owner);
-	UBossProjectileComponent* ProjectileComp=CHelpers::GetComponent<UBossProjectileComponent>(Owner);
 	UCBossTargetingComponent* TargetingComp=CHelpers::GetComponent<UCBossTargetingComponent>(Owner);
 	UCBossStatusComponent* StatusComp=CHelpers::GetComponent<UCBossStatusComponent>(Owner);
 	StatusComp->ResetAp();
@@ -47,7 +46,6 @@ EStateTreeRunStatus UTask_PlayMontage::EnterState(FStateTreeExecutionContext& Co
 	if (WeaponComp)
 	{
 		WeaponComp->BossDoAction(SelectedTag);
-		// ProjectileComp->ShotProjectile();
 		// ProjectileComp->ShotProjectileToLocation(TargetingComp->FindPlayer(), 1.0f);
 	}
 	
