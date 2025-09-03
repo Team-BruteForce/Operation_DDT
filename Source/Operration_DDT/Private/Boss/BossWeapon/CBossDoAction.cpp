@@ -13,6 +13,7 @@
 #include "Boss/BossWeapon/CBossDoAction.h"
 #include "Global.h"
 #include "Boss/Component/BossStateComponent.h"
+#include "Boss/Component/CBossMovementComponent.h"
 #include "GameFramework/Character.h"
 
 /**
