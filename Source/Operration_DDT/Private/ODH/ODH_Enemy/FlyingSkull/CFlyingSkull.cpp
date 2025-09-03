@@ -5,6 +5,9 @@
 #include "ODH/ODH_Enemy/Component/CEnemyStatusComponent.h"
 #include "ODH/ODH_Enemy/Component/CEnemyMeleeAttackComponent.h"
 #include "ODH/Component/CEnemyProjectileComp.h"
+#include "ODH/ODH_Enemy/FlyingSkull/CSkullRangedATKManager.h"
+#include "ODH/ODH_AIController/CFlyingSkullAIController.h"
+#include "Kismet/GameplayStatics.h"
 #include "Engine/Engine.h"
 
 // Sets default values
@@ -12,6 +15,9 @@ ACFlyingSkull::ACFlyingSkull()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+
+	// AI 컨트롤러 클래스 설정
+	AIControllerClass = ACFlyingSkullAIController::StaticClass();
 
 	// 스테이터스 컴포넌트 생성
 	StatusComponent = CreateDefaultSubobject<UCEnemyStatusComponent>(TEXT("StatusComponent"));
@@ -24,6 +30,9 @@ ACFlyingSkull::ACFlyingSkull()
 void ACFlyingSkull::BeginPlay()
 {
 	Super::BeginPlay();
+	
+	// 타이머 핸들 초기화
+	DeathTimerHandle.Invalidate();
 	
 	// Flying Skull 전용 스테이터스 설정
 	if (StatusComponent)
@@ -51,6 +60,17 @@ void ACFlyingSkull::BeginPlay()
 	{
 		MeleeAttackComponent->OnMeleeAttackHit.AddDynamic(this, &ACFlyingSkull::OnMeleeAttackHit);
 	}
+}
+
+void ACFlyingSkull::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	// 타이머 정리
+	if (GetWorldTimerManager().IsTimerActive(DeathTimerHandle))
+	{
+		GetWorldTimerManager().ClearTimer(DeathTimerHandle);
+	}
+	
+	Super::EndPlay(EndPlayReason);
 }
 
 // Called every frame
@@ -94,12 +114,54 @@ bool ACFlyingSkull::IsDead_Implementation() const
 	return false;
 }
 
+// UGameplayStatics::ApplyDamage를 위한 TakeDamage 오버라이드
+float ACFlyingSkull::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser)
+{
+	// 이미 사망한 경우 데미지를 받지 않음
+	if (StatusComponent && StatusComponent->IsDead())
+	{
+		return 0.0f;
+	}
+
+	// IDamageable 인터페이스의 TakeDamage_Implementation 호출
+	TakeDamage_Implementation(DamageAmount);
+
+	// 디버그 출력
+	if (GEngine)
+	{
+		float CurrentHealth = StatusComponent ? StatusComponent->GetCurrentHealth() : 0.0f;
+		float HealthPercent = StatusComponent ? StatusComponent->GetHealthPercent() * 100.0f : 0.0f;
+		
+		FString DebugMessage = FString::Printf(TEXT("Flying Skull took %.1f damage from %s! Health: %.1f (%.1f%%)"), 
+			DamageAmount, DamageCauser ? *DamageCauser->GetName() : TEXT("Unknown"), CurrentHealth, HealthPercent);
+		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Yellow, DebugMessage);
+	}
+
+	return DamageAmount;
+}
+
+// IGenericTeamAgentInterface 구현
+FGenericTeamId ACFlyingSkull::GetGenericTeamId() const
+{
+	return FGenericTeamId(1); // Team ID 1 (적 팀)
+}
+
 // 공격 함수들
 void ACFlyingSkull::PlayMeleeAttack()
 {
 	if (MeleeAttackComponent)
 	{
 		MeleeAttackComponent->ActivateMeleeAttack();
+		bIsMeleeAttacking = true;
+		
+		// 기존 타이머 클리어 후 재설정
+		GetWorldTimerManager().ClearTimer(MeleeAttackTimerHandle);
+		FTimerDelegate ClearMelee;
+		ClearMelee.BindLambda([this]()
+		{
+			bIsMeleeAttacking = false;
+		});
+		GetWorldTimerManager().SetTimer(MeleeAttackTimerHandle, ClearMelee, 0.6f, false);
 		
 		// 디버그 출력
 		if (GEngine)
@@ -112,7 +174,15 @@ void ACFlyingSkull::PlayMeleeAttack()
 void ACFlyingSkull::PlayRangedAttack()
 {
 	// 원거리 공격 로직
-	// 예: 프로젝타일 발사, 원거리 공격 애니메이션 등
+	bIsRangedAttacking = true;
+	
+	GetWorldTimerManager().ClearTimer(RangedAttackTimerHandle);
+	FTimerDelegate ClearRanged;
+	ClearRanged.BindLambda([this]()
+	{
+		bIsRangedAttacking = false;
+	});
+	GetWorldTimerManager().SetTimer(RangedAttackTimerHandle, ClearRanged, 0.6f, false);
 	
 	// 디버그 출력
 	if (GEngine)
@@ -139,13 +209,49 @@ void ACFlyingSkull::SpawnRangedProjectileAtLocation(AActor* TargetPlayer, FVecto
 	if (!TargetPlayer)
 		return;
 	
-	// 프로젝타일 액터 스폰
+	// 월드 컨텍스트
 	UWorld* World = GetWorld();
 	if (!World)
 		return;
 	
-	// 프로젝타일 클래스 가져오기
+	// 풀 매니저 찾기
+	ACSkullRangedATKManager* Pool = Cast<ACSkullRangedATKManager>(UGameplayStatics::GetActorOfClass(World, ACSkullRangedATKManager::StaticClass()));
+	
+	// 사용할 프로젝타일 클래스
 	TSubclassOf<AActor> ProjectileClassToUse = GetProjectileClass();
+	
+	if (Pool)
+	{
+		// 매니저에 클래스가 비어 있으면 설정
+		if (!Pool->ProjectileClass && ProjectileClassToUse)
+		{
+			Pool->ProjectileClass = ProjectileClassToUse;
+		}
+		
+		// 풀에서 하나 대여
+		AActor* PooledProjectile = Pool->AcquireProjectile(World);
+		if (PooledProjectile)
+		{
+			PooledProjectile->SetActorLocation(SpawnLocation);
+			PooledProjectile->SetActorRotation(SpawnRotation);
+			PooledProjectile->SetOwner(this);
+			PooledProjectile->SetInstigator(this);
+			
+			if (UCEnemyProjectileComp* ProjectileComponent = PooledProjectile->FindComponentByClass<UCEnemyProjectileComp>())
+			{
+				ProjectileComponent->InitializeTarget(TargetPlayer);
+			}
+			
+			if (GEngine)
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, 
+					FString::Printf(TEXT("Flying Skull pooled projectile targeting %s"), *TargetPlayer->GetName()));
+			}
+			return;
+		}
+	}
+	
+	// 풀을 사용하지 못하면 기존 스폰 방식으로 폴백
 	if (!ProjectileClassToUse)
 	{
 		if (GEngine)
@@ -169,29 +275,24 @@ void ACFlyingSkull::SpawnRangedProjectileAtLocation(AActor* TargetPlayer, FVecto
 	
 	if (SpawnedProjectile)
 	{
-		// CEnemyProjectileComp 컴포넌트 찾기
-		UCEnemyProjectileComp* ProjectileComponent = SpawnedProjectile->FindComponentByClass<UCEnemyProjectileComp>();
-		if (ProjectileComponent)
+		if (UCEnemyProjectileComp* ProjectileComponent = SpawnedProjectile->FindComponentByClass<UCEnemyProjectileComp>())
 		{
-			// 타겟 설정
 			ProjectileComponent->InitializeTarget(TargetPlayer);
 			
-			// 디버그 출력
 			if (GEngine)
 			{
 				GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, 
-					FString::Printf(TEXT("Flying Skull spawned projectile targeting %s"), *TargetPlayer->GetName()));
+					FString::Printf(TEXT("Flying Skull spawned projectile targeting %s (fallback)"), *TargetPlayer->GetName()));
 			}
 		}
 		else
 		{
-			// 컴포넌트가 없으면 제거
 			SpawnedProjectile->Destroy();
 			
 			if (GEngine)
 			{
 				GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, 
-					TEXT("Failed to find ProjectileComponent on spawned projectile"));
+					TEXT("Failed to find ProjectileComponent on spawned projectile (fallback)"));
 			}
 		}
 	}
@@ -207,12 +308,28 @@ void ACFlyingSkull::OnDeath()
 	// 사망 시 처리 로직
 	if (GEngine)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Flying Skull Died!"));
+		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Flying Skull Died! Will be removed in 3 seconds..."));
 	}
 	
-	// 여기에 사망 애니메이션 재생, 사망 효과 등 추가 가능
-	// 예: Destroy(); // 즉시 제거
-	// 또는 사망 애니메이션 후 제거하는 로직
+	// 기존 타이머가 있다면 클리어
+	GetWorldTimerManager().ClearTimer(DeathTimerHandle);
+	
+	FTimerDelegate DestroySelf;
+	DestroySelf.BindLambda([this]()
+	{
+		if (IsValid(this))
+		{
+			if (GEngine)
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("Flying Skull removed from game!"));
+			}
+			Destroy();
+		}
+	});
+	GetWorldTimerManager().SetTimer(DeathTimerHandle, DestroySelf, 3.0f, false);
+	
+	// 사망 애니메이션 재생, 사망 효과 등 추가 가능
+	// 예: PlayDeathAnimation();
 }
 
 void ACFlyingSkull::OnMeleeAttackHit(AActor* HitActor)

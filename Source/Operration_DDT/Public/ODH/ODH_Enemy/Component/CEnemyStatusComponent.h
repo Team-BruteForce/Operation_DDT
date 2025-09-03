@@ -72,6 +72,9 @@ public:
 	float GetHealthPercent() const;
 
 	UFUNCTION(BlueprintCallable, Category = "Status")
+	float GetCurrentHealth() const { return CurrentHealth; }
+
+	UFUNCTION(BlueprintCallable, Category = "Status")
 	bool IsDead() const { return bIsDead; }
 
 	// 공격력 관련 함수들
