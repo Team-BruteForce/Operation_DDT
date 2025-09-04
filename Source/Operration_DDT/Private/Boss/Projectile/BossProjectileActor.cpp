@@ -5,6 +5,7 @@
 #include "NiagaraComponent.h"
 #include "Components/ShapeComponent.h"
 #include "Components/SphereComponent.h"
+#include "GameFramework/Character.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 
 // Sets default values
@@ -16,6 +17,8 @@ ABossProjectileActor::ABossProjectileActor()
 	SetRootComponent(Root);
 	
 	CHelpers::CreateComponent<UNiagaraComponent>(this, &NiagaraProjectile, "NiagaraProjectileComp", Root);
+	CHelpers::CreateComponent<UNiagaraComponent>(this, &NiagaraSpawnEffect, "NiagaraSpawnEffect", Root);
+	CHelpers::CreateComponent<UNiagaraComponent>(this, &NiagaraDestroyEffect, "NiagaraDestroyEffect", Root);
 	CHelpers::CreateActorComponent<UProjectileMovementComponent>(this, &ProjectileComp, "ProjectileComp");
 	CHelpers::CreateComponent<USphereComponent>(this, &Shape, "Shape", Root);
 	
@@ -29,12 +32,19 @@ ABossProjectileActor::ABossProjectileActor()
 	bMovingToLocation = false;
 	WaitTimer = 0.0f;
 	WaitDuration = 2.0f;
+	
+	// 충돌 설정
+	if (Shape)
+	{
+		Shape->OnComponentBeginOverlap.AddDynamic(this, &ABossProjectileActor::OnProjectileHit);
+	}
 }
 
 // Called when the game starts or when spawned
 void ABossProjectileActor::BeginPlay()
 {
 	Super::BeginPlay();
+	
 }
 
 // Called every frame
@@ -54,7 +64,6 @@ void ABossProjectileActor::Tick(float DeltaTime)
 		{
 			bWaitingToMove = false;
 			bMovingToLocation = true;
-			UE_LOG(LogTemp, Warning, TEXT("대기 완료! 지점으로 이동 시작"));
 		}
 		else
 		{
@@ -74,14 +83,13 @@ void ABossProjectileActor::Tick(float DeltaTime)
 		float DistanceToTarget = FVector::Dist(GetActorLocation(), DelayedTargetLocation);
 		if (DistanceToTarget < 50.0f)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("목표 지점 도달!"));
 			bMovingToLocation = false;
 		}
 		
 		return;
 	}
 	
-	// 기존 추적 로직 (변경 없음)
+	// 기존 추적 로직
 	if (!bHasPassedTarget)
 	{
 		// Phase 1: 타겟 추적 (관통)
@@ -97,16 +105,14 @@ void ABossProjectileActor::Tick(float DeltaTime)
 			// 타겟 방향으로 회전
 			SetActorRotation(Direction.Rotation());
 			
-			// 타겟을 완전히 통과했는지 확인 (시작점에서 타겟까지의 선을 넘어섰을 때)
+			// 타겟을 완전히 통과했는지 확인
 			FVector StartToTarget = TargetLocation - StartLocation;
 			FVector CurrentToStart = GetActorLocation() - StartLocation;
 			
-			// 현재 위치가 시작점에서 타겟까지의 선을 넘어섰는지 확인
 			if (FVector::DotProduct(StartToTarget, CurrentToStart) > FVector::DotProduct(StartToTarget, StartToTarget))
 			{
-				// 타겟을 완전히 통과함
 				bHasPassedTarget = true;
-				LastDirection = Direction; // 마지막 이동 방향 저장
+				LastDirection = Direction;
 			}
 		}
 	}
@@ -120,6 +126,7 @@ void ABossProjectileActor::Tick(float DeltaTime)
 	// 수명이 다하면 파괴
 	if (CurrentTime >= LifeTime)
 	{
+		PlayDestroyEffect();
 		Destroy();
 	}
 }
@@ -133,17 +140,42 @@ void ABossProjectileActor::FireProjectile(AActor* Target)
 	// 시작 위치 저장
 	StartLocation = GetActorLocation();
 	
-	// VFX 활성화
-	if (NiagaraProjectile)
+	// 스폰 이펙트 재생
+	PlaySpawnEffect();
+}
+
+// 스폰 시 나이아가라 이펙트 재생
+void ABossProjectileActor::PlaySpawnEffect()
+{
+	if (NiagaraSpawnEffect)
 	{
-		NiagaraProjectile->Activate();
+		NiagaraSpawnEffect->Activate();
 	}
+}
+
+// 파괴 시 나이아가라 이펙트 재생
+void ABossProjectileActor::PlayDestroyEffect()
+{
+	if (NiagaraDestroyEffect)
+	{
+		// 현재 위치로 설정
+		NiagaraDestroyEffect->SetWorldLocation(GetActorLocation());
+		
+		// 이펙트가 이미 활성화되어 있다면 재시작
+		if (NiagaraDestroyEffect->IsActive())
+		{
+			NiagaraDestroyEffect->Deactivate();
+		}
+		
+		// 이펙트 활성화
+		NiagaraDestroyEffect->Activate(true);
+	}
+
 }
 
 // 새로운 기능: 스폰 후 n초 대기 후 원하는 지점으로 이동
 void ABossProjectileActor::FireProjectileToLocation(const FVector& TargetLocation, float WaitTime)
 {
-	
 	// 기존 추적 기능 비활성화
 	TargetActor = nullptr;
 	bHasPassedTarget = true;
@@ -160,6 +192,34 @@ void ABossProjectileActor::FireProjectileToLocation(const FVector& TargetLocatio
 	{
 		NiagaraProjectile->Activate();
 	}
-	
+}
+
+// 충돌 판정 함수
+void ABossProjectileActor::OnProjectileHit(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (ACharacter* Boss = Cast<ACharacter>(OtherActor))
+	{
+		
+		// 충돌 후 콜리전 비활성화 (다단히트 방지)
+		if (Shape)
+		{
+			Shape->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		}
+		UGameplayStatics::ApplyDamage(Boss,1,Boss->GetController(),Boss,nullptr);
+		
+		// 파괴 이펙트 재생
+		PlayDestroyEffect();
+		
+		// 0.5초 후에 프로젝타일 파괴 (이펙트 재생 시간 확보)
+		FTimerHandle DestroyTimerHandle;
+		GetWorld()->GetTimerManager().SetTimer(DestroyTimerHandle, [this]()
+		{
+			Destroy();
+		}, 0.25f, false);
+		
+		// 충돌 후 더 이상 이동하지 않도록 설정
+		SetActorTickEnabled(false);
+	}
 }
 

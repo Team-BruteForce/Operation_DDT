@@ -25,5 +25,6 @@ namespace AssetPaths
     constexpr const TCHAR* Boss_StateTree = TEXT ("/Script/StateTreeModule.StateTree'/Game/LHW/StateTree/STT_Boss.STT_Boss_C'");
     constexpr const TCHAR* Boss_StatsDataTable = TEXT ("/Script/Engine.DataTable'/Game/LHW/BossData/DT_BossStats.DT_BossStats'");
     constexpr const TCHAR* Boss_Projectile = TEXT ("/Script/Engine.Blueprint'/Game/LHW/Blueprint/BP_Projectile.BP_Projectile_C'");
+    constexpr const TCHAR* Boss_Orb = TEXT ("/Script/Engine.Blueprint'/Game/LHW/Blueprint/BP_Orb.BP_Orb_C''");
 #pragma endregion BossAsset
 }

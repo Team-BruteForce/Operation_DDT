@@ -295,7 +295,7 @@ FVector UCBossMovementComponent::FindBackstepPosition()
 			FVector SearchDirection = BossBackwardDirection.RotateAngleAxis(CurrentAngle, FVector::UpVector);
 			
 			// 플레이어로부터 지정된 거리에 있는 위치 계산
-			FVector TargetPosition = PlayerLocation + SearchDirection * TargetingComp->DistanceThresholds[3];
+			FVector TargetPosition = PlayerLocation + SearchDirection * TargetingComp->DistanceThresholds[2];
 			
 			// Nav Mesh에서 안전한 위치 찾기
 			SafePosition = FindSafePositionOnNavMesh(SearchDirection, FVector::Dist(BossLocation, TargetPosition));

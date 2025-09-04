@@ -14,34 +14,82 @@ UBossProjectileComponent::UBossProjectileComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
 	CHelpers::GetClass<ABossProjectileActor>(&ProjectileClass,AssetPaths::Boss_Projectile);
+	CHelpers::GetClass<ABossProjectileOrb>(&ProjectileOrbClass,AssetPaths::Boss_Orb);
 }
 
 // 기존 단일 발사 함수
 void UBossProjectileComponent::ShotProjectile()
 {
-	UE_LOG(LogTemp, Warning, TEXT("ShotProjectile() 호출됨"));
-	
 	UCBossTargetingComponent* TargetingComp = CHelpers::GetComponent<UCBossTargetingComponent>(GetOwner());
-	UE_LOG(LogTemp, Warning, TEXT("ShotProjectile - TargetingComp: %s"), TargetingComp ? TEXT("찾음") : TEXT("못찾음"));
-	
 	if (TargetingComp && TargetingComp->FindPlayer())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("ShotProjectile - 플레이어 찾음"));
-		ABossProjectileActor* Projectile = GetWorld()->SpawnActor<ABossProjectileActor>(ProjectileClass, GetOwner()->GetActorLocation(), FRotator(0));
-		if (Projectile)
+		ACharacter* Boss = Cast<ACharacter>(GetOwner());
+		if (Boss)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("ShotProjectile - 투사체 스폰 성공"));
-			Projectile->FireProjectile(TargetingComp->FindPlayer());
+			// 플레이어 방향으로 회전 계산 (창이 세워서 날아가도록)
+			FVector PlayerLocation = TargetingComp->FindPlayer()->GetActorLocation();
+			FVector BossLocation = Boss->GetActorLocation();
+			FVector Direction = (PlayerLocation - BossLocation).GetSafeNormal();
+			FRotator TargetRotation = Direction.Rotation();
+			
+			
+			// 보스 소켓 위치에서 스폰 (플레이어 방향으로 회전)
+			FVector SpawnLocation = Boss->GetMesh()->GetSocketLocation(FName("LightningSpear"));
+			
+			AProjectile_LightSpear* Projectile = GetWorld()->SpawnActor<AProjectile_LightSpear>(ProjectileSpearClass, SpawnLocation, TargetRotation);
+			if (Projectile)
+			{
+				// 오너 설정
+				Projectile->SetOwner(GetOwner());
+				
+				// 발사 함수 호출
+				Projectile->FireProjectile();
+			}
+		}
+	}
+}
+
+void UBossProjectileComponent::SpawnOrb()
+{
+		ExitOrb=true;
+	// 0.5초 간격으로 오브 3개 소환
+	GetWorld()->GetTimerManager().SetTimer(OrbTimerHandle, [this]()
+	{
+		// 오브 소환 카운터 증가
+		OrbSpawnCount++;
+		
+		// 소켓 이름 동적 생성
+		FString SocketNameString = FString::Printf(TEXT("OrbSocket_%d"), OrbSpawnCount);
+		FName SocketName = FName(*SocketNameString);
+		ACharacter* Boss=Cast<ACharacter>(GetOwner());
+		
+		// 소켓 위치 가져오기
+		FVector SocketLocation = Boss->GetMesh()->GetSocketLocation(SocketName);
+		FRotator SocketRotation = Boss->GetMesh()->GetSocketRotation(SocketName);
+		
+		// 오브 스폰 시 소유자 설정
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.Owner = GetOwner();
+		
+		ABossProjectileOrb* Orb = GetWorld()->SpawnActor<ABossProjectileOrb>(ProjectileOrbClass, SocketLocation, SocketRotation, SpawnParams);
+		if (Orb)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("SpawnOrb - 오브 스폰 성공 (소켓: %s, 카운트: %d)"), *SocketNameString, OrbSpawnCount);
 		}
 		else
 		{
-			UE_LOG(LogTemp, Error, TEXT("ShotProjectile - 투사체 스폰 실패"));
+			UE_LOG(LogTemp, Error, TEXT("SpawnOrb - 오브 스폰 실패 (소켓: %s, 카운트: %d)"), *SocketNameString, OrbSpawnCount);
 		}
-	}
-	else
+	}, 0.5f, true, 0.0f);
+	
+	// 3번 소환 후 타이머 정리
+	FTimerHandle CleanupTimerHandle;
+	GetWorld()->GetTimerManager().SetTimer(CleanupTimerHandle, [this]()
 	{
-		UE_LOG(LogTemp, Error, TEXT("ShotProjectile - TargetingComp 또는 플레이어 못찾음"));
-	}
+		GetWorld()->GetTimerManager().ClearTimer(OrbTimerHandle);
+		// 카운터 리셋
+		OrbSpawnCount = 0;
+	}, 1.5f, false);
 }
 
 // 새로운 기능: 타겟 액터를 받아서 발사 직전에 타겟의 위치로 이동
@@ -72,3 +120,17 @@ void UBossProjectileComponent::ShotProjectileToLocation(AActor* Target, float Wa
 		UE_LOG(LogTemp, Error, TEXT("ShotProjectileToLocation - 투사체 스폰 실패"));
 	}
 }
+
+void UBossProjectileComponent::DestroyOrb()
+{
+	OrbSpawnCount--;
+	if (OrbSpawnCount>0)
+	{
+		ExitOrb=false;
+	}
+	else
+	{
+		ExitOrb=true;
+	}
+}
+

@@ -24,6 +24,12 @@ public:
 	class UNiagaraComponent* NiagaraProjectile;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectile")
+	class UNiagaraComponent* NiagaraSpawnEffect;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectile")
+	class UNiagaraComponent* NiagaraDestroyEffect;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectile")
 	class UProjectileMovementComponent* ProjectileComp;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectile")
@@ -38,6 +44,15 @@ public:
 	
 	// 새로운 기능: 스폰 후 n초 대기 후 원하는 지점으로 이동
 	void FireProjectileToLocation(const FVector& TargetLocation, float WaitTime = 2.0f);
+	
+	// 이펙트 관련 함수들
+	void PlaySpawnEffect();
+	void PlayDestroyEffect();
+	
+	// 충돌 판정 함수
+	UFUNCTION()
+	void OnProjectileHit(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	
 
 private:
 	// 기본 변수들

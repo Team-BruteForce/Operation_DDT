@@ -16,7 +16,7 @@ void UAnimNotify_GateOfBabylonSpawn::Notify(USkeletalMeshComponent* MeshComp, UA
 	CheckNull(Owner);
 	UBossProjectileComponent* ProjectileComp=CHelpers::GetComponent<UBossProjectileComponent>(Owner);
 	CheckNull(ProjectileComp);
-	ProjectileComp->ShotProjectile();
+	ProjectileComp->SpawnOrb();
 	
 	Super::Notify(MeshComp, Animation);
 }

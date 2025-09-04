@@ -12,6 +12,7 @@
 #include "DrawDebugHelpers.h"
 #include "Engine/Engine.h"
 #include "NavigationSystem.h"
+#include "Boss/Component/BossProjectileComponent.h"
 
 void UCBossEnemyStateTreeEvaluator::Tick(FStateTreeExecutionContext& Context, const float DeltaTime)
 {
@@ -22,9 +23,11 @@ void UCBossEnemyStateTreeEvaluator::Tick(FStateTreeExecutionContext& Context, co
 	if (!DebugComponent) DebugComponent = CHelpers::GetComponent<UBossDebugComponent>(Boss);
 	if (!State) State=CHelpers::GetComponent<UBossStateComponent>(Boss);
 	if (!Status) Status=CHelpers::GetComponent<UCBossStatusComponent>(Boss);
+	if (!Projectile) Projectile=CHelpers::GetComponent<UBossProjectileComponent>(Boss);
 	// 컴포넌트에서 계산 결과를 전역변수로 받아오기
 	Get_Decision_Data(Context, DeltaTime);
-	
+	IsExitOrb= Projectile->ExitOrb;
+	CLog::Log(IsExitOrb);
 	// 컴포넌트를 사용하여 타겟 이동 방향 계산
 	if (TargetingComponent)
 	{
