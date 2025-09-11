@@ -25,6 +25,8 @@ private:
 	class ADDTPlayer* OwnerCharacter;
 
 	class USpringArmComponent* OwnerSpringArm;
+	class UCMovementComponent* Movement;
+	class UCStateComponent* State;
 
 public:
 	void SetAimPosition();

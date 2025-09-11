@@ -24,23 +24,32 @@ protected:
 public:	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
-protected:
 	AActor* GetActorAttachedToSocket(const FName& SocketName);
+protected:
+	
 	void SetMuzzleVector(const FName& SocketName);
 
 public:
 	void Fire();
 
+	UPROPERTY(EditDefaultsOnly, Category = "VFX")
+	class UNiagaraSystem* MuzzleFireSystem;
+
+	UPROPERTY(visibleAnywhere)
+	class UNiagaraComponent* MuzzleFireComp;
+
 private:
 	class ADDTPlayer* OwnerCharacter;
 	class ACAttachment* Rifle;
+	class UCMagazineComponent* MagazineComponent;
 
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Gun")
 	TSubclassOf<ACPlayerBullet> PlayerBulletClass;
 
 	FVector MuzzleVector;
+	FRotator MuzzleRotator;
+	FVector MuzzleForwardVector;
 	FName RifleSocketName;
 
 		

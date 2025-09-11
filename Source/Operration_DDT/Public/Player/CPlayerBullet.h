@@ -35,6 +35,12 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "Default")
 	class UProjectileMovementComponent* Movement;
 
+	UPROPERTY(EditDefaultsOnly, Category = "VFX")
+	class UNiagaraSystem* BulletTrailSystem;
+
+	UPROPERTY(visibleAnywhere)
+	class UNiagaraComponent* BulletTrailComp;
+	
 
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "Default")
 	float LifeTime = 5.f;
@@ -46,6 +52,10 @@ public:
 	float BulletDamage = 25.f;
 
 	void SetVelocity(FVector value);
+	
+	// 랜덤 데미지 설정 함수
+	UFUNCTION(BlueprintCallable, Category = "Damage")
+	void SetRandomDamage();
 
 	class ADDTPlayer* OwnerCharacter;
 

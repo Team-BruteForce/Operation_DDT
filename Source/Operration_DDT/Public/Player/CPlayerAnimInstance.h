@@ -29,6 +29,15 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category="Animation")
 	bool bAimMode = false;
 
+	UPROPERTY(BlueprintReadOnly, Category="Animation")
+	bool bIsSprinting = false;
+
+	UPROPERTY(BlueprintReadOnly, Category="Animation")
+	float ForwardInput;
+
+	UPROPERTY(BlueprintReadOnly, Category="Animation")
+	float RightInput;
+
 protected:
 		UPROPERTY(BlueprintReadOnly, EditAnywhere, Category="Animation")
 		EWeaponType WeaponType = EWeaponType::Max;
@@ -36,12 +45,15 @@ protected:
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category="Animation")
 	EStateType PlayerStateType = EStateType::Idle;
 
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category="Animation")
+	class ADDTPlayer* OwnerCharacter;
+
 public:
 	void NativeBeginPlay() override;
 	void NativeUpdateAnimation(float DeltaSeconds) override;
 
 private:
-	class ADDTPlayer* OwnerCharacter;
+	
 	class UCWeaponComponent* Weapon;
 
 	FRotator PrevRotation;

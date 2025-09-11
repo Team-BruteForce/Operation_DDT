@@ -16,6 +16,7 @@ enum class EStateType : uint8
 	RifleAtt,
 	SwordAtt,
 	RevolverAtt,
+	RifleReload,
 	Equip,
 	Healing,
 	Hitted,
@@ -50,6 +51,7 @@ public:
 	FORCEINLINE bool IsHittedMode() { return Type == EStateType::Hitted; }
 	FORCEINLINE bool IsDeadMode() { return Type == EStateType::Dead; }
 	FORCEINLINE bool IsActionMode() { return Type == EStateType::Action; }
+	FORCEINLINE bool IsReloadMode() { return Type == EStateType::RifleReload; }
 	
 	FORCEINLINE bool IsRifleAimMode() { return bRifleAimMode; }
 	UFUNCTION(BlueprintCallable)
@@ -66,8 +68,19 @@ public:
 	void SetHittedMode();
 	void SetDeadMode();
 	void SetActionMode();
+	void SetReloadMode();
+	void SetHealingMode();
+	
 	FORCEINLINE void SetRifleAimMode(bool inBool) { bRifleAimMode = inBool; }
 	FORCEINLINE void SetCanDodge(bool inBool) { bCanDodge = inBool; }
+	FORCEINLINE void SetIsHammerPulled(bool inBool) {bIsHammerPulled = inBool; }
+	FORCEINLINE bool GetIsHammerPulled() { return bIsHammerPulled; }
+	
+	FORCEINLINE bool GetIsDead() { return bIsDead; }
+	
+	// 부활 시 사망 상태를 리셋하는 함수
+	UFUNCTION(BlueprintCallable, Category = "State")
+	void ResetDeadState() { bIsDead = false; }
 
 	FStateTypeChanged OnStateTypeChanged;
 
@@ -80,6 +93,10 @@ private:
 	bool bRifleAimMode = false;
 
 	bool bCanDodge = false;
+	
+	bool bIsDead = false;
+
+	bool bIsHammerPulled = true;
 
 
 		

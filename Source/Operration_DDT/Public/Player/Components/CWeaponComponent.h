@@ -66,7 +66,7 @@ public:
 
 private:
 	class ACharacter* OwnerCharacter;
-	EWeaponType Type = EWeaponType::Sword;
+	EWeaponType Type = EWeaponType::Rifle;
 
 
 		

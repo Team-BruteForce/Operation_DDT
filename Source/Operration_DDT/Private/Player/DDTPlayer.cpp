@@ -20,6 +20,8 @@
 #include "Player/Components/CWeaponComponent.h"
 #include "Player/Components/CFireComponent.h"
 #include "Player/Components/CStatusComponent.h"
+#include "Player/Components/CRespawnComponent.h"
+#include "Player/Components/CMagazineComponent.h"
 
 // Sets default values
 ADDTPlayer::ADDTPlayer()
@@ -50,6 +52,8 @@ ADDTPlayer::ADDTPlayer()
 	CHelpers::CreateActorComponent<UCCameraActionComponent>(this, &CameraActionComp, "CameraActionComp");
 	CHelpers::CreateActorComponent<UCFireComponent>(this, &FireComp, "FireComp");
 	CHelpers::CreateActorComponent<UCStatusComponent>(this, &Status, "Status");
+	CHelpers::CreateActorComponent<UCRespawnComponent>(this, &RespawnComp, "RespawnComp");
+	CHelpers::CreateActorComponent<UCMagazineComponent>(this, &MagazineComp, "MagazineComp");
 	
 #pragma endregion
 	
@@ -127,9 +131,11 @@ void ADDTPlayer::SetupPlayerInputComponent(class UInputComponent* PlayerInputCom
 		input->BindAction(IA_Sword, ETriggerEvent::Started, WeaponComp, &UCWeaponComponent::SetSwordMode);
 		input->BindAction(IA_Rifle, ETriggerEvent::Started, WeaponComp, &UCWeaponComponent::SetRifleMode);
 		input->BindAction(IA_Attack, ETriggerEvent::Started, WeaponComp, &UCWeaponComponent::DoAction);
-		input->BindAction(IA_AimRifle, ETriggerEvent::Triggered,CameraActionComp, &UCCameraActionComponent::SetAimPosition );
+		input->BindAction(IA_AimRifle, ETriggerEvent::Started,CameraActionComp, &UCCameraActionComponent::SetAimPosition );
 		input->BindAction(IA_AimRifle, ETriggerEvent::Completed, CameraActionComp, &UCCameraActionComponent::SetIdlePosition );
 		input->BindAction(IA_Roll, ETriggerEvent::Started, this, &ADDTPlayer::OnAvoid);
+		input->BindAction(IA_Heal, ETriggerEvent::Started, State, &UCStateComponent::SetHealingMode);
+		input->BindAction(IA_Reload, ETriggerEvent::Started, MagazineComp, &UCMagazineComponent::StartReloadSequence);
 	}
 
 }
@@ -145,6 +151,16 @@ float ADDTPlayer::TakeDamage(float DamageAmount, struct FDamageEvent const& Dama
 		return Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 	}
 	Status->GetDamage(DamageAmount);
+	if (Status->GetNowHp() <= 0)
+	{
+		State->SetDeadMode();	
+		//Dead();
+	}
+	else
+	{
+		State->SetHittedMode();
+		//Hitted();
+	}
 	CLog::Log("Player Take Damage" + FString::SanitizeFloat(DamageAmount));
 	return Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 }
@@ -157,6 +173,21 @@ void ADDTPlayer::OnStateTypeChanged(EStateType InPrevType, EStateType InNewType)
 		{
 			// Roll() 호출 제거 - 이미 OnAvoid()에서 PlayRollingMode(InputDirection)로 처리됨
 			// 방향별 구르기가 기본 구르기로 덮어써지는 것을 방지
+			break;
+		}
+		case EStateType::Hitted:
+		{
+			Hitted();
+			break;
+		}
+		case EStateType::Dead:
+		{
+			Dead();	
+			break;
+		}
+		case EStateType::Healing:
+		{
+			Heal();
 			break;
 		}
 	}
@@ -192,10 +223,50 @@ void ADDTPlayer::Roll()
 	Montages->PlayRollingMode();
 }
 
+void ADDTPlayer::Hitted()
+{
+	Montages->PlayHittedMode();
+}
+
+void ADDTPlayer::Dead()
+{
+	Montages->PlayDeadMode();
+	Movement->DisableControlRotation();
+}
+
+
+void ADDTPlayer::Heal()
+{
+	Montages->PlayHealingMode();
+	Status->GetHeal(70.f);
+}
+
 void ADDTPlayer::End_Rolling()
 {
 	State->SetIdleMode();
 }
+
+void ADDTPlayer::End_Hitted()
+{
+	State->SetIdleMode();
+}
+
+void ADDTPlayer::End_Healing()
+{
+	AActor* Weapon = FireComp->GetActorAttachedToSocket(FName("Reload_Rifle"));
+	Weapon->DetachFromActor(FDetachmentTransformRules::KeepRelativeTransform);
+	Weapon->AttachToComponent (GetMesh(), FAttachmentTransformRules(EAttachmentRule::KeepRelative, true), FName("Hand_Rifle"));
+	State->SetIdleMode();
+}
+
+void ADDTPlayer::End_Reload()
+{
+	AActor* Weapon = FireComp->GetActorAttachedToSocket(FName("Reload_Rifle"));
+	Weapon->DetachFromActor(FDetachmentTransformRules::KeepRelativeTransform);
+	Weapon->AttachToComponent (GetMesh(), FAttachmentTransformRules(EAttachmentRule::KeepRelative, true), FName("Hand_Rifle"));
+	State->SetIdleMode();
+}
+
 
 FVector ADDTPlayer::GetCurrentInputDirection()
 {

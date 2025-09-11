@@ -53,6 +53,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	class UInputAction* IA_TurnVer;
 
+	UPROPERTY(editAnywhere, Category = "Input")
+	class UInputAction* IA_Sprint;
+
 
 
 #pragma region Getter/Setter
@@ -69,6 +72,14 @@ public:
 	FORCEINLINE void DisableFixedCamera() { bFixedCamera = false; }
 	
 	FORCEINLINE FVector GetCurrentDirection() { return Direction; }
+	
+	FORCEINLINE bool GetIsSprinting() { return bIsSprinting; }
+	FORCEINLINE void SetIsSprinting(bool inBool) { bIsSprinting = inBool; }
+
+	// BlendSpace용 방향 계산
+	FORCEINLINE float GetForwardInput() const;
+	FORCEINLINE float GetRightInput() const;
+	FVector GetLocalInputDirection() const;
 
 #pragma endregion Getter/Setter
 	
@@ -94,9 +105,12 @@ private:
 
 private:
 	class ADDTPlayer* OwnerCharacter;
+	class UCStateComponent* OwnerState;
 
 	bool bCanMove = true;	
 	bool bFixedCamera;
+	
+	bool bIsSprinting = false;
 
 	FVector Direction;
 	FVector CachedDirection;

@@ -64,11 +64,22 @@ void UCStateComponent::SetHittedMode()
 void UCStateComponent::SetDeadMode()
 {
 	ChangeType(EStateType::Dead);
+	bIsDead = true;
 }
 
 void UCStateComponent::SetActionMode()
 {
 	ChangeType(EStateType::Action);
+}
+
+void UCStateComponent::SetReloadMode()
+{
+	ChangeType(EStateType::RifleReload);
+}
+
+void UCStateComponent::SetHealingMode()
+{
+	ChangeType(EStateType::Healing);
 }
 
 void UCStateComponent::ChangeType(EStateType InType)

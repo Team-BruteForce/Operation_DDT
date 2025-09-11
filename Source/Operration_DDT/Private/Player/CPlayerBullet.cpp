@@ -7,6 +7,8 @@
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Player/DDTPlayer.h"
 #include "Kismet/GameplayStatics.h"
+#include "NiagaraSystem.h"
+#include "NiagaraComponent.h"
 
 // Sets default values
 ACPlayerBullet::ACPlayerBullet()
@@ -44,10 +46,26 @@ void ACPlayerBullet::BeginPlay()
 	SetLifeSpan (LifeTime);
 	OwnerCharacter = Cast<ADDTPlayer>(GetOwner());
 	
+	// 랜덤 데미지 설정
+	SetRandomDamage();
+	
 	// 충돌 이벤트 바인딩
 	if (CapsuleComp)
 	{
 		CapsuleComp->OnComponentBeginOverlap.AddDynamic(this, &ACPlayerBullet::OnBulletOverlap);
+	}
+
+	if (BulletTrailSystem)
+	{
+		BulletTrailComp = UNiagaraFunctionLibrary::SpawnSystemAttached(
+			BulletTrailSystem,
+			CapsuleComp,
+			NAME_None,
+			FVector::ZeroVector,
+			FRotator::ZeroRotator,
+			EAttachLocation::SnapToTarget,
+			true  // bAutoDestroy
+		);
 	}
 }
 
@@ -61,6 +79,32 @@ void ACPlayerBullet::Tick(float DeltaTime)
 void ACPlayerBullet::SetVelocity(FVector value)
 {
 	Movement->Velocity = value * Speed;
+	
+	// 이펙트 방향을 총알 진행 방향에 맞춰 조정
+	if (BulletTrailComp)
+	{
+		// 속도 벡터를 회전으로 변환
+		FRotator EffectRotation = value.Rotation();
+		BulletTrailComp->SetWorldRotation(EffectRotation);
+		
+		// 나이아가라 파라미터로 방향 전달 (선택사항)
+		BulletTrailComp->SetVectorParameter("Direction", value);
+	}
+}
+
+void ACPlayerBullet::SetRandomDamage()
+{
+	// 1. 랜덤 시드 초기화 (현재 시간 기반)
+	FMath::RandInit(FDateTime::Now().GetTicks());
+	
+	// 2. 160~165 범위의 정수 랜덤 값 생성
+	int32 RandomInt = FMath::RandRange(160, 165);
+	
+	// 3. BulletDamage에 정수 랜덤 값 설정
+	BulletDamage = static_cast<float>(RandomInt);
+	
+	// 4. 로그 출력 (디버깅용)
+	CLog::Log("Random Integer Bullet Damage: " + FString::FromInt(RandomInt));
 }
 
 void ACPlayerBullet::OnBulletOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,

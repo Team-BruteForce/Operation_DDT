@@ -3,8 +3,10 @@
 
 #include "Player/Components/CCameraActionComponent.h"
 
+#include "Global.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Player/DDTPlayer.h"
+#include "Player/Components/CMovementComponent.h"
 #include "Player/Components/CWeaponComponent.h"
 
 // Sets default values for this component's properties
@@ -26,18 +28,27 @@ void UCCameraActionComponent::BeginPlay()
 	// ...
 	OwnerCharacter = Cast<ADDTPlayer>(GetOwner());
 	OwnerSpringArm = OwnerCharacter->GetSpringArm();
+	Movement = CHelpers::GetComponent<UCMovementComponent>(OwnerCharacter);
+	State = CHelpers::GetComponent<UCStateComponent>(OwnerCharacter);
 	
 }
 
 void UCCameraActionComponent::SetAimPosition()
 {
+	CheckTrue(State->IsRollingMode());
+	CheckTrue(State->IsHittedMode());
+	CheckTrue(State->IsDeadMode());
+	
 	OwnerSpringArm->SetRelativeLocation(FVector(locX, 0.f, locZ));
 	OwnerSpringArm->SetRelativeRotation(FRotator(0.f, 90.f, 0.f));
 	OwnerSpringArm->TargetArmLength = ArmLen;
 	OwnerSpringArm->bEnableCameraLag = false;
 	
 	OwnerCharacter->State->SetRifleAimMode(true);
+	//CLog::Log("SetAimPosition: " + OwnerCharacter->State->IsRifleAimMode() ? TEXT("true") : TEXT("false"));
 	OwnerCharacter->WeaponComp->SetRifleMode();
+	Movement->OnWalk();
+	
 }
 
 void UCCameraActionComponent::SetIdlePosition()
@@ -49,6 +60,10 @@ void UCCameraActionComponent::SetIdlePosition()
 
 	OwnerCharacter->State->SetIdleMode();
 	OwnerCharacter->State->SetRifleAimMode(false);
+	//CLog::Log("SetIdlePosition: " + OwnerCharacter->State->IsRifleAimMode() ? TEXT("true") : TEXT("false"));
+
 	OwnerCharacter->WeaponComp->SetUnarmedMode();
+	
+	Movement->OnRun();
 }
 

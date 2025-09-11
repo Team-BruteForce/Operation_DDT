@@ -21,9 +21,24 @@ void UCAnimNotify_EndState::Notify(USkeletalMeshComponent* MeshComp, UAnimSequen
 
 	switch (StateType)
 	{
-	case EStateType::Rolling:
+		case EStateType::Rolling:
 		{
 			OwnerCharater->End_Rolling();
+			break;
+		}
+		case EStateType::Hitted:
+		{
+			OwnerCharater->End_Hitted();
+			break;
+		}
+		case EStateType::Healing:
+		{
+			OwnerCharater->End_Healing();
+			break;
+		}
+		case EStateType::RifleReload:
+		{
+			OwnerCharater->End_Reload();
 			break;
 		}
 	}

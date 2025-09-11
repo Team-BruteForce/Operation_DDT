@@ -8,6 +8,7 @@
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "NiagaraFunctionLibrary.h"
 #include "Components/CapsuleComponent.h"
+#include "GameFramework/Character.h"
 
 // Sets default values
 AGateOfBabyonProjectile::AGateOfBabyonProjectile()

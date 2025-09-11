@@ -22,6 +22,7 @@ public:
 	void Begin_DoAction() override;
 	void End_DoAction() override;
 
+
 private:
 	bool bEnable;;
 	bool bExist;
@@ -29,5 +30,12 @@ private:
 	class ADDTPlayer* PlayerCharacter;
 
 	class UCFireComponent* FireComp;
+
+	class UCStateComponent* StateComp;
+
+	class UCMagazineComponent* MagazineComponent;
+
+	UPROPERTY(EditDefaultsOnly)
+	UAnimMontage* HammerMontage;
 	
 };

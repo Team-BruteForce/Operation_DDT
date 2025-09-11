@@ -9,6 +9,7 @@
 #include "Player/CPlayerBullet.h"
 #include "Player/DDTPlayer.h"
 #include "Weapons/CAttachment.h"
+#include "Player/Components/CMagazineComponent.h"
 
 // Sets default values for this component's properties
 UCFireComponent::UCFireComponent()
@@ -30,7 +31,7 @@ void UCFireComponent::BeginPlay()
 	FName HandSocketName = FName("Hand_Rifle");
 	RifleSocketName = FName("MuzzlePos");
 	Rifle = Cast<ACAttachment>(GetActorAttachedToSocket(HandSocketName));
-	
+	MagazineComponent = CHelpers::GetComponent<UCMagazineComponent>(OwnerCharacter);
 	
 }
 
@@ -94,7 +95,10 @@ void UCFireComponent::SetMuzzleVector(const FName& SocketName)
 	}
 	if (MeshComponent->DoesSocketExist(SocketName))
 	{
-		MuzzleVector = MeshComponent->GetSocketLocation(SocketName);
+		FTransform SocketTransform = MeshComponent->GetSocketTransform(SocketName);
+		MuzzleVector = SocketTransform.GetLocation();
+		MuzzleRotator = SocketTransform.GetRotation().Rotator();
+		MuzzleForwardVector = SocketTransform.GetRotation().GetForwardVector();
 		CLog::Log(MuzzleVector);
 		
 	}
@@ -118,13 +122,32 @@ void UCFireComponent::Fire()
 
 	SetMuzzleVector(RifleSocketName);
 	
-	ACPlayerBullet* Bullet = GetWorld()->SpawnActor<ACPlayerBullet>(PlayerBulletClass, MuzzleVector, FRotator(0.f,0.f,0.f), spawnParams);
+	ACPlayerBullet* Bullet = GetWorld()->SpawnActor<ACPlayerBullet>(PlayerBulletClass, MuzzleVector, MuzzleRotator, spawnParams);
 	if (Bullet)
 	{
 		CLog::Log(MuzzleVector);
 		CLog::Log("Spawned Bullet");
 		
-		Bullet->SetVelocity(OwnerCharacter->GetActorForwardVector());
+		Bullet->SetVelocity(MuzzleForwardVector);
+		MagazineComponent->FireBullet();
+		
+		// 총구 소켓에 화염 이펙트 부착
+		if (MuzzleFireSystem && Rifle)
+		{
+			USkeletalMeshComponent* RifleMesh = Rifle->GetMeshComp();
+			if (RifleMesh)
+			{
+				UNiagaraFunctionLibrary::SpawnSystemAttached(
+					MuzzleFireSystem,
+					RifleMesh,           // 총의 메시 컴포넌트
+					RifleSocketName,     // "MuzzlePos" 소켓
+					FVector::ZeroVector, // 소켓 기준 오프셋 (0,0,0)
+					FRotator::ZeroRotator, // 소켓 기준 회전 오프셋
+					EAttachLocation::SnapToTarget,
+					true  // bAutoDestroy
+				);
+			}
+		}
 		
 	}
 }

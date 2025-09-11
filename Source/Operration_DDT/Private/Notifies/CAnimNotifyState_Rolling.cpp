@@ -26,6 +26,7 @@ void UCAnimNotifyState_Rolling::NotifyBegin(USkeletalMeshComponent* MeshComp, UA
 
 	if (State->IsRifleAimMode())
 	{
+		State->SetRifleAimMode(false);
 		CameraAction->SetIdlePosition();
 	}
 	State->SetCanDodge(true);
@@ -39,6 +40,6 @@ void UCAnimNotifyState_Rolling::NotifyEnd(USkeletalMeshComponent* MeshComp, UAni
 	CheckNull(MeshComp->GetOwner());
 
 	CheckNull(State);
-	//State->SetIdleMode();
+	
 	State->SetCanDodge(false);
 }

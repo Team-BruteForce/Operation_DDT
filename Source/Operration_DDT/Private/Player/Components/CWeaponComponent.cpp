@@ -55,7 +55,7 @@ void UCWeaponComponent::BeginPlay()
 	{
 		CLog::Print("Sword DataAsset is null - but keeping Sword mode as default");
 		// Sword DataAsset이 없어도 기본 상태는 Sword로 유지
-		ChangeType(EWeaponType::Sword);
+		ChangeType(EWeaponType::Rifle);
 	}
 }
 

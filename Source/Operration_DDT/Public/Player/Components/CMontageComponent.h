@@ -36,7 +36,7 @@ public:
 };
 
 //DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDataFetched);
-
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDieDelegate);
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class OPERRATION_DDT_API UCMontageComponent : public UActorComponent
 {
@@ -62,6 +62,12 @@ public:
 	void PlayRollingMode();
 	void PlayRollingMode(FVector InDirection);
 
+	void PlayHittedMode();
+	void PlayDeadMode();
+
+	void PlayReloadMode();
+	void PlayHealingMode();
+
 
 private:
 	void PlayAnimMontage(EStateType InType);
@@ -80,6 +86,9 @@ private:
 	UPROPERTY(EditDefaultsOnly)
 	class UAnimMontage* RightRollMontage;
 
+
+public:
+	FOnDieDelegate DieDelegate;
 
 public:
 	UPROPERTY(EditDefaultsOnly)

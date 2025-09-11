@@ -29,12 +29,13 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	class USkeletalMeshComponent* MeshComp;
-
-	UFUNCTION(BlueprintCallable, Category = "Attach")
-	void AttachTo(FName InSocketName);
-
+	
 	UPROPERTY(BlueprintReadOnly, Category = "Game")
 	class ACharacter* OwnerCharacter;
+
+public:
+	UFUNCTION(BlueprintCallable, Category = "Attach")
+	void AttachTo(FName InSocketName);
 	
 public:
 	UFUNCTION(BlueprintImplementableEvent)

@@ -5,6 +5,7 @@
 #include "Global.h"
 #include "Player/DDTPlayer.h"
 #include "Player/Components/CFireComponent.h"
+#include "Player/Components/CMagazineComponent.h"
 #include "Player/Components/CStateComponent.h"
 
 void UCDoAction_RifleFire::DoAction()
@@ -24,16 +25,28 @@ void UCDoAction_RifleFire::DoAction()
 	Super::DoAction();
 	//첫 타격 이후에 Combo의 Enable이 호출되어야 한다.
 	//첫 타격 시 IsIdleMode를 체크 후 부모의 DoAction 호출, State->ActionMode()로 전환
-	DoActionDatas[0].DoAction(OwnerCharacter);
+	
 	
 	FireComp = CHelpers::GetComponent<UCFireComponent>(OwnerCharacter);
+	StateComp = CHelpers::GetComponent<UCStateComponent>(OwnerCharacter);
+	MagazineComponent = CHelpers::GetComponent<UCMagazineComponent>(OwnerCharacter);
+	
 	if (FireComp)
 	{
-		FireComp->Fire();
-		CLog::Log("Fire Start");
+		if (StateComp->GetIsHammerPulled() == false)
+		{
+			DoActionDatas[1].DoAction(OwnerCharacter);
+		}
+			
+		if (StateComp->GetIsHammerPulled() == true && MagazineComponent->CurrentRifleBullets > 0)
+		{
+			DoActionDatas[0].DoAction(OwnerCharacter);
+			FireComp->Fire();
+			StateComp->SetIsHammerPulled(false);
+			DoActionDatas[1].DoAction(OwnerCharacter);
+		}
+		
 	}
-	
-	
 }
 
 void UCDoAction_RifleFire::Begin_DoAction()
@@ -50,3 +63,4 @@ void UCDoAction_RifleFire::End_DoAction()
 {
 	Super::End_DoAction();
 }
+

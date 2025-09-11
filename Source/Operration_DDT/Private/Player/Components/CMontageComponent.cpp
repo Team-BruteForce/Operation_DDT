@@ -132,6 +132,27 @@ void UCMontageComponent::PlayRollingMode(FVector InDirection)
 	
 }
 
+void UCMontageComponent::PlayHittedMode()
+{
+	PlayAnimMontage(EStateType::Hitted);
+}
+
+void UCMontageComponent::PlayDeadMode()
+{
+	PlayAnimMontage(EStateType::Dead);
+	DieDelegate.Broadcast();
+}
+
+void UCMontageComponent::PlayReloadMode()
+{
+	PlayAnimMontage(EStateType::RifleReload);
+}
+
+void UCMontageComponent::PlayHealingMode()
+{
+	PlayAnimMontage(EStateType::Healing);
+}
+
 void UCMontageComponent::PlayAnimMontage(EStateType InType)
 {
 	CheckNull(OwnerCharacter);

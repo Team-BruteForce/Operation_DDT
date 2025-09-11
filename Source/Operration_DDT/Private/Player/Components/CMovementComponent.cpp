@@ -5,6 +5,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Global.h"
 #include "Player/DDTPlayer.h"
+#include "Player/Components/CStateComponent.h"
 #include "../../../../Plugins/EnhancedInput/Source/EnhancedInput/Public/EnhancedInputComponent.h"
 
 // Sets default values for this component's properties
@@ -25,6 +26,7 @@ void UCMovementComponent::BeginPlay()
 
 	OwnerCharacter = Cast<ADDTPlayer>(GetOwner());
 	OwnerCharacter->InputBindingDelegate.AddUObject(this, &UCMovementComponent::SetupInputBinding);
+	OwnerState = CHelpers::GetComponent<UCStateComponent>(OwnerCharacter);
 	
 }
 
@@ -35,9 +37,10 @@ void UCMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	// ...
-
+	
 	if (!Direction.IsNearlyZero())
 	{
+		CheckTrue(OwnerState->GetIsDead());
 		FVector InputDirection = FTransform(OwnerCharacter->GetControlRotation()).TransformVector(Direction);
 
 		InputDirection.Z = 0.f;
@@ -60,22 +63,38 @@ void UCMovementComponent::SetupInputBinding(class UEnhancedInputComponent* input
 	input->BindAction(IA_Move, ETriggerEvent::Triggered, this, &ThisClass::OnMove);
 	input->BindAction(IA_TurnHor, ETriggerEvent::Triggered, this, &ThisClass::OnHorizontalLook);
 	input->BindAction(IA_TurnVer, ETriggerEvent::Triggered, this, &ThisClass::OnVerticalLook);
+	input->BindAction(IA_Sprint, ETriggerEvent::Started, this, &ThisClass::OnSprint);
+	input->BindAction(IA_Sprint, ETriggerEvent::Completed, this, &ThisClass::OnRun);
 }
 
 
 void UCMovementComponent::OnSprint()
 {
+	CheckTrue(OwnerState->IsRifleAimMode());
 	SetSpeed(ESpeedType::Sprint);
+	if (!bIsSprinting)
+	{
+		SetIsSprinting(true);
+	}
 }
 
 void UCMovementComponent::OnRun()
 {
 	SetSpeed (ESpeedType::Run);
+
+	if (bIsSprinting)
+	{
+		SetIsSprinting(false);
+	}
 }
 
 void UCMovementComponent::OnWalk()
 {
 	SetSpeed (ESpeedType::Walk);
+	if (bIsSprinting)
+	{
+		SetIsSprinting(false);
+	}
 }
 
 void UCMovementComponent::EnableControlRotation()
@@ -122,6 +141,39 @@ void UCMovementComponent::OnVerticalLook(const struct FInputActionValue& InAxis)
 void UCMovementComponent::SetSpeed(ESpeedType InType)
 {
 	OwnerCharacter->GetCharacterMovement ()->MaxWalkSpeed = Speed[(int32)InType];
+}
+
+float UCMovementComponent::GetForwardInput() const
+{
+	if (!OwnerCharacter) return 0.0f;
+	
+	// 입력 방향을 캐릭터 기준으로 변환
+	FVector LocalDirection = GetLocalInputDirection();
+	return LocalDirection.X; // Forward 방향
+}
+
+float UCMovementComponent::GetRightInput() const
+{
+	if (!OwnerCharacter) return 0.0f;
+	
+	// 입력 방향을 캐릭터 기준으로 변환
+	FVector LocalDirection = GetLocalInputDirection();
+	return LocalDirection.Y; // Right 방향
+}
+
+FVector UCMovementComponent::GetLocalInputDirection() const
+{
+	if (!OwnerCharacter) return FVector::ZeroVector;
+	
+	// 입력 방향을 캐릭터의 로컬 좌표계로 변환
+	FVector WorldDirection = Direction;
+	WorldDirection.Z = 0.0f;
+	WorldDirection.Normalize();
+	
+	// 캐릭터의 회전을 기준으로 로컬 방향 계산
+	FVector LocalDirection = OwnerCharacter->GetActorTransform().InverseTransformVector(WorldDirection);
+	
+	return LocalDirection;
 }
 
 

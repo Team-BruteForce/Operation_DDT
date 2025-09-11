@@ -55,6 +55,12 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	class UInputAction* IA_Roll;
 	
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	class UInputAction* IA_Reload;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	class UInputAction* IA_Heal;
+	
 #pragma endregion 
  
 public:
@@ -79,7 +85,12 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	class UCStatusComponent* Status;
 
-	
+	UPROPERTY(visibleAnywhere)
+	class UCRespawnComponent* RespawnComp;
+
+	UPROPERTY(visibleAnywhere, BlueprintReadOnly)
+	class UCMagazineComponent* MagazineComp;
+
   
 protected:
 	virtual void BeginPlay() override;
@@ -108,10 +119,17 @@ private:
 
 	void OnAvoid();
 	FVector GetCurrentInputDirection();
-
+	
 	void Roll();
+	void Hitted();
+	void Dead();
+	//void Reload();
+	void Heal();
 
 public:
 	void End_Rolling();
+	void End_Hitted();
+	void End_Healing();
+	void End_Reload();
 
 };

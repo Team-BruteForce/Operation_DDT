@@ -1,0 +1,130 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+
+#include "Player/Components/CRespawnComponent.h"
+#include "Global.h"
+#include "Player/DDTPlayer.h"
+#include "Player/Components/CStateComponent.h"
+#include "Player/Components/CMontageComponent.h"
+#include "Player/Components/CStatusComponent.h"
+#include "Player/Components/CMovementComponent.h"
+#include "Engine/World.h"
+#include "TimerManager.h"
+
+// Sets default values for this component's properties
+UCRespawnComponent::UCRespawnComponent()
+{
+	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
+	// off to improve performance if you don't need them.
+	PrimaryComponentTick.bCanEverTick = true;
+
+	// ...
+}
+
+
+// Called when the game starts
+void UCRespawnComponent::BeginPlay()
+{
+	Super::BeginPlay();
+
+	// ...
+	OwnerCharacter = Cast<ADDTPlayer>(GetOwner());
+	State = CHelpers::GetComponent<UCStateComponent>(OwnerCharacter);
+	RespawnLocation = OwnerCharacter->GetActorLocation();
+	
+	// DieDelegate 구독
+	if (OwnerCharacter && OwnerCharacter->Montages)
+	{
+		OwnerCharacter->Montages->DieDelegate.AddDynamic(this, &UCRespawnComponent::OnPlayerDied);
+		CLog::Log("RespawnComponent: DieDelegate subscribed successfully");
+	}
+	else
+	{
+		CLog::Log("RespawnComponent: Failed to subscribe to DieDelegate");
+	}
+}
+
+
+// Called every frame
+void UCRespawnComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	// CLog::Log("RespawnLocation: " + RespawnLocation.ToString());
+	// ...
+}
+
+void UCRespawnComponent::OnPlayerDied()
+{
+	// 플레이어가 사망했을 때 호출되는 함수
+	CLog::Log("RespawnComponent: Player Died! Starting respawn timer...");
+	
+	// 기존 타이머가 있다면 클리어
+	if (GetWorld())
+	{
+		GetWorld()->GetTimerManager().ClearTimer(RespawnTimerHandle);
+		
+		// 일정 시간 후 부활하도록 타이머 설정
+		GetWorld()->GetTimerManager().SetTimer(
+			RespawnTimerHandle,
+			this,
+			&UCRespawnComponent::RespawnPlayer,
+			RespawnDelay,
+			false  // 한 번만 실행
+		);
+		
+		CLog::Log("RespawnComponent: Respawn timer set for " + FString::SanitizeFloat(RespawnDelay) + " seconds");
+	}
+}
+
+void UCRespawnComponent::RespawnPlayer()
+{
+	// 실제 부활 처리
+	if (!OwnerCharacter || !State) 
+	{
+		CLog::Log("RespawnComponent: Cannot respawn - OwnerCharacter or State is null");
+		return;
+	}
+	
+	CLog::Log("RespawnComponent: Starting respawn process...");
+	
+	// 1. 플레이어 위치를 RespawnLocation으로 이동
+	OwnerCharacter->SetActorLocation(RespawnLocation);
+	CLog::Log("RespawnComponent: Player moved to respawn location: " + RespawnLocation.ToString());
+	
+	// 2. 플레이어 상태를 Idle로 변경 및 사망 상태 리셋
+	State->SetIdleMode();
+	State->ResetDeadState();
+	CLog::Log("RespawnComponent: Player state set to Idle and dead state reset");
+	
+	// 3. HP를 최대치로 복구 (Status 컴포넌트가 있다면)
+	if (OwnerCharacter->Status)
+	{
+		OwnerCharacter->Status->SetFullHealth();
+		CLog::Log("RespawnComponent: Player health restored to full");
+	}
+	
+	// 4. 컨트롤러 회전 다시 활성화
+	if (OwnerCharacter->Movement)
+	{
+		OwnerCharacter->Movement->EnableControlRotation();
+		CLog::Log("RespawnComponent: Control rotation enabled");
+	}
+	
+	// 5. 부활 델리게이트 브로드캐스트
+	OnPlayerRespawned.Broadcast();
+	
+	CLog::Log("RespawnComponent: Player respawned successfully!");
+}
+
+void UCRespawnComponent::SetRespawnLocation(FVector NewLocation)
+{
+	RespawnLocation = NewLocation;
+	CLog::Log("RespawnComponent: Respawn location updated to: " + RespawnLocation.ToString());
+}
+
+void UCRespawnComponent::SetRespawnDelay(float NewDelay)
+{
+	RespawnDelay = FMath::Max(0.1f, NewDelay); // 최소 0.1초
+	CLog::Log("RespawnComponent: Respawn delay updated to: " + FString::SanitizeFloat(RespawnDelay) + " seconds");
+}
+
