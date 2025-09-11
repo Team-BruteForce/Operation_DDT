@@ -23,9 +23,6 @@ protected:
 public:	
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	// 근접 공격 콜리전
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	UBoxComponent* MeleeAttackCollision;
 
 	// 공격 설정
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attack")
@@ -53,10 +50,6 @@ public:
 	FOnMeleeAttackHit OnMeleeAttackHit;
 
 private:
-	// 콜리전 오버랩 이벤트
-	UFUNCTION()
-	void OnMeleeAttackOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-
 	// 공격 쿨다운 관리
 	float LastAttackTime;
 };

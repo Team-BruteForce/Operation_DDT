@@ -8,6 +8,11 @@
 #include "ODH/ODH_Enemy/Component/CEnemyStatusComponent.h"
 #include "ODH/ODH_Enemy/Component/CEnemyMeleeAttackComponent.h"
 #include "GenericTeamAgentInterface.h"
+#include "Components/TimelineComponent.h"
+#include "Components/ArrowComponent.h"
+
+// 전방 선언: 콜리전 컴포넌트
+class UBoxComponent;
 #include "CFlyingSkull.generated.h"
 
 UCLASS()
@@ -52,9 +57,24 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Attack")
 	void SpawnRangedProjectileAtLocation(AActor* TargetPlayer, FVector SpawnLocation, FRotator SpawnRotation);
 
+
 	// 프로젝타일 클래스 설정
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attack")
 	TSubclassOf<AActor> ProjectileClass;
+
+	// 근접 공격 시 메쉬 상대 이동(연출) 설정 값
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Melee|VisualMove")
+	float MeleeVisualMaxDistance = 400.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Melee|VisualMove")
+	float MeleeVisualOutTime = 0.25f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Melee|VisualMove")
+	float MeleeVisualBackTime = 0.20f;
+
+	// 0이면 Z를 고정하고, 양수면 Z 오프셋을 그 값으로 제한
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Melee|VisualMove")
+	float MeleeVisualMaxZOffset = 0.0f;
 
 	// 공격/사망 상태 플래그
 public:
@@ -71,6 +91,14 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UCEnemyMeleeAttackComponent* MeleeAttackComponent;
 
+	// 애로우 컴포넌트 (원거리 공격 발사 위치)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UArrowComponent* ProjectileSpawnArrow;
+
+	// 근접 공격 콜리전 (Mesh의 자식)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UBoxComponent* MeleeAttackCollision = nullptr;
+
 private:
 	// 이벤트 핸들러들
 	UFUNCTION()
@@ -78,6 +106,9 @@ private:
 
 	UFUNCTION()
 	void OnMeleeAttackHit(AActor* HitActor);
+
+	UFUNCTION()
+	void OnMeleeAttackOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 	// 프로젝타일 클래스 가져오기
 	TSubclassOf<AActor> GetProjectileClass() const;
@@ -92,4 +123,54 @@ private:
 	// 내부 상태 플래그
 	bool bIsMeleeAttacking = false;
 	bool bIsRangedAttacking = false;
+
+	// ===== 메쉬 상대 이동 근접 연출 상태 =====
+	bool bIsMeleeVisualMoving = false;
+	bool bMeleeVisualGoingOut = false;
+	float MeleeVisualElapsed = 0.0f;
+	FVector MeshStartRelativeLocation = FVector::ZeroVector;
+	FVector MeshTargetRelativeLocation = FVector::ZeroVector;
+
+	void StartMeleeVisualMove(AActor* TargetActor);
+	void UpdateMeleeVisualMove(float DeltaTime);
+	void EndMeleeVisualMove(bool bSnapToStart);
+
+public:
+	// 떨어지는 연출 관련 변수들
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Death Animation")
+	bool bIsFalling = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Death Animation")
+	float FallDuration = 2.0f; // 떨어지는 시간 (초)
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Death Animation")
+	float FallEndHeight = -73.0f; // 떨어지기 끝나는 높이
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Death Animation")
+	UCurveFloat* FallCurve = nullptr; // 떨어지는 곡선 (선택사항)
+
+	// 회전 연출: 끝 회전값 (기본: Pitch=0, Yaw=370, Roll=285)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Death Animation")
+	FRotator FallEndRotation = FRotator(0.0f, 370.0f, 285.0f);
+
+private:
+	// 떨어지는 연출 함수
+	UFUNCTION()
+	void StartFallingAnimation();
+
+	UFUNCTION()
+	void UpdateFallingAnimation(float DeltaTime);
+
+	UFUNCTION()
+	void OnFallTimelineUpdate(float Value);
+
+	UFUNCTION()
+	void OnFallTimelineFinished();
+
+	// 떨어지는 연출용 변수들
+	float FallStartTime = 0.0f;
+	FVector OriginalMeshLocation;
+	FRotator FallStartRotation;
+	float FallStartZ = 0.0f;
+	FTimeline FallTimeline;
 };

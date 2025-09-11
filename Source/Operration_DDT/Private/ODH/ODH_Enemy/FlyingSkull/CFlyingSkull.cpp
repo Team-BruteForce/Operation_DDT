@@ -9,6 +9,12 @@
 #include "ODH/ODH_AIController/CFlyingSkullAIController.h"
 #include "Kismet/GameplayStatics.h"
 #include "Engine/Engine.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Components/BoxComponent.h"
+#include "DrawDebugHelpers.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "AIController.h"
+#include "BrainComponent.h"
 
 // Sets default values
 ACFlyingSkull::ACFlyingSkull()
@@ -24,6 +30,28 @@ ACFlyingSkull::ACFlyingSkull()
 	
 	// 근접 공격 컴포넌트 생성
 	MeleeAttackComponent = CreateDefaultSubobject<UCEnemyMeleeAttackComponent>(TEXT("MeleeAttackComponent"));
+
+	// 근접 공격 콜리전 생성 (Mesh의 자식으로 설정)
+	MeleeAttackCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("MeleeAttackCollision"));
+	MeleeAttackCollision->SetupAttachment(GetMesh());
+	MeleeAttackCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	MeleeAttackCollision->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
+	MeleeAttackCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+	MeleeAttackCollision->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
+	
+	// 콜리전 위치 및 크기 설정 (Mesh 기준 상대 위치)
+	MeleeAttackCollision->SetRelativeLocation(FVector(50.0f, 0.0f, 0.0f)); // Mesh 앞쪽
+	MeleeAttackCollision->SetRelativeRotation(FRotator::ZeroRotator);
+	MeleeAttackCollision->SetBoxExtent(FVector(50.0f, 50.0f, 50.0f)); // 공격 범위
+
+	// 애로우 컴포넌트 생성 (원거리 공격 발사 위치)
+	ProjectileSpawnArrow = CreateDefaultSubobject<UArrowComponent>(TEXT("ProjectileSpawnArrow"));
+	ProjectileSpawnArrow->SetupAttachment(RootComponent);
+	ProjectileSpawnArrow->SetArrowColor(FLinearColor::Red);
+	ProjectileSpawnArrow->SetArrowLength(50.0f);
+	ProjectileSpawnArrow->SetArrowSize(2.0f);
+	// 기본 위치는 전방 100cm (블루프린트에서 자유롭게 변경 가능)
+	ProjectileSpawnArrow->SetRelativeLocation(FVector(100.0f, 0.0f, 0.0f));
 }
 
 // Called when the game starts or when spawned
@@ -60,6 +88,30 @@ void ACFlyingSkull::BeginPlay()
 	{
 		MeleeAttackComponent->OnMeleeAttackHit.AddDynamic(this, &ACFlyingSkull::OnMeleeAttackHit);
 	}
+
+	// 근접 공격 콜리전 오버랩 이벤트 바인딩
+	if (MeleeAttackCollision)
+	{
+		MeleeAttackCollision->OnComponentBeginOverlap.AddDynamic(this, &ACFlyingSkull::OnMeleeAttackOverlap);
+	}
+
+	// 낙하 타임라인 델리게이트 바인딩 (커브가 있는 경우에만 재생됨)
+	if (FallCurve)
+	{
+		FOnTimelineFloat UpdateDelegate;
+		UpdateDelegate.BindUFunction(this, FName("OnFallTimelineUpdate"));
+		FallTimeline.AddInterpFloat(FallCurve, UpdateDelegate);
+
+		FOnTimelineEvent FinishedDelegate;
+		FinishedDelegate.BindUFunction(this, FName("OnFallTimelineFinished"));
+		FallTimeline.SetTimelineFinishedFunc(FinishedDelegate);
+
+		// 커브 X축이 0..1이라고 가정하고 Duration에 맞추어 재생 속도를 설정
+		if (FallDuration > 0.0f)
+		{
+			FallTimeline.SetPlayRate(1.0f / FallDuration);
+		}
+	}
 }
 
 void ACFlyingSkull::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -78,6 +130,23 @@ void ACFlyingSkull::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	if (bIsFalling)
+	{
+		if (FallCurve)
+		{
+			FallTimeline.TickTimeline(DeltaTime);
+		}
+		else
+		{
+			UpdateFallingAnimation(DeltaTime);
+		}
+	}
+
+	// 메쉬 상대 이동 기반 근접 공격 연출 업데이트
+	if (bIsMeleeVisualMoving)
+	{
+		UpdateMeleeVisualMove(DeltaTime);
+	}
 }
 
 // Called to bind functionality to input
@@ -160,6 +229,12 @@ void ACFlyingSkull::PlayMeleeAttack()
 		ClearMelee.BindLambda([this]()
 		{
 			bIsMeleeAttacking = false;
+			
+			// 근접 공격 콜리전 비활성화
+			if (MeleeAttackCollision)
+			{
+				MeleeAttackCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			}
 		});
 		GetWorldTimerManager().SetTimer(MeleeAttackTimerHandle, ClearMelee, 0.6f, false);
 		
@@ -167,6 +242,25 @@ void ACFlyingSkull::PlayMeleeAttack()
 		if (GEngine)
 		{
 			GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Yellow, TEXT("Flying Skull Melee Attack!"));
+		}
+
+		// 근접 공격 콜리전 활성화
+		if (MeleeAttackCollision)
+		{
+			MeleeAttackCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+			
+			// 디버그 시각화
+			DrawDebugBox(GetWorld(), MeleeAttackCollision->GetComponentLocation(), 
+				MeleeAttackCollision->GetScaledBoxExtent(), 
+				MeleeAttackCollision->GetComponentRotation().Quaternion(), 
+				FColor::Red, false, 0.5f);
+		}
+
+		// 시각 연출 이동 시작(서버 권한에서만)
+		if (HasAuthority())
+		{
+			APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(this, 0);
+			StartMeleeVisualMove(PlayerPawn);
 		}
 	}
 }
@@ -197,7 +291,18 @@ void ACFlyingSkull::SpawnRangedProjectile(AActor* TargetPlayer)
 	if (!TargetPlayer)
 		return;
 	
-	// 기본 발사 위치 계산
+	// 애로우가 있으면 애로우 위치/회전에서 발사
+	if (ProjectileSpawnArrow)
+	{
+		const FVector SpawnLocation = ProjectileSpawnArrow->GetComponentLocation();
+		FVector ToTarget = TargetPlayer->GetActorLocation() - SpawnLocation;
+		ToTarget.Normalize();
+		const FRotator SpawnRotation = ToTarget.Rotation();
+		SpawnRangedProjectileAtLocation(TargetPlayer, SpawnLocation, SpawnRotation);
+		return;
+	}
+
+	// 기본 발사 위치 계산(폴백)
 	FVector SpawnLocation = GetActorLocation() + GetActorForwardVector() * 100.0f;
 	FRotator SpawnRotation = GetActorRotation();
 	
@@ -310,6 +415,25 @@ void ACFlyingSkull::OnDeath()
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Flying Skull Died! Will be removed in 3 seconds..."));
 	}
+
+	// 이동/AI 즉시 정지
+	if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
+	{
+		MoveComp->StopMovementImmediately();
+		MoveComp->DisableMovement();
+		MoveComp->SetMovementMode(MOVE_None);
+	}
+	if (AController* C = GetController())
+	{
+		if (AAIController* AI = Cast<AAIController>(C))
+		{
+			AI->StopMovement();
+			if (UBrainComponent* Brain = AI->GetBrainComponent())
+			{
+				Brain->StopLogic(TEXT("Dead"));
+			}
+		}
+	}
 	
 	// 기존 타이머가 있다면 클리어
 	GetWorldTimerManager().ClearTimer(DeathTimerHandle);
@@ -330,6 +454,12 @@ void ACFlyingSkull::OnDeath()
 	
 	// 사망 애니메이션 재생, 사망 효과 등 추가 가능
 	// 예: PlayDeathAnimation();
+
+	// 낙하 연출 시작
+	StartFallingAnimation();
+
+	// 진행 중이던 시각 이동 종료 및 원복
+	EndMeleeVisualMove(true);
 }
 
 void ACFlyingSkull::OnMeleeAttackHit(AActor* HitActor)
@@ -346,6 +476,246 @@ void ACFlyingSkull::OnMeleeAttackHit(AActor* HitActor)
 		
 		// 여기에 플레이어에게 데미지를 주는 로직 추가
 		// 예: HitActor->TakeDamage(MeleeAttackComponent->GetMeleeDamage());
+	}
+}
+
+void ACFlyingSkull::OnMeleeAttackOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (!MeleeAttackComponent || !MeleeAttackComponent->IsAttackActive() || !OtherActor)
+		return;
+
+	// 자기 자신은 제외
+	if (OtherActor == this)
+		return;
+
+	// 쿨다운 체크 (MeleeAttackComponent의 AttackCooldown 사용)
+	float CurrentTime = GetWorld()->GetTimeSeconds();
+	static float LastAttackTime = 0.0f;
+	if (CurrentTime - LastAttackTime < MeleeAttackComponent->AttackCooldown)
+		return;
+
+	// 플레이어인지 확인
+	if (OtherActor->IsA<APawn>())
+	{
+		// 공격 이벤트 발생
+		MeleeAttackComponent->OnMeleeAttackHit.Broadcast(OtherActor);
+
+		// 실제 데미지 적용
+		float Damage = MeleeAttackComponent->GetMeleeDamage();
+		AController* InstigatorController = GetInstigatorController();
+		UGameplayStatics::ApplyDamage(OtherActor, Damage, InstigatorController, this, nullptr);
+		
+		// 쿨다운 업데이트
+		LastAttackTime = CurrentTime;
+		
+		// 디버그 출력
+		if (GEngine)
+		{
+			FString DebugMessage = FString::Printf(TEXT("Flying Skull Melee Attack Hit: %s with %.1f damage!"), *OtherActor->GetName(), Damage);
+			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, DebugMessage);
+		}
+	}
+}
+
+void ACFlyingSkull::StartFallingAnimation()
+{
+	if (!GetMesh())
+		return;
+
+	bIsFalling = true;
+
+	// 시작 위치/높이 기록 (현재 메시 상대 위치 기준)
+	OriginalMeshLocation = GetMesh()->GetRelativeLocation();
+	FallStartZ = OriginalMeshLocation.Z;
+	FallStartRotation = GetMesh()->GetRelativeRotation();
+
+	FallStartTime = 0.0f;
+
+	if (FallCurve)
+	{
+		FallTimeline.PlayFromStart();
+	}
+}
+
+void ACFlyingSkull::UpdateFallingAnimation(float DeltaTime)
+{
+	if (!GetMesh())
+		return;
+
+	if (FallDuration <= 0.0f)
+	{
+		FVector FinalLoc = OriginalMeshLocation;
+		FinalLoc.Z = FallEndHeight;
+		GetMesh()->SetRelativeLocation(FinalLoc);
+		bIsFalling = false;
+		return;
+	}
+
+	FallStartTime += DeltaTime;
+	float Alpha = FMath::Clamp(FallStartTime / FallDuration, 0.0f, 1.0f);
+
+	float NewZ = FMath::Lerp(FallStartZ, FallEndHeight, Alpha);
+	FVector NewLoc = OriginalMeshLocation;
+	NewLoc.Z = NewZ;
+	GetMesh()->SetRelativeLocation(NewLoc);
+
+	const FQuat StartQ = FallStartRotation.Quaternion();
+	const FQuat EndQ = FallEndRotation.Quaternion();
+	const FQuat Slerped = FQuat::Slerp(StartQ, EndQ, Alpha);
+	GetMesh()->SetRelativeRotation(Slerped);
+
+	if (Alpha >= 1.0f)
+	{
+		bIsFalling = false;
+	}
+}
+
+void ACFlyingSkull::OnFallTimelineUpdate(float Value)
+{
+	if (!GetMesh())
+		return;
+
+	float NewZ = FMath::Lerp(FallStartZ, FallEndHeight, Value);
+	FVector NewLoc = OriginalMeshLocation;
+	NewLoc.Z = NewZ;
+	GetMesh()->SetRelativeLocation(NewLoc);
+
+	const FQuat StartQ = FallStartRotation.Quaternion();
+	const FQuat EndQ = FallEndRotation.Quaternion();
+	const FQuat Slerped = FQuat::Slerp(StartQ, EndQ, Value);
+	GetMesh()->SetRelativeRotation(Slerped);
+}
+
+void ACFlyingSkull::OnFallTimelineFinished()
+{
+	if (!GetMesh())
+		return;
+
+	FVector FinalLoc = OriginalMeshLocation;
+	FinalLoc.Z = FallEndHeight;
+	GetMesh()->SetRelativeLocation(FinalLoc);
+	GetMesh()->SetRelativeRotation(FallEndRotation);
+	bIsFalling = false;
+}
+
+// ===== 메쉬 상대 이동 근접 연출 =====
+void ACFlyingSkull::StartMeleeVisualMove(AActor* TargetActor)
+{
+	USkeletalMeshComponent* MeshComp = GetMesh();
+	if (!MeshComp)
+		return;
+
+	// 시작 상대 위치 저장
+	MeshStartRelativeLocation = MeshComp->GetRelativeLocation();
+
+	// 타겟 위치 계산(수평 위주)
+	FVector TargetWorld = GetActorLocation();
+	if (IsValid(TargetActor))
+	{
+		TargetWorld = TargetActor->GetActorLocation();
+	}
+
+	// 플레이어 위치로 직선 이동 (몸통 박치기)
+	FVector TargetWorldPos = TargetWorld;
+	
+	// 최대 거리 제한 (너무 멀리 가는 것 방지)
+	FVector ToTarget = TargetWorldPos - GetActorLocation();
+	float Distance = ToTarget.Length();
+	if (Distance > MeleeVisualMaxDistance)
+	{
+		FVector Direction = ToTarget / Distance;
+		TargetWorldPos = GetActorLocation() + Direction * MeleeVisualMaxDistance;
+	}
+	
+	// 월드 위치를 상대 위치로 변환
+	FVector LocalTargetPos = GetActorTransform().InverseTransformPosition(TargetWorldPos);
+
+	MeshTargetRelativeLocation = LocalTargetPos;
+
+	MeleeVisualElapsed = 0.0f;
+	bMeleeVisualGoingOut = true;
+	bIsMeleeVisualMoving = true;
+}
+
+void ACFlyingSkull::UpdateMeleeVisualMove(float DeltaTime)
+{
+	USkeletalMeshComponent* MeshComp = GetMesh();
+	if (!MeshComp)
+	{
+		bIsMeleeVisualMoving = false;
+		return;
+	}
+
+	const float Duration = bMeleeVisualGoingOut ? MeleeVisualOutTime : MeleeVisualBackTime;
+	if (Duration <= 0.0f)
+	{
+		// 즉시 스냅
+		if (bMeleeVisualGoingOut)
+		{
+			MeshComp->SetRelativeLocation(MeshTargetRelativeLocation);
+			bMeleeVisualGoingOut = false;
+			MeleeVisualElapsed = 0.0f;
+		}
+		else
+		{
+			MeshComp->SetRelativeLocation(MeshStartRelativeLocation);
+			bIsMeleeVisualMoving = false;
+		}
+		return;
+	}
+
+	MeleeVisualElapsed += DeltaTime;
+	float Alpha = FMath::Clamp(MeleeVisualElapsed / Duration, 0.0f, 1.0f);
+	// EaseInOut 가중치
+	float Smooth = FMath::InterpEaseInOut(0.0f, 1.0f, Alpha, 2.0f);
+
+	// 직선 이동 계산
+	FVector NewRel;
+	
+	if (bMeleeVisualGoingOut)
+	{
+		// 전진: 시작 → 목표 (직선)
+		NewRel = FMath::Lerp(MeshStartRelativeLocation, MeshTargetRelativeLocation, Smooth);
+	}
+	else
+	{
+		// 복귀: 목표 → 시작 (직선)
+		NewRel = FMath::Lerp(MeshTargetRelativeLocation, MeshStartRelativeLocation, Smooth);
+	}
+	
+	MeshComp->SetRelativeLocation(NewRel);
+
+	if (Alpha >= 1.0f)
+	{
+		if (bMeleeVisualGoingOut)
+		{
+			// 왕복의 복귀 단계로 전환
+			bMeleeVisualGoingOut = false;
+			MeleeVisualElapsed = 0.0f;
+		}
+		else
+		{
+		// 종료
+		bIsMeleeVisualMoving = false;
+		// 잔오차 제거
+		MeshComp->SetRelativeLocation(MeshStartRelativeLocation);
+		}
+	}
+}
+
+void ACFlyingSkull::EndMeleeVisualMove(bool bSnapToStart)
+{
+	USkeletalMeshComponent* MeshComp = GetMesh();
+	if (!MeshComp)
+		return;
+
+	bIsMeleeVisualMoving = false;
+	bMeleeVisualGoingOut = false;
+	MeleeVisualElapsed = 0.0f;
+
+	if (bSnapToStart)
+	{
+		MeshComp->SetRelativeLocation(MeshStartRelativeLocation);
 	}
 }
 
