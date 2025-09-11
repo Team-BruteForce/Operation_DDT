@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "Global.h"
 #include "Boss/Notifies/AnimNotify_SpawnLightningSpear.h"
+#include "Global.h"
 #include "Boss/Component/BossProjectileComponent.h"
 
 FString UAnimNotify_SpawnLightningSpear::GetNotifyName_Implementation() const
