@@ -24,6 +24,12 @@ public:
 	class UNiagaraComponent* NiagaraProjectile;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectile")
+	class UNiagaraComponent* NiagaraSpawnEffect;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectile")
+	class UNiagaraComponent* NiagaraDestroyEffect;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectile")
 	class UProjectileMovementComponent* ProjectileComp;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectile")
@@ -34,29 +40,84 @@ public:
 
 public:
 	// 투사체 발사
+	UFUNCTION(BlueprintCallable, Category = "Projectile")
 	void FireProjectile(AActor* Target);
 	
 	// 새로운 기능: 스폰 후 n초 대기 후 원하는 지점으로 이동
+	UFUNCTION(BlueprintCallable, Category = "Projectile")
 	void FireProjectileToLocation(const FVector& TargetLocation, float WaitTime = 2.0f);
+	
+	// 이펙트 관련 함수들
+	UFUNCTION(BlueprintCallable, Category = "Effects")
+	void PlaySpawnEffect();
+	
+	UFUNCTION(BlueprintCallable, Category = "Effects")
+	void PlayDestroyEffect();
+	
+	// 충돌 판정 함수
+	UFUNCTION()
+	void OnProjectileHit(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	
 
-private:
+public:
 	// 기본 변수들
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Projectile")
 	AActor* TargetActor;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectile")
 	float ProjectileSpeed;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Projectile")
 	float CurrentTime;
-	FVector StartLocation;       // 시작 위치
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Projectile")
+	FVector StartLocation;
 	
 	// 투사체 수명
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectile")
 	float LifeTime;
 	
 	// 관통 후 직진 관련 변수들
-	bool bHasPassedTarget;       // 타겟을 통과했는지 여부
-	FVector LastDirection;       // 마지막 이동 방향
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Projectile")
+	bool bHasPassedTarget;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Projectile")
+	FVector LastDirection;
+	
+	// 추적 각도 제한 관련 변수들
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectile")
+	float MaxTrackingAngle;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Projectile")
+	FVector InitialDirection;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Projectile")
+	FVector CurrentDirection;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectile")
+	bool bCanTrack;
 	
 	// 새로운 기능 관련 변수들
-	bool bWaitingToMove;              // 대기 중인지 여부
-	float WaitTimer;                  // 대기 타이머
-	float WaitDuration;               // 대기 시간
-	FVector DelayedTargetLocation;    // 지연 이동할 목표 위치
-	bool bMovingToLocation;           // 지점으로 이동 중인지 여부
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Projectile")
+	bool bWaitingToMove;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Projectile")
+	float WaitTimer;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectile")
+	float WaitDuration;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Projectile")
+	FVector DelayedTargetLocation;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Projectile")
+	bool bMovingToLocation;
+	
+	// 오브젝트 풀 관련
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Object Pool")
+	bool bUseObjectPool;
+	
+	// 타이머 핸들 (멤버 변수로 추가)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Object Pool")
+	FTimerHandle DestroyTimerHandle;
 };

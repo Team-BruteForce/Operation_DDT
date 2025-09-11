@@ -30,6 +30,9 @@ struct FBossWeaponTags {
 	
 	UPROPERTY(EditDefaultsOnly)
 	FGameplayTag PaseOne= FGameplayTag::RequestGameplayTag("BOSS.Pase.One");
+
+	UPROPERTY(EditDefaultsOnly)
+	FGameplayTag PaseTwo = FGameplayTag::RequestGameplayTag("BOSS.Pase.Two");
 };
 
 /**
@@ -79,12 +82,14 @@ public:
 	/**
 	 * @brief 맨손 모드인지 확인
 	 */
-	FORCEINLINE bool IsUnarmedMode() { return CurrentWeaponMode == BossTags.PaseZero; }
+	FORCEINLINE bool IsPaseZeroMode() { return CurrentWeaponMode == BossTags.PaseZero; }
 	
 	/**
 	 * @brief 팔라딘 모드인지 확인
 	 */
-	FORCEINLINE bool IsPaladinMode() { return CurrentWeaponMode == BossTags.PaseOne; }
+	FORCEINLINE bool IsPaseOneMode() { return CurrentWeaponMode == BossTags.PaseOne; }
+	
+	FORCEINLINE bool IsPaseTwoMode() { return CurrentWeaponMode == BossTags.PaseTwo; }
 
 	/**
 	 * @brief 현재 무기 모드 반환

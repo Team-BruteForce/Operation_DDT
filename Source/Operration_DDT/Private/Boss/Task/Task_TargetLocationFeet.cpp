@@ -10,6 +10,7 @@ EStateTreeRunStatus UTask_TargetLocationFeet::Tick(FStateTreeExecutionContext& C
 {
 	UMotionWarpingComponent* Motion= CHelpers::GetComponent<UMotionWarpingComponent>(Boss);
 	UCBossTargetingComponent* TargetingComponent= CHelpers::GetComponent<UCBossTargetingComponent>(Boss);
-	Motion->AddOrUpdateWarpTargetFromLocation( TargetName,TargetingComponent->FindPlayer()->GetActorLocation());
+	TargetLocation=TargetingComponent->FindPlayer()->GetActorLocation();
+	Motion->AddOrUpdateWarpTargetFromLocation( TargetName,FVector(TargetLocation.X,TargetLocation.Y,0));
 	return Super::Tick(Context, DeltaTime);
 }

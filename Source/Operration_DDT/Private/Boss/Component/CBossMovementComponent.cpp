@@ -26,6 +26,7 @@
 #include "DrawDebugHelpers.h"
 #include "GameplayTagContainer.h"
 #include "Boss/Component/CBossTargetingComponent.h"
+#include "Boss/Component/FlyingComponent.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
@@ -39,10 +40,11 @@ UCBossMovementComponent::UCBossMovementComponent()
 void UCBossMovementComponent::BeginPlay()
 {
 	Super::BeginPlay();
-	Owner = Cast<APawn>(GetOwner());
+	Owner = Cast<ACharacter>(GetOwner());
 	CheckNull(Owner);
 	AIC = Cast<AAIController>(Owner->GetController());
 	TargetingComp=CHelpers::GetComponent<UCBossTargetingComponent>(Owner);
+	FlyingComponent=CHelpers::GetComponent<UFlyingComponent>(Owner);
 }
 
 // Called every frame
@@ -250,6 +252,30 @@ FGameplayTag UCBossMovementComponent::GetPlayerMovementStateTag()
 	}
 }
 
+void UCBossMovementComponent::SetMovementStateWalk()
+{
+	Owner->GetCharacterMovement()->SetMovementMode(MOVE_NavWalking);
+	IsFlying=false;
+	
+	// 비행 컴포넌트가 있으면 착륙
+	if (FlyingComponent)
+	{
+		FlyingComponent->StartLanding();
+	}
+}
+
+void UCBossMovementComponent::SetMovementStateFly()
+{
+	Owner->GetCharacterMovement()->SetMovementMode(MOVE_Flying);
+	IsFlying=true;
+	
+	// 비행 컴포넌트가 있으면 이륙
+	if (FlyingComponent)
+	{
+		FlyingComponent->StartTakeoff(300.0f); // 300 유닛 높이로 이륙
+	}
+}
+
 APawn* UCBossMovementComponent::FindPlayer()
 {
 	if (!GetWorld()) return nullptr;
@@ -272,7 +298,6 @@ APawn* UCBossMovementComponent::FindPlayer()
  */
 FVector UCBossMovementComponent::FindBackstepPosition()
 {
-	
 	// 게임 시작 시 플레이어가 아직 준비되지 않았을 수 있음
 	APawn* Player = FindPlayer();
 	if (!Player) return Owner->GetActorLocation();
@@ -295,7 +320,7 @@ FVector UCBossMovementComponent::FindBackstepPosition()
 			FVector SearchDirection = BossBackwardDirection.RotateAngleAxis(CurrentAngle, FVector::UpVector);
 			
 			// 플레이어로부터 지정된 거리에 있는 위치 계산
-			FVector TargetPosition = PlayerLocation + SearchDirection * TargetingComp->DistanceThresholds[3];
+			FVector TargetPosition = PlayerLocation + SearchDirection * TargetingComp->DistanceThresholds[2];
 			
 			// Nav Mesh에서 안전한 위치 찾기
 			SafePosition = FindSafePositionOnNavMesh(SearchDirection, FVector::Dist(BossLocation, TargetPosition));
@@ -575,7 +600,7 @@ void UCBossMovementComponent::ExecuteSmartMovement(float DeltaTime, float MinDis
 			// AI MoveTo로 목표 좌표로 이동
 			if (AIC)
 			{
-				AIC->MoveToLocation(TargetPosition, 0);
+					AIC->MoveToLocation(TargetPosition, 0);
 			}
 		}
 		else
@@ -587,7 +612,7 @@ void UCBossMovementComponent::ExecuteSmartMovement(float DeltaTime, float MinDis
 			// AI 컨트롤러로 이동
 			if (AIC)
 			{
-				AIC->MoveToLocation(TargetPosition, 0);
+					AIC->MoveToLocation(TargetPosition, 0);
 			}
 		}
 		
@@ -614,7 +639,7 @@ void UCBossMovementComponent::ExecuteSmartMovement(float DeltaTime, float MinDis
 			// AI 컨트롤러로 이동
 			if (AIC)
 			{
-				AIC->MoveToLocation(TargetPosition, 0);
+					AIC->MoveToLocation(TargetPosition, 0);
 			}
 		}
 		else if (CurrentDistance > AdjustedMaxDistance)
@@ -630,7 +655,7 @@ void UCBossMovementComponent::ExecuteSmartMovement(float DeltaTime, float MinDis
 			// AI 컨트롤러로 이동
 			if (AIC)
 			{
-				AIC->MoveToLocation(TargetPosition, 0);
+					AIC->MoveToLocation(TargetPosition, 0);
 			}
 		}
 		else
@@ -647,7 +672,7 @@ void UCBossMovementComponent::ExecuteSmartMovement(float DeltaTime, float MinDis
 			// AI 컨트롤러로 이동
 			if (AIC)
 			{
-				AIC->MoveToLocation(TargetPosition, 0);
+					AIC->MoveToLocation(TargetPosition, 0);
 			}
 		}
 	}

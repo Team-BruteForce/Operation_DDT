@@ -128,6 +128,19 @@ public:
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Boss Stats")
 	int32 Speed;
+
+	/**
+	 * @brief 최대 그로기 게이지
+	 * 
+	 * @details
+	 * 보스의 최대 그로기 게이지입니다.
+	 * 
+	 * @section default_value 기본값
+	 * - 기본값: 100.0f
+	 * - 에디터에서 수정 가능
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Boss Stats")
+	float MaxGroggyGauge;
 	
 	/**
 	 * @brief 생성자
@@ -149,5 +162,6 @@ public:
 		, ATK(100.0f)
 		, DEF(50.0f)
 		, Speed(300)
+		, MaxGroggyGauge(100.0f)
 	{}
 };

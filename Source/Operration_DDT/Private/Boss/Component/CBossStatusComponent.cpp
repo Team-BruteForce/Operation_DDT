@@ -51,6 +51,8 @@ void UCBossStatusComponent::BeginPlay()
 			BossCurrentStats.ConstDEF = BossData->DEF;
 			BossCurrentStats.CurrentDEF = BossData->DEF;
 			BossCurrentStats.MaxSpeed = BossData->Speed;
+			BossCurrentStats.MaxGroggyGauge = BossData->MaxGroggyGauge;
+			BossCurrentStats.CurrentGroggyGauge = 0.0f;
 		}
 	}
 	Owner=Cast<APawn>(GetOwner());
@@ -89,8 +91,60 @@ void UCBossStatusComponent::IncreaseAP(float AP)
 		BossCurrentStats.CurrentAP += AP;
 }
 
+void UCBossStatusComponent::SetDamage(float Damage)
+{
+	if (!GetIsGroggy())
+		BossCurrentStats.CurrentHP-=Damage;
+		
+		// BossCurrentStats.CurrentHP-=Damage-BossCurrentStats.CurrentDEF;
+	else
+		BossCurrentStats.CurrentHP-=Damage;
+}
+
 void UCBossStatusComponent::ResetAp()
 {
 	BossCurrentStats.CurrentAP =0;
+}
+
+/**
+ * @brief 그로기 게이지 증가
+ * 
+ * @param GroggyAmount 증가할 그로기 게이지량
+ * 
+ * 현재 그로기 게이지에 지정된 양을 더합니다.
+ * 최대치를 초과하지 않도록 제한합니다.
+ */
+void UCBossStatusComponent::IncreaseGroggyGauge(float GroggyAmount)
+{
+	if (BossCurrentStats.CurrentGroggyGauge >= BossCurrentStats.MaxGroggyGauge)
+		BossCurrentStats.CurrentGroggyGauge = BossCurrentStats.MaxGroggyGauge;
+	else
+		BossCurrentStats.CurrentGroggyGauge += GroggyAmount*0.1;
+}
+
+/**
+ * @brief 그로기 게이지 감소
+ * 
+ * @param GroggyAmount 감소할 그로기 게이지량
+ * 
+ * 현재 그로기 게이지에서 지정된 양을 뺍니다.
+ * 0 이하로 내려가지 않도록 제한합니다.
+ */
+void UCBossStatusComponent::DecreaseGroggyGauge(float GroggyAmount)
+{
+	if (BossCurrentStats.CurrentGroggyGauge <= 0.0f)
+		BossCurrentStats.CurrentGroggyGauge = 0.0f;
+	else
+		BossCurrentStats.CurrentGroggyGauge -= GroggyAmount;
+}
+
+/**
+ * @brief 그로기 게이지 초기화
+ * 
+ * 현재 그로기 게이지를 0으로 설정합니다.
+ */
+void UCBossStatusComponent::ResetGroggyGauge()
+{
+	BossCurrentStats.CurrentGroggyGauge = 0.0f;
 }
 

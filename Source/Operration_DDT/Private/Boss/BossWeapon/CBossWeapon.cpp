@@ -51,6 +51,21 @@ void ACBossWeapon::OnBossCollisions()
 		shape->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 }
 
+void ACBossWeapon::OnSelectCollision(FName CollisionName)
+{
+	if (OnBossAttachmentBeginCollision.IsBound())
+		OnBossAttachmentBeginCollision.Broadcast();
+
+	for (UShapeComponent* shape : Collisions)
+	{
+		if (shape->GetName()==CollisionName)
+		{
+			CheckNull(shape);
+			shape->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		}
+	}
+}
+
 void ACBossWeapon::OffBossCollisions()
 {
 	if (OnBossAttachmentEndCollision.IsBound())
@@ -64,6 +79,7 @@ void ACBossWeapon::OnBossComponentBeginOverlap(UPrimitiveComponent * OverlappedC
 {
 	CheckTrue(OwnerCharacter == OtherActor);
 	CheckTrue(OwnerCharacter->GetClass() == OtherActor->GetClass());
+	CheckNull(Cast<ACharacter>(OtherActor));
 
 	if (OnBossAttachmentBeginOverlap.IsBound())
 		OnBossAttachmentBeginOverlap.Broadcast(OwnerCharacter, this, Cast<ACharacter>(OtherActor));
@@ -73,6 +89,7 @@ void ACBossWeapon::OnBossComponentEndOverlap(UPrimitiveComponent * OverlappedCom
 {
 	CheckTrue(OwnerCharacter == OtherActor);
 	CheckTrue(OwnerCharacter->GetClass() == OtherActor->GetClass());
+	CheckNull(OtherActor);
 	
 	if (OnBossAttachmentEndOverlap.IsBound())
 		OnBossAttachmentEndOverlap.Broadcast(OwnerCharacter, Cast<ACharacter>(OtherActor));

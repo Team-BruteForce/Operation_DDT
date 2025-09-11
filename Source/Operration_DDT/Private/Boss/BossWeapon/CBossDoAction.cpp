@@ -14,6 +14,7 @@
 #include "Global.h"
 #include "Boss/Component/BossStateComponent.h"
 #include "Boss/Component/CBossMovementComponent.h"
+#include "Boss/Component/CBossStatusComponent.h"
 #include "GameFramework/Character.h"
 
 /**
@@ -95,7 +96,8 @@ void UCBossDoAction::OnBossWeaponEndCollision()
 void UCBossDoAction::OnBossWeaponBeginOverlap(class ACharacter* InAttacker, AActor* InAttackCuaser,
                                               class ACharacter* InOther)
 {
-	UGameplayStatics::ApplyDamage(InOther,BossDoActionDatas[CurrentWeaponActionTag].Damage,InOther->GetController(),InOther,nullptr);
+	UCBossStatusComponent* Status=CHelpers::GetComponent<UCBossStatusComponent>(InAttacker);
+	UGameplayStatics::ApplyDamage(InOther,BossDoActionDatas[CurrentWeaponActionTag].Damage*Status->BossCurrentStats.CurrentATK,InOther->GetController(),InOther,nullptr);
 	
 }
 

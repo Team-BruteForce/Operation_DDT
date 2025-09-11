@@ -122,7 +122,9 @@ public:
 	FGameplayTag GetPlayerMovementStateTag();
 	
 
-
+	void SetMovementStateWalk();
+	void SetMovementStateFly();
+	
 	/**
 	 * @brief 플레이어를 찾는 함수
 	 * 
@@ -131,11 +133,9 @@ public:
 public:
 	class APawn* FindPlayer();
 private:
-	
-
 	/** 소유자 액터 */
 	UPROPERTY()
-	class APawn* Owner;
+	class ACharacter* Owner;
 	
 	/** AI 컨트롤러 */
 	UPROPERTY()
@@ -144,12 +144,17 @@ private:
 	UPROPERTY()
 	class UCBossTargetingComponent* TargetingComp;
 
+	UPROPERTY()
+	class UFlyingComponent* FlyingComponent;
+
 	UPROPERTY(EditAnywhere)
 	FBossTargetState TargetStateTag;
+
 public:
 	UPROPERTY()
 	FVector SafePosition;
-	
+	UPROPERTY(EditAnywhere)
+	bool IsFlying=false;
 private:
 	// 디버그 데이터 변수들
 	FVector DebugTargetLocation;

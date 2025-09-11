@@ -41,6 +41,7 @@ protected:
 
 public:
 	void OnBossCollisions ( );
+	void OnSelectCollision(FName CollisionName);
 	void OffBossCollisions ( );
 private:
 	UFUNCTION()
