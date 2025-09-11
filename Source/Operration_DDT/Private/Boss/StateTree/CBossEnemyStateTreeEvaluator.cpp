@@ -13,6 +13,9 @@
 #include "Engine/Engine.h"
 #include "NavigationSystem.h"
 #include "Boss/Component/BossProjectileComponent.h"
+#include "Boss/Component/CBossWeaponComponent.h"
+#include "Boss/Component/FlyingComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 void UCBossEnemyStateTreeEvaluator::Tick(FStateTreeExecutionContext& Context, const float DeltaTime)
 {
@@ -24,10 +27,12 @@ void UCBossEnemyStateTreeEvaluator::Tick(FStateTreeExecutionContext& Context, co
 	if (!State) State=CHelpers::GetComponent<UBossStateComponent>(Boss);
 	if (!Status) Status=CHelpers::GetComponent<UCBossStatusComponent>(Boss);
 	if (!Projectile) Projectile=CHelpers::GetComponent<UBossProjectileComponent>(Boss);
+	if (!CharacterMovement) CharacterMovement=CHelpers::GetComponent<UCharacterMovementComponent>(Boss);
+	if (!FlyingComponent) FlyingComponent=CHelpers::GetComponent<UFlyingComponent>(Boss);
+	if (!WeaponComponent) WeaponComponent=CHelpers::GetComponent<UCBossWeaponComponent>(Boss);
 	// 컴포넌트에서 계산 결과를 전역변수로 받아오기
 	Get_Decision_Data(Context, DeltaTime);
 	IsExitOrb= Projectile->ExitOrb;
-	CLog::Log(IsExitOrb);
 	// 컴포넌트를 사용하여 타겟 이동 방향 계산
 	if (TargetingComponent)
 	{
@@ -51,13 +56,17 @@ void UCBossEnemyStateTreeEvaluator::Tick(FStateTreeExecutionContext& Context, co
 	
 	// 현재 상태 태그 업데이트
 	CurrentTag = State->GetStateTag();
-	
+	IsFly=FlyingComponent->IsFlying();
+	CurrentPaseState=WeaponComponent->GetCurrentWeaponMode();
 	// 디버그 출력
 	CLog::Print(State->GetStateTag().ToString(), 1);
 	CLog::Print(FString::Printf(TEXT("Distance : %f"), player_ai_dist), 2);
 	CLog::Print("Target : " + Target->GetName(), 3);
 	CLog::Print(Status->BossCurrentStats.CurrentAP, 4);
 	CLog::Print("Current Range Tag: " + CurrentRangeTag.ToString(), 5);
+	CLog::Print("Current Pase Tag: " + WeaponComponent->GetCurrentWeaponMode().ToString(), 6);
+	CLog::Print(FString::Printf(TEXT("CurrentHP : %d"), Status->BossCurrentStats.CurrentHP), 7);
+	
 }
 
 void UCBossEnemyStateTreeEvaluator::TreeStart(FStateTreeExecutionContext& Context)

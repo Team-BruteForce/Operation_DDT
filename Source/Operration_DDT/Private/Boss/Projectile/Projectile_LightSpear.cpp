@@ -8,6 +8,7 @@
 #include "GameFramework/Character.h"
 #include "Kismet/GameplayStatics.h"
 #include "Boss/Component/CBossTargetingComponent.h"
+#include "Boss/Component/BossProjectileComponent.h"
 
 // Sets default values
 AProjectile_LightSpear::AProjectile_LightSpear()
@@ -44,9 +45,10 @@ void AProjectile_LightSpear::BeginPlay()
 // 발사 함수
 void AProjectile_LightSpear::FireProjectile()
 {
+	
 	// 타겟팅 컴포넌트 가져오기
 	TargetingComp = CHelpers::GetComponent<UCBossTargetingComponent>(GetOwner());
-	
+	Shape->SetCollisionEnabled(ECollisionEnabled::Type::QueryAndPhysics);
 	// 타겟 방향 계산
 	if (TargetingComp && TargetingComp->FindPlayer())
 	{
@@ -62,6 +64,49 @@ void AProjectile_LightSpear::FireProjectile()
 	
 	// 타이머 리셋
 	CurrentTime = 0.0f;
+	
+	// 3초 후 풀로 반환은 Tick에서 처리 (중복 방지)
+	/*
+	if (bUseObjectPool)
+	{
+		// WeakPtr을 사용하여 안전한 참조
+		TWeakObjectPtr<AProjectile_LightSpear> WeakThis = this;
+		TWeakObjectPtr<AActor> WeakOwner = GetOwner();
+		
+		GetWorld()->GetTimerManager().SetTimer(LifeTimeTimerHandle, [WeakThis, WeakOwner]()
+		{
+			// WeakPtr로 유효성 확인
+			if (!WeakThis.IsValid())
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Projectile_LightSpear - 3초 타이머: WeakThis가 유효하지 않음 (이미 파괴됨)"));
+				return;
+			}
+			
+			if (!WeakOwner.IsValid())
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Projectile_LightSpear - 3초 타이머: WeakOwner가 유효하지 않음"));
+				return;
+			}
+			
+			AProjectile_LightSpear* Projectile = WeakThis.Get();
+			AActor* Owner = WeakOwner.Get();
+			
+			UE_LOG(LogTemp, Warning, TEXT("Projectile_LightSpear - 3초 타이머 실행: 풀로 반환 시도"));
+			
+			// 오브젝트 풀에 반환
+			class UBossProjectileComponent* ProjectileComp = CHelpers::GetComponent<class UBossProjectileComponent>(Owner);
+			if (ProjectileComp)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Projectile_LightSpear - 3초 타이머: 풀로 반환 성공"));
+				ProjectileComp->ReturnProjectileToPool(Projectile);
+			}
+			else
+			{
+				UE_LOG(LogTemp, Error, TEXT("Projectile_LightSpear - 3초 타이머: ProjectileComp를 찾을 수 없음"));
+			}
+		}, 3.0f, false);
+	}
+	*/
 }
 
 // Called every frame
@@ -75,10 +120,33 @@ void AProjectile_LightSpear::Tick(float DeltaTime)
 	FVector NewLocation = GetActorLocation() + TargetDirection * ProjectileSpeed * DeltaTime;
 	SetActorLocation(NewLocation);
 	
-	// 3초 후 파괴
+	// 3초 후 풀로 반환 (오브젝트 풀 사용 시) 또는 파괴
 	if (CurrentTime >= LifeTime)
 	{
-		Destroy();
+		if (bUseObjectPool)
+		{
+			// 타이머 클리어 (중복 실행 방지)
+			if (LifeTimeTimerHandle.IsValid())
+			{
+				GetWorld()->GetTimerManager().ClearTimer(LifeTimeTimerHandle);
+				LifeTimeTimerHandle.Invalidate();
+			}
+			
+			
+			// 오브젝트 풀에 반환
+			if (IsValid(GetOwner()))
+			{
+				UBossProjectileComponent* BossProjectileComp = CHelpers::GetComponent<UBossProjectileComponent>(GetOwner());
+				if (BossProjectileComp)
+				{
+					BossProjectileComp->ReturnProjectileToPool(this);
+				}
+			}
+		}
+		else
+		{
+			Destroy();
+		}
 	}
 }
 
@@ -97,6 +165,7 @@ void AProjectile_LightSpear::PlayDestroyEffect()
 void AProjectile_LightSpear::OnProjectileHit(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+	CheckNull( Cast<ACharacter>(OtherActor));
 	ACharacter* Player = Cast<ACharacter>(OtherActor);
 		if (Player->GetName()!=GetOwner()->GetName())
 		{
@@ -108,12 +177,45 @@ void AProjectile_LightSpear::OnProjectileHit(UPrimitiveComponent* OverlappedComp
 			{
 				Shape->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 			}
+			
+			// 3초 타이머 클리어 (충돌로 인한 조기 반환)
+			if (LifeTimeTimerHandle.IsValid())
+			{
+				GetWorld()->GetTimerManager().ClearTimer(LifeTimeTimerHandle);
+				LifeTimeTimerHandle.Invalidate();
+			}
+			
 			PlayDestroyEffect();
-			// 0.25초 후 파괴
+			// 0.25초 후 파괴 또는 풀 반환
 			FTimerHandle DestroyTimerHandle;
 			GetWorld()->GetTimerManager().SetTimer(DestroyTimerHandle, [this]()
 			{
-				Destroy();
+				// 오브젝트가 여전히 유효한지 확인
+				if (!IsValid(this))
+				{
+					return;
+				}
+				
+				// 오브젝트 풀 사용 시 Destroy 대신 비활성화만
+				if (bUseObjectPool)
+				{
+					// Owner 유효성 확인
+					if (!IsValid(GetOwner()))
+					{
+						return;
+					}
+					
+					// 오브젝트 풀에 반환
+					UBossProjectileComponent* BossProjectileComp = CHelpers::GetComponent<UBossProjectileComponent>(GetOwner());
+					if (BossProjectileComp)
+					{
+						BossProjectileComp->ReturnProjectileToPool(this);
+					}
+				}
+				else
+				{
+					Destroy();
+				}
 			}, 0.25f, false);
 			
 			// 이동 정지

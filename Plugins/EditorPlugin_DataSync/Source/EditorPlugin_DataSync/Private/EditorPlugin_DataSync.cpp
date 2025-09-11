@@ -493,6 +493,7 @@ void FEditorPlugin_DataSyncModule::UpdateBossStatsTableSimple(UDataTable* BossTa
 			float ATK = RowObject->GetNumberField("atk");
 			float DEF = RowObject->GetNumberField("def");
 			int32 Speed = RowObject->GetIntegerField("speed");
+			float MaxGroggyGauge = RowObject->GetNumberField("MaxGroggyGauge");
 			
 			// 행 이름 생성
 			FName RowName = FName(*BossName);
@@ -506,6 +507,7 @@ void FEditorPlugin_DataSyncModule::UpdateBossStatsTableSimple(UDataTable* BossTa
 				float ATK;
 				float DEF;
 				int32 Speed;
+				float MaxGroggyGauge;
 			};
 			
 			FBossStatSimple BossStat;
@@ -515,13 +517,14 @@ void FEditorPlugin_DataSyncModule::UpdateBossStatsTableSimple(UDataTable* BossTa
 			BossStat.ATK = ATK;
 			BossStat.DEF = DEF;
 			BossStat.Speed = Speed;
+			BossStat.MaxGroggyGauge = MaxGroggyGauge;
 			
 			// 테이블에 행 추가
 			BossTable->AddRow(RowName, BossStat);
 			SuccessCount++;
 			
-			UE_LOG(LogTemp, Log, TEXT("보스 스탯 추가 성공: %s (HP:%d, AP:%f, ATK:%.1f, DEF:%.1f, Speed:%d)"), 
-				*BossName, MaxHP, MaxAP, ATK, DEF, Speed);
+			UE_LOG(LogTemp, Log, TEXT("보스 스탯 추가 성공: %s (HP:%d, AP:%f, ATK:%.1f, DEF:%.1f, Speed:%d, MaxGroggyGauge : %.1f)"), 
+				*BossName, MaxHP, MaxAP, ATK, DEF, Speed,MaxGroggyGauge);
 		}
 		catch (...)
 		{

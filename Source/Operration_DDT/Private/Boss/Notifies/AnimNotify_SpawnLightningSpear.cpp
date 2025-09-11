@@ -2,7 +2,6 @@
 
 #include "Global.h"
 #include "Boss/Notifies/AnimNotify_SpawnLightningSpear.h"
-
 #include "Boss/Component/BossProjectileComponent.h"
 
 FString UAnimNotify_SpawnLightningSpear::GetNotifyName_Implementation() const
@@ -13,6 +12,7 @@ FString UAnimNotify_SpawnLightningSpear::GetNotifyName_Implementation() const
 void UAnimNotify_SpawnLightningSpear::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation)
 {
 	Super::Notify(MeshComp, Animation);
+	
 	APawn* Owner=Cast<APawn>(MeshComp->GetOwner());
 	CheckNull(Owner);
 	UBossProjectileComponent* ProjectileComp=CHelpers::GetComponent<UBossProjectileComponent>(Owner);

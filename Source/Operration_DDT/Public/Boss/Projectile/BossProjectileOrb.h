@@ -24,16 +24,21 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 public:
+	UFUNCTION(BlueprintCallable, Category = "Projectile")
 	void SpawnProjectile();
 
 public:
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectile")
 	TSubclassOf<ABossProjectileActor> ProjectileClass;
 
-	UPROPERTY()
-	float CurrentTime = 0.0f;
-	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="Time")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Time")
+	float CurrentTime;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Time")
 	float MaxTime=5.0f;
 	
+	// 오브젝트 풀 관련
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Object Pool")
+	bool bUseObjectPool;
 
 };

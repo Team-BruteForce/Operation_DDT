@@ -15,9 +15,13 @@
 #include "Boss/CBossAIC.h"
 #include "Boss/Component/CBossWeaponComponent.h"
 #include "MotionWarpingComponent.h"
+#include "Boss/BossAnimInstance.h"
+#include "Boss/Component/BossEffectComponent.h"
 #include "Boss/Component/CBossStatusComponent.h"
+#include "Boss/Component/FlyingComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/StateTreeComponent.h"
+#include "Engine/DamageEvents.h"
 
 /**
  * @brief 보스 캐릭터 생성자
@@ -53,6 +57,8 @@ ACBoss::ACBoss()
 	CHelpers::CreateActorComponent<UBossProjectileComponent>(this,&ProjectileComp,"ProjectileComp");
 	CHelpers::CreateActorComponent<UCBossTargetingComponent>(this,&TargetingComp,"TargetingComp");
 	CHelpers::CreateActorComponent<UBossDebugComponent>(this,&DebugComp,"DebugComp");
+	CHelpers::CreateActorComponent<UBossEffectComponent>(this,&EffectComponent,"EffectComp");
+	CHelpers::CreateActorComponent<UFlyingComponent>(this,&FlyingComponent,"FlyingComponent");
 
 	// USkeletalMesh* WingsMesh;
 	// CHelpers::GetAsset<USkeletalMesh>(&WingsMesh, AssetPaths::Boss_Wings);
@@ -65,21 +71,68 @@ ACBoss::ACBoss()
 	// WingMeshComp->SetAnimInstanceClass(WingAnim);
 }
 
-float ACBoss::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator,
-	AActor* DamageCauser)
+void ACBoss::Tick(float DeltaSeconds)
 {
-	BossStatusComponent->SetDamage(DamageAmount);
-	BossStatusComponent->IncreaseAP(DamageAmount*0.1);
+	Super::Tick(DeltaSeconds);
 	if (BossStatusComponent->BossCurrentStats.CurrentHP<=0)
 	{
 		UStateTreeComponent* StateTreeComp = GetController()->FindComponentByClass<UStateTreeComponent>();
 		StateTreeComp->SendStateTreeEvent(FGameplayTag::RequestGameplayTag("BOSS.State.Dead"));
+		BossStatusComponent->BossCurrentStats.CurrentHP=1;
 	}
+	if (BossStatusComponent->BossCurrentStats.CurrentHP <= 1200 && BossWeaponComponent->GetCurrentWeaponMode()==FGameplayTag::RequestGameplayTag("BOSS.Pase.One"))
+	{
+		UStateTreeComponent* StateTreeComp = GetController()->FindComponentByClass<UStateTreeComponent>();
+		StateTreeComp->SendStateTreeEvent(FGameplayTag::RequestGameplayTag("BOSS.Event.ChangePase"));
+	}
+	else if (BossStatusComponent->BossCurrentStats.CurrentGroggyGauge >= BossStatusComponent->BossCurrentStats.MaxGroggyGauge)
+	{
+		if (BossStatusComponent->GetIsPaseChange())return;
+		// 현재 스턴 상태가 아닐 때만 스턴 상태로 전환
+		if (!BossStatusComponent->IsGroggy) // 또는 적절한 스턴 상태 체크
+		{
+			UStateTreeComponent* StateTreeComp = GetController()->FindComponentByClass<UStateTreeComponent>();
+			StateTreeComp->SendStateTreeEvent(FGameplayTag::RequestGameplayTag("BOSS.State.Stunned"));
+			BossStatusComponent->BossCurrentStats.CurrentGroggyGauge = 0;
+		}
+	}
+}
+
+float ACBoss::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator,
+                         AActor* DamageCauser)
+{
+	const FPointDamageEvent* PointDamageEvent = static_cast<const FPointDamageEvent*>(&DamageEvent);
+	FName HitBone = PointDamageEvent->HitInfo.BoneName;
+	FVector HitLocation = PointDamageEvent->HitInfo.ImpactPoint;
+	if (DamageEvent.IsOfType(FPointDamageEvent::ClassID))
+	{
+		if (PointDamageEvent)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Hit Bone: %s"), *HitBone.ToString());
+
+			// 🎯 헤드샷 판정
+			if (HitBone == FName("head") || HitBone == FName("Head") || HitBone.ToString().Contains("Head"))
+			{
+				DamageAmount *= 2.0f; // 데미지 배율
+			}
+		}
+	}
+
+	// 기존 보스 상태 처리
+	if (!BossStatusComponent->GetIsPaseChange())
+	{
+		BossStatusComponent->SetDamage(DamageAmount);
+		BossStatusComponent->IncreaseAP(DamageAmount);
+		BossStatusComponent->IncreaseGroggyGauge(DamageAmount);
+		PlayHitMotion(HitBone);
+	}
+
+
 	return DamageAmount;
 }
 
 
-/**
+/** 
  * @brief 게임 시작 또는 스폰 시 호출되는 함수
  * 
  * 캐릭터가 게임에 스폰될 때 초기화 작업을 수행합니다.
@@ -87,5 +140,16 @@ float ACBoss::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEv
 void ACBoss::BeginPlay()
 {
 	Super::BeginPlay();
+}
 
+void ACBoss::PlayHitMotion(FName BoneName)
+{
+	GetMesh()->SetAllBodiesBelowSimulatePhysics(FName("spine_03"), true, true);
+	// 일정 시간 후 복구
+	FTimerHandle TimerHandle;
+	GetWorld()->GetTimerManager().SetTimer(TimerHandle, [this]()
+	{
+		GetMesh()->SetSimulatePhysics(false);
+		GetMesh()->AttachToComponent(GetCapsuleComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+	}, 0.05f, false);
 }

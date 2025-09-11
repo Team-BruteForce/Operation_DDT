@@ -15,6 +15,7 @@
 #include "Global.h"
 #include "StateTreeExecutionContext.h"
 #include "Boss/CBoss.h"
+#include "Boss/Component/BossEffectComponent.h"
 #include "Boss/Component/BossProjectileComponent.h"
 #include "Boss/Component/CBossStatusComponent.h"
 #include "Boss/Component/CBossTargetingComponent.h"
@@ -41,11 +42,13 @@ EStateTreeRunStatus UTask_PlayMontage::EnterState(FStateTreeExecutionContext& Co
 	UCBossWeaponComponent* WeaponComp=CHelpers::GetComponent<UCBossWeaponComponent>(Owner);
 	UCBossTargetingComponent* TargetingComp=CHelpers::GetComponent<UCBossTargetingComponent>(Owner);
 	UCBossStatusComponent* StatusComp=CHelpers::GetComponent<UCBossStatusComponent>(Owner);
+	UBossEffectComponent* EffectComponent=CHelpers::GetComponent<UBossEffectComponent>(Owner);
 	StatusComp->ResetAp();
 	
 	if (WeaponComp)
 	{
 		WeaponComp->BossDoAction(SelectedTag);
+		// EffectComponent->PlayEffect(FGameplayTag::RequestGameplayTag("BOSS.Event.Interrupt"));
 		// ProjectileComp->ShotProjectileToLocation(TargetingComp->FindPlayer(), 1.0f);
 	}
 	

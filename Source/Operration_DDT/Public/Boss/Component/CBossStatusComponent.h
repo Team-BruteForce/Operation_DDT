@@ -90,7 +90,19 @@ public:
 	 * @brief 현재 속도
 	 */
 	UPROPERTY()
-	int32 CurrentSpeed; 
+	int32 CurrentSpeed;
+
+	/**
+	 * @brief 최대 그로기 게이지
+	 */
+	UPROPERTY()
+	float MaxGroggyGauge;
+
+	/**
+	 * @brief 현재 그로기 게이지
+	 */
+	UPROPERTY()
+	float CurrentGroggyGauge; 
 };
 
 /**
@@ -129,9 +141,41 @@ public:
 	 */
 	void IncreaseAP(float AP);
 
-	void SetDamage(float Damage){BossCurrentStats.CurrentHP-=Damage;};
+	void SetDamage(float Damage);
 
 	void ResetAp();
+
+	FORCEINLINE void OnGroggy(){IsGroggy=true;};
+	FORCEINLINE void OffGroggy(){IsGroggy=false;};
+	bool const GetIsGroggy  (){return IsGroggy; };
+
+	UPROPERTY()
+	bool IsGroggy=false;
+
+	FORCEINLINE void OnPaseChange(){IsPaseChange=true;};
+	FORCEINLINE void OffPaseChange(){IsPaseChange=false;};
+	bool const GetIsPaseChange  (){return IsPaseChange; };
+
+	UPROPERTY()
+	bool IsPaseChange=false;
+	/**
+	 * @brief 그로기 게이지 증가
+	 * 
+	 * @param GroggyAmount 증가할 그로기 게이지량
+	 */
+	void IncreaseGroggyGauge(float GroggyAmount);
+
+	/**
+	 * @brief 그로기 게이지 감소
+	 * 
+	 * @param GroggyAmount 감소할 그로기 게이지량
+	 */
+	void DecreaseGroggyGauge(float GroggyAmount);
+
+	/**
+	 * @brief 그로기 게이지 초기화
+	 */
+	void ResetGroggyGauge();
 	
 	/**
 	 * @brief 보스 스탯 데이터 테이블

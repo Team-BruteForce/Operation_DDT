@@ -12,9 +12,7 @@ bool USTC_IsDeadState::TestCondition(FStateTreeExecutionContext& Context) const
 	ACharacter* Owner=Cast<ACharacter>(Context.GetOwner());
 	if (Owner)
 		CLog::Log("USTC_IsDeadState : "+Owner->GetName());
-	// UCBossStatusComponent* Status= CHelpers::GetComponent<UCBossStatusComponent>(Owner);
-	// CLog::Log("USTC_IsDeadState");
-	// return Status->BossCurrentStats.CurrentHP<=0;
-	return false;
+	UCBossStatusComponent* Status= CHelpers::GetComponent<UCBossStatusComponent>(Owner);
+	return Status->BossCurrentStats.CurrentHP<=0;
 }
 

@@ -16,7 +16,8 @@ void UAnimNotify_GateOfBabylonSpawn::Notify(USkeletalMeshComponent* MeshComp, UA
 	CheckNull(Owner);
 	UBossProjectileComponent* ProjectileComp=CHelpers::GetComponent<UBossProjectileComponent>(Owner);
 	CheckNull(ProjectileComp);
-	ProjectileComp->SpawnOrb();
+	ProjectileComp->SpawnMagicCirclesAtCirclePositions();
+	CLog::Log("SpawnMagicCirclesAtCirclePositions1");
 	
 	Super::Notify(MeshComp, Animation);
 }

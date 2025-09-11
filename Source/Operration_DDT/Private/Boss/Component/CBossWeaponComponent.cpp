@@ -94,17 +94,29 @@ void UCBossWeaponComponent::SetPaseOneMode()
  */
 void UCBossWeaponComponent::SetMode(const FGameplayTag& InTag)
 {
-	// if (BossTags.Unarmed == InTag)
-	// {
-	// 	SetUnarmedMode();
-	// 	return;
-	// }
-	// else if (IsUnarmedMode() == false)
-		// GetBossEquipment()->Unequip(CurrentWeaponMode);
-	
+	// 같은 모드면 변경하지 않음
+	if (CurrentWeaponMode == InTag)
+		return;
+    
+	// 맨손 모드로 변경
+	if (BossTags.PaseZero == InTag)
+	{
+		SetUnarmedMode();
+		return;
+	}
+    
+	// 현재 무기가 있으면 해제
+	if (!IsPaseZeroMode())
+	{
+		CLog::Log("Unequip");
+		GetBossEquipment()->Unequip(CurrentWeaponMode);
+	}
+    
+	// 새 무기 장착
 	if (DataAssets.Contains(InTag))
 	{
-		DataAssets[InTag]->GetBossEquipment()->Equip(InTag);
+		CLog::Log("ChangeWeapon");
+ 		DataAssets[InTag]->GetBossEquipment()->Equip(InTag);
 		ChangeType(InTag);
 	}
 }
@@ -134,7 +146,7 @@ void UCBossWeaponComponent::ChangeType(const FGameplayTag& InTag)
  */
 class UCBossEquipment* UCBossWeaponComponent::GetBossEquipment()
 {
-	CheckTrueResult ( IsUnarmedMode ( ) , nullptr );
+	CheckTrueResult ( IsPaseZeroMode ( ) , nullptr );
 	CheckFalseResult ( !!DataAssets[CurrentWeaponMode] , nullptr );
 	return DataAssets[CurrentWeaponMode]->GetBossEquipment();
 }
@@ -148,7 +160,7 @@ class UCBossEquipment* UCBossWeaponComponent::GetBossEquipment()
  */
 class ACBossWeapon* UCBossWeaponComponent::GetBossWeapon()
 {
-	CheckTrueResult ( IsUnarmedMode ( ) , nullptr );
+	CheckTrueResult ( IsPaseZeroMode ( ) , nullptr );
 	CheckFalseResult ( !!DataAssets[CurrentWeaponMode] , nullptr );
 	return DataAssets[CurrentWeaponMode]->GetBossWeapon();
 }
@@ -162,7 +174,7 @@ class ACBossWeapon* UCBossWeaponComponent::GetBossWeapon()
  */
 class UCBossDoAction* UCBossWeaponComponent::GetBossDoAction()
 {
-	CheckTrueResult ( IsUnarmedMode ( ) , nullptr );
+	CheckTrueResult ( IsPaseZeroMode ( ) , nullptr );
 	CheckFalseResult ( !!DataAssets[CurrentWeaponMode] , nullptr );
 	return DataAssets[CurrentWeaponMode]->BossDoAction;
 }

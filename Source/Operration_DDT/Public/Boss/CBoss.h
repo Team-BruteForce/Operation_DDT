@@ -34,12 +34,14 @@ public:
 	 * @brief 보스 캐릭터 생성자
 	 */
 	ACBoss();
+
+	virtual void Tick(float DeltaSeconds) override;
 	/**
 	 *@brief 데미지 함수
 	 */
 	UFUNCTION()
-	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
-
+	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent,
+							 AController* EventInstigator, AActor* DamageCauser) override;
 	// UPROPERTY(EditAnywhere, BlueprintReadWrite,Category="Wings")
 	// class USkeletalMeshComponent* WingMeshComp; 
 
@@ -90,6 +92,18 @@ public:
  */
 	UPROPERTY(VisibleAnywhere)
 	class UBossDebugComponent* DebugComp;
+
+	/**
+*@brief 보스 디버그 컴포넌트
+*/
+	UPROPERTY(EditAnywhere)
+	class UBossEffectComponent* EffectComponent;
+
+	/**
+*@brief 보스 비행 컴포넌트
+*/
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	class UFlyingComponent* FlyingComponent;
 	
 
 protected:
@@ -98,4 +112,7 @@ protected:
 	 * @brief 게임 시작 시 호출되는 함수
 	 */
 	virtual void BeginPlay() override;
+
+	void PlayHitMotion(FName BoneName="spine_03");
+	
 };

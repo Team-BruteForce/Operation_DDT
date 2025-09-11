@@ -7,6 +7,7 @@
 #include "Components/SphereComponent.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/ProjectileMovementComponent.h"
+#include "Boss/Component/BossProjectileComponent.h"
 
 // Sets default values
 ABossProjectileActor::ABossProjectileActor()
@@ -24,8 +25,12 @@ ABossProjectileActor::ABossProjectileActor()
 	
 	// 기본값 설정
 	ProjectileSpeed = 1000.0f;
-	LifeTime = 10.0f;
+	LifeTime = 5.0f;
 	bHasPassedTarget = false;
+	
+	// 추적 각도 제한 설정
+	MaxTrackingAngle = 0.75f;     // 프레임당 최대 2도만 회전
+	bCanTrack = true;
 	
 	// 새로운 기능 초기화
 	bWaitingToMove = false;
@@ -89,21 +94,52 @@ void ABossProjectileActor::Tick(float DeltaTime)
 		return;
 	}
 	
-	// 기존 추적 로직
+	// 기존 추적 로직 (각도 제한 추가)
 	if (!bHasPassedTarget)
 	{
-		// Phase 1: 타겟 추적 (관통)
-		if (TargetActor && TargetActor->IsValidLowLevel())
+		// Phase 1: 타겟 추적 (관통) - 방향 전환 각도 제한
+		if (TargetActor && TargetActor->IsValidLowLevel() && bCanTrack)
 		{
-			// 타겟 방향으로 이동
+			// 타겟 방향 계산
 			FVector TargetLocation = TargetActor->GetActorLocation();
-			FVector Direction = (TargetLocation - GetActorLocation()).GetSafeNormal();
+			FVector DesiredDirection = (TargetLocation - GetActorLocation()).GetSafeNormal();
 			
-			FVector NewLocation = GetActorLocation() + Direction * ProjectileSpeed * DeltaTime;
+			// 현재 방향에서 원하는 방향으로의 각도 차이 계산
+			float DotProduct = FVector::DotProduct(CurrentDirection, DesiredDirection);
+			DotProduct = FMath::Clamp(DotProduct, -1.0f, 1.0f); // 안전한 범위로 제한
+			float AngleDifference = FMath::RadiansToDegrees(FMath::Acos(DotProduct));
+			
+			FVector NewDirection;
+			if (AngleDifference <= MaxTrackingAngle)
+			{
+				// 각도 내에서 완전 추적
+				NewDirection = DesiredDirection;
+			}
+			else
+			{
+				// 각도 제한 내에서만 방향 전환
+				FVector RotationAxis = FVector::CrossProduct(CurrentDirection, DesiredDirection);
+				
+				// CrossProduct가 0벡터인 경우 처리 (같은 방향)
+				if (RotationAxis.IsNearlyZero())
+				{
+					NewDirection = CurrentDirection; // 방향 유지
+				}
+				else
+				{
+					RotationAxis = RotationAxis.GetSafeNormal();
+					FQuat RotationQuat = FQuat(RotationAxis, FMath::DegreesToRadians(MaxTrackingAngle));
+					NewDirection = RotationQuat.RotateVector(CurrentDirection);
+				}
+			}
+			
+			// 새로운 위치로 이동
+			FVector NewLocation = GetActorLocation() + NewDirection * ProjectileSpeed * DeltaTime;
 			SetActorLocation(NewLocation);
 			
-			// 타겟 방향으로 회전
-			SetActorRotation(Direction.Rotation());
+			// 방향 업데이트
+			CurrentDirection = NewDirection;
+			SetActorRotation(NewDirection.Rotation());
 			
 			// 타겟을 완전히 통과했는지 확인
 			FVector StartToTarget = TargetLocation - StartLocation;
@@ -112,8 +148,14 @@ void ABossProjectileActor::Tick(float DeltaTime)
 			if (FVector::DotProduct(StartToTarget, CurrentToStart) > FVector::DotProduct(StartToTarget, StartToTarget))
 			{
 				bHasPassedTarget = true;
-				LastDirection = Direction;
+				LastDirection = CurrentDirection;
 			}
+		}
+		else if (!bCanTrack)
+		{
+			// 추적 불가능 시 직진
+			FVector NewLocation = GetActorLocation() + LastDirection * ProjectileSpeed * DeltaTime;
+			SetActorLocation(NewLocation);
 		}
 	}
 	else
@@ -123,11 +165,27 @@ void ABossProjectileActor::Tick(float DeltaTime)
 		SetActorLocation(NewLocation);
 	}
 	
-	// 수명이 다하면 파괴
+	// 수명이 다하면 풀로 반환 또는 파괴
 	if (CurrentTime >= LifeTime)
 	{
 		PlayDestroyEffect();
-		Destroy();
+		
+		if (bUseObjectPool)
+		{
+			// 오브젝트 풀에 반환
+			if (IsValid(GetOwner()))
+			{
+				UBossProjectileComponent* BossProjectileComp = CHelpers::GetComponent<UBossProjectileComponent>(GetOwner());
+				if (BossProjectileComp)
+				{
+					BossProjectileComp->ReturnBossProjectileToPool(this);
+				}
+			}
+		}
+		else
+		{
+			Destroy();
+		}
 	}
 }
 
@@ -136,9 +194,19 @@ void ABossProjectileActor::FireProjectile(AActor* Target)
 	TargetActor = Target;
 	CurrentTime = 0.0f;
 	bHasPassedTarget = false;
+	bCanTrack = true;
+	Shape->SetCollisionEnabled(ECollisionEnabled::Type::QueryAndPhysics);
 	
 	// 시작 위치 저장
 	StartLocation = GetActorLocation();
+	
+	// 초기 방향 계산 및 저장
+	if (TargetActor && TargetActor->IsValidLowLevel())
+	{
+		FVector TargetLocation = TargetActor->GetActorLocation();
+		InitialDirection = (TargetLocation - StartLocation).GetSafeNormal();
+		CurrentDirection = InitialDirection;  // 현재 방향도 초기화
+	}
 	
 	// 스폰 이펙트 재생
 	PlaySpawnEffect();
@@ -211,11 +279,25 @@ void ABossProjectileActor::OnProjectileHit(UPrimitiveComponent* OverlappedCompon
 		// 파괴 이펙트 재생
 		PlayDestroyEffect();
 		
-		// 0.5초 후에 프로젝타일 파괴 (이펙트 재생 시간 확보)
-		FTimerHandle DestroyTimerHandle;
+		// 0.25초 후에 풀로 반환 또는 파괴 (이펙트 재생 시간 확보)
 		GetWorld()->GetTimerManager().SetTimer(DestroyTimerHandle, [this]()
 		{
-			Destroy();
+			if (bUseObjectPool)
+			{
+				// 오브젝트 풀에 반환
+				if (IsValid(this) && IsValid(GetOwner()))
+				{
+					UBossProjectileComponent* BossProjectileComp = CHelpers::GetComponent<UBossProjectileComponent>(GetOwner());
+					if (BossProjectileComp)
+					{
+						BossProjectileComp->ReturnBossProjectileToPool(this);
+					}
+				}
+			}
+			else
+			{
+				Destroy();
+			}
 		}, 0.25f, false);
 		
 		// 충돌 후 더 이상 이동하지 않도록 설정

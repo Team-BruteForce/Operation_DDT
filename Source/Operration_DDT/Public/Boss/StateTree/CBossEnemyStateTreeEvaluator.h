@@ -44,7 +44,7 @@ public:
 	// ========================================
 	// Public Variables
 	// ========================================
-	
+
 	/** AI 컨트롤러 참조 */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Owner")
 	class AAIController* Owner;
@@ -80,9 +80,21 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Components")
 	class UBossDebugComponent* DebugComponent;
 
+	/** 비행 컴포넌트 참조 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Components")
+	class UFlyingComponent* FlyingComponent;
+
+	/** 웨폰 컴포넌트 참조 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Components")
+	class UCBossWeaponComponent* WeaponComponent;
+
 	/** 프로젝타일 컴포넌트 참조 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Components")
 	class UBossProjectileComponent* Projectile;
+
+	/** 프로젝타일 컴포넌트 참조 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Components")
+	class UCharacterMovementComponent* CharacterMovement;
 
 	/** 플레이어와 보스 간의 거리 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Distance", meta=(ToolTip="현재 플레이어와 보스 간의 실시간 거리입니다.\n이 값에 따라 CurrentRangeTag가 자동으로 결정됩니다."))
@@ -114,6 +126,10 @@ public:
 	/** 현재 타겟 방향 상태 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Tag", meta=(ToolTip="플레이어의 이동 방향을 보스 기준으로 분석한 결과입니다.\nLeft: 보스 왼쪽으로 이동\nCenter: 보스 정면으로 이동\nRight: 보스 오른쪽으로 이동"))
 	FGameplayTag CurrentTargetDirectionState;
+
+	/** 현재 페이즈 상태 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Tag", meta=(ToolTip="플레이어의 이동 방향을 보스 기준으로 분석한 결과입니다.\nLeft: 보스 왼쪽으로 이동\nCenter: 보스 정면으로 이동\nRight: 보스 오른쪽으로 이동"))
+	FGameplayTag CurrentPaseState;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Tag", meta=(ToolTip="보스가 회피 할 수있는 안전한 좌표입니다."))
 	FVector SafePosition;
@@ -125,7 +141,10 @@ public:
 	/** 타겟 예측 위치 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Tag", meta=(ToolTip="보스가 공격할 예측한 위치입니다. 모션워핑에서 사용됩니다."))
 	FVector TagetLocation;
-
+	/** 비행 상태*/
+	UPROPERTY(EditDefaultsOnly, Category="Fly")
+	bool IsFly=false;
+	
 private:
 	// ========================================
 	// Private Functions

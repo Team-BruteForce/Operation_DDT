@@ -39,6 +39,7 @@ EStateTreeRunStatus UTask_SwitchPase::EnterState(FStateTreeExecutionContext& Con
 		UE_LOG(LogTemp, Warning, TEXT("Task_SwitchPase - Weapon component not found!"));
 		return EStateTreeRunStatus::Running;
 	}
+	CLog::Log("Pase Change Task");
 	Weapon->SetMode(OwningStateTag);
 	CLog::Log(OwningStateTag.ToString());
 	
