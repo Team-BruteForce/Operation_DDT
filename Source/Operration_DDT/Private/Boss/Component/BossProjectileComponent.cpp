@@ -9,7 +9,11 @@
 #include "Engine/World.h"
 #include "TimerManager.h"
 #include "DrawDebugHelpers.h"
+<<<<<<< HEAD
 #include "Components/CapsuleComponent.h"
+=======
+#include "../../Engine/Classes/Components/CapsuleComponent.h"
+>>>>>>> 438a74969425ae654b68f899ab60dd84d390a807
 
 // Sets default values for this component's properties
 UBossProjectileComponent::UBossProjectileComponent()

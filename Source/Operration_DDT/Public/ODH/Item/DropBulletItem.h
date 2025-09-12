@@ -29,7 +29,7 @@ private:
 public:
     // 플레이어에게 지급할 총알 수(디버그 메시지에만 사용)
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Drop|Bullet")
-    int32 BulletAmount = 15;
+    int32 BulletAmount = 10;
 
 private:
     UPROPERTY(VisibleAnywhere, Category="Components")

@@ -4,6 +4,7 @@
 #include "Engine/Engine.h"
 #include "ODH/Component/CItemPoolManager.h"
 #include "Player/DDTPlayer.h"
+#include "Player/Components/CMagazineComponent.h"
 #include "DrawDebugHelpers.h"
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraComponent.h"
@@ -130,10 +131,9 @@ void ADropBulletItem::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor
     // 간단히 플레이어 판정: 컨트롤 가능 Pawn
     if (ADDTPlayer* Player = Cast<ADDTPlayer>(OtherActor))
     {
-        if (GEngine)
+        if (Player->MagazineComp)
         {
-            GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Cyan,
-                FString::Printf(TEXT("총알 아이템 획득! +%d"), BulletAmount));
+            Player->MagazineComp->LootRifleBullets(BulletAmount);
         }
         ReturnToPool();
     }

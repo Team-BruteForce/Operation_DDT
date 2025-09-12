@@ -13,6 +13,7 @@
 
 // 전방 선언: 콜리전 컴포넌트
 class UBoxComponent;
+class USphereComponent;
 #include "CFlyingSkull.generated.h"
 
 UCLASS()
@@ -99,6 +100,22 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UBoxComponent* MeleeAttackCollision = nullptr;
 
+	// 소켓 기반 데미지 콜리전들
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Damage Collisions")
+	UBoxComponent* HandLTakeDamageCollision = nullptr;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Damage Collisions")
+	UBoxComponent* HandRTakeDamageCollision = nullptr;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Damage Collisions")
+	UBoxComponent* MiddleFingerLTakeDamageCollision = nullptr;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Damage Collisions")
+	UBoxComponent* MiddleFingerRTakeDamageCollision = nullptr;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Damage Collisions")
+	USphereComponent* HeadTakeDamageCollision = nullptr;
+
 private:
 	// 이벤트 핸들러들
 	UFUNCTION()
@@ -110,8 +127,21 @@ private:
 	UFUNCTION()
 	void OnMeleeAttackOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
+	// 소켓 기반 데미지 콜리전 오버랩 이벤트 핸들러
+	UFUNCTION()
+	void OnDamageCollisionOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
 	// 프로젝타일 클래스 가져오기
 	TSubclassOf<AActor> GetProjectileClass() const;
+
+	// 소켓 기반 데미지 콜리전 생성 함수
+	void CreateDamageCollisions();
+
+	// 소켓 기반 데미지 콜리전 이벤트 바인딩 함수
+	void BindDamageCollisionEvents();
+
+	// 소켓 기반 데미지 콜리전 비활성화 함수
+	void DisableDamageCollisions();
 
 	// 사망 타이머 핸들
 	FTimerHandle DeathTimerHandle;

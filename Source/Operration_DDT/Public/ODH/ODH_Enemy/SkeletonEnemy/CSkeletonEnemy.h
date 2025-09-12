@@ -40,7 +40,25 @@ public:
 
 	// 공격 함수들
 	UFUNCTION(BlueprintCallable, Category = "Attack")
-	void PlayMeleeAttack();
+	void PlayComboAttack();
+
+	UFUNCTION(BlueprintCallable, Category = "Attack")
+	void PlayDashAttack();
+
+	// 콜리전 제어 함수들 (애니메이션 노티파이용)
+	UFUNCTION(BlueprintCallable, Category = "Attack")
+	void EnableComboCollisions();
+
+	UFUNCTION(BlueprintCallable, Category = "Attack")
+	void DisableComboCollisions();
+
+	// 모든 콜리전 비활성화 (사망 시 사용)
+	UFUNCTION(BlueprintCallable, Category = "Collision")
+	void DisableAllCollisions();
+
+	// 콤보 마지막 공격 콜리전 제어
+	UFUNCTION(BlueprintCallable, Category = "Attack")
+	void EnableLastComboCollision();
 
 	// 근접 공격 이동 연출은 애니메이션에서 처리
 
@@ -56,9 +74,56 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UCEnemyMeleeAttackComponent* MeleeAttackComponent;
 
-	// 근접 공격 콜리전 (Mesh의 자식)
+	// 소켓 부착 콜리전 (Mesh의 자식)
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	UBoxComponent* MeleeAttackCollision;
+	UBoxComponent* WeakPointCollision;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UBoxComponent* MeleeAttackCollisionR;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UBoxComponent* MeleeAttackCollisionL;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UBoxComponent* ComboAttackLastCollision;
+
+	// 바디 대미지 소켓별 콜리전 (L/R)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UBoxComponent* UpperLTakeDamageCollision;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UBoxComponent* LowerLTakeDamageCollision;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UBoxComponent* HandLTakeDamageCollision;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UBoxComponent* CalfLTakeDamageCollision;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UBoxComponent* FootLTakeDamageCollision;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UBoxComponent* UpperRTakeDamageCollision;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UBoxComponent* LowerRTakeDamageCollision;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UBoxComponent* HandRTakeDamageCollision;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UBoxComponent* CalfRTakeDamageCollision;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UBoxComponent* FootRTakeDamageCollision;
+
+	// 중앙부 추가 콜리전
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UBoxComponent* PelvisTakeDamageCollision;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UBoxComponent* BustTakeDamageCollision;
 
 private:
 	// 이벤트 핸들러들
@@ -71,6 +136,9 @@ private:
 	UFUNCTION()
 	void OnMeleeAttackOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
+	UFUNCTION()
+	void OnWeakPointOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
 	// 사망 타이머 핸들
 	FTimerHandle DeathTimerHandle;
 
@@ -79,6 +147,14 @@ private:
 
 	// 내부 상태 플래그
 	bool bIsMeleeAttacking = false;
+
+public:
+	// 공격 쿨다운 시스템
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attack")
+	float AttackCooldown = 0.5f; // 공격 쿨다운 시간
+
+private:
+	float LastHitTime = 0.0f; // 마지막 히트 시간
 
 	// 이동 연출 관련 상태/함수 제거됨
 

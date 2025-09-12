@@ -11,6 +11,7 @@
 #include "Engine/Engine.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/BoxComponent.h"
+#include "Components/SphereComponent.h"
 #include "DrawDebugHelpers.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "AIController.h"
@@ -52,6 +53,9 @@ ACFlyingSkull::ACFlyingSkull()
 	ProjectileSpawnArrow->SetArrowSize(2.0f);
 	// 기본 위치는 전방 100cm (블루프린트에서 자유롭게 변경 가능)
 	ProjectileSpawnArrow->SetRelativeLocation(FVector(100.0f, 0.0f, 0.0f));
+
+	// 소켓 기반 데미지 콜리전들 생성
+	CreateDamageCollisions();
 }
 
 // Called when the game starts or when spawned
@@ -94,6 +98,9 @@ void ACFlyingSkull::BeginPlay()
 	{
 		MeleeAttackCollision->OnComponentBeginOverlap.AddDynamic(this, &ACFlyingSkull::OnMeleeAttackOverlap);
 	}
+
+	// 소켓 기반 데미지 콜리전 오버랩 이벤트 바인딩
+	BindDamageCollisionEvents();
 
 	// 낙하 타임라인 델리게이트 바인딩 (커브가 있는 경우에만 재생됨)
 	if (FallCurve)
@@ -460,6 +467,9 @@ void ACFlyingSkull::OnDeath()
 
 	// 진행 중이던 시각 이동 종료 및 원복
 	EndMeleeVisualMove(true);
+
+	// 소켓 기반 데미지 콜리전 비활성화
+	DisableDamageCollisions();
 }
 
 void ACFlyingSkull::OnMeleeAttackHit(AActor* HitActor)
@@ -716,6 +726,157 @@ void ACFlyingSkull::EndMeleeVisualMove(bool bSnapToStart)
 	if (bSnapToStart)
 	{
 		MeshComp->SetRelativeLocation(MeshStartRelativeLocation);
+	}
+}
+
+// 소켓 기반 데미지 콜리전 생성 함수
+void ACFlyingSkull::CreateDamageCollisions()
+{
+	USkeletalMeshComponent* MeshComp = GetMesh();
+	if (!MeshComp)
+		return;
+
+	// HandLTakeDamageSocket 콜리전 생성
+	HandLTakeDamageCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("HandLTakeDamageCollision"));
+	HandLTakeDamageCollision->SetupAttachment(MeshComp, TEXT("HandLTakeDamageSocket"));
+	HandLTakeDamageCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	HandLTakeDamageCollision->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
+	HandLTakeDamageCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+	HandLTakeDamageCollision->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
+	HandLTakeDamageCollision->SetRelativeLocation(FVector(330.4f, 1581.4f, 0.0f));
+	HandLTakeDamageCollision->SetRelativeRotation(FRotator(0.0f, 10.0f, 0.0f));
+	HandLTakeDamageCollision->SetRelativeScale3D(FVector(100.0f, 100.0f, 100.0f));
+	HandLTakeDamageCollision->SetBoxExtent(FVector(30.0f, 19.4f, 6.0f));
+
+	// HandRTakeDamageSocket 콜리전 생성
+	HandRTakeDamageCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("HandRTakeDamageCollision"));
+	HandRTakeDamageCollision->SetupAttachment(MeshComp, TEXT("HandRTakeDamageSocket"));
+	HandRTakeDamageCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	HandRTakeDamageCollision->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
+	HandRTakeDamageCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+	HandRTakeDamageCollision->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
+	HandRTakeDamageCollision->SetRelativeLocation(FVector(138.8f, -1212.1f, 0.0f));
+	HandRTakeDamageCollision->SetRelativeRotation(FRotator(0.0f, -10.0f, 0.0f));
+	HandRTakeDamageCollision->SetRelativeScale3D(FVector(100.0f, 100.0f, 100.0f));
+	HandRTakeDamageCollision->SetBoxExtent(FVector(30.0f, 19.4f, 6.0f));
+
+	// MiddleFingerLTakeDamageSocket 콜리전 생성
+	MiddleFingerLTakeDamageCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("MiddleFingerLTakeDamageCollision"));
+	MiddleFingerLTakeDamageCollision->SetupAttachment(MeshComp, TEXT("MiddleFingerLTakeDamageSocket"));
+	MiddleFingerLTakeDamageCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	MiddleFingerLTakeDamageCollision->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
+	MiddleFingerLTakeDamageCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+	MiddleFingerLTakeDamageCollision->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
+	MiddleFingerLTakeDamageCollision->SetRelativeLocation(FVector(2221.5f, -1864.0f, 0.0f));
+	MiddleFingerLTakeDamageCollision->SetRelativeRotation(FRotator(0.0f, 50.0f, 0.0f));
+	MiddleFingerLTakeDamageCollision->SetRelativeScale3D(FVector(100.0f, 100.0f, 100.0f));
+	MiddleFingerLTakeDamageCollision->SetBoxExtent(FVector(31.4f, 47.1f, 3.4f));
+
+	// MiddleFingerRTakeDamageSocket 콜리전 생성
+	MiddleFingerRTakeDamageCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("MiddleFingerRTakeDamageCollision"));
+	MiddleFingerRTakeDamageCollision->SetupAttachment(MeshComp, TEXT("MiddleFingerRTakeDamageSocket"));
+	MiddleFingerRTakeDamageCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	MiddleFingerRTakeDamageCollision->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
+	MiddleFingerRTakeDamageCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+	MiddleFingerRTakeDamageCollision->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
+	MiddleFingerRTakeDamageCollision->SetRelativeLocation(FVector(2735.7f, 1251.1f, 0.0f));
+	MiddleFingerRTakeDamageCollision->SetRelativeRotation(FRotator(0.0f, -50.0f, 0.0f));
+	MiddleFingerRTakeDamageCollision->SetRelativeScale3D(FVector(100.0f, 100.0f, 100.0f));
+	MiddleFingerRTakeDamageCollision->SetBoxExtent(FVector(31.4f, 47.1f, 3.4f));
+
+	// HeadTakeDamageSocket 콜리전 생성 (스피어)
+	HeadTakeDamageCollision = CreateDefaultSubobject<USphereComponent>(TEXT("HeadTakeDamageCollision"));
+	HeadTakeDamageCollision->SetupAttachment(MeshComp, TEXT("HeadTakeDamageSocket"));
+	HeadTakeDamageCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	HeadTakeDamageCollision->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
+	HeadTakeDamageCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+	HeadTakeDamageCollision->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
+	HeadTakeDamageCollision->SetRelativeScale3D(FVector(100.0f, 100.0f, 100.0f));
+	HeadTakeDamageCollision->SetSphereRadius(20.0f);
+}
+
+// 소켓 기반 데미지 콜리전 이벤트 바인딩 함수
+void ACFlyingSkull::BindDamageCollisionEvents()
+{
+	// 모든 데미지 콜리전에 오버랩 이벤트 바인딩
+	TArray<UPrimitiveComponent*> DamageCollisions = {
+		HandLTakeDamageCollision,
+		HandRTakeDamageCollision,
+		MiddleFingerLTakeDamageCollision,
+		MiddleFingerRTakeDamageCollision,
+		HeadTakeDamageCollision
+	};
+
+	for (UPrimitiveComponent* Collision : DamageCollisions)
+	{
+		if (Collision)
+		{
+			Collision->OnComponentBeginOverlap.AddDynamic(this, &ACFlyingSkull::OnDamageCollisionOverlap);
+		}
+	}
+}
+
+// 소켓 기반 데미지 콜리전 비활성화 함수
+void ACFlyingSkull::DisableDamageCollisions()
+{
+	// 모든 데미지 콜리전을 비활성화
+	TArray<UPrimitiveComponent*> DamageCollisions = {
+		HandLTakeDamageCollision,
+		HandRTakeDamageCollision,
+		MiddleFingerLTakeDamageCollision,
+		MiddleFingerRTakeDamageCollision,
+		HeadTakeDamageCollision,
+		MeleeAttackCollision  // 근접 공격 콜리전도 포함
+	};
+
+	for (UPrimitiveComponent* Collision : DamageCollisions)
+	{
+		if (Collision)
+		{
+			Collision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		}
+	}
+
+	// 디버그 출력
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Orange, TEXT("Flying Skull all collisions disabled"));
+	}
+}
+
+// 소켓 기반 데미지 콜리전 오버랩 이벤트 핸들러
+void ACFlyingSkull::OnDamageCollisionOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (!OtherActor || OtherActor == this)
+		return;
+
+	// 플레이어인지 확인
+	if (!OtherActor->IsA<APawn>())
+		return;
+
+	// 이미 사망한 경우 데미지를 받지 않음
+	if (StatusComponent && StatusComponent->IsDead())
+		return;
+
+	// 플레이어의 공격인지 확인 (예: 플레이어의 무기나 공격 콜리전)
+	// 여기서는 간단히 Pawn으로 확인하지만, 실제로는 플레이어의 공격 콜리전을 확인해야 함
+	APawn* PlayerPawn = Cast<APawn>(OtherActor);
+	if (!PlayerPawn)
+		return;
+
+	// 데미지 적용
+	float DamageAmount = 10.0f; // 기본 데미지 (실제로는 플레이어의 공격력에 따라 결정되어야 함)
+	
+	// IDamageable 인터페이스의 TakeDamage_Implementation 호출
+	TakeDamage_Implementation(DamageAmount);
+
+	// 디버그 출력
+	if (GEngine)
+	{
+		FString CollisionName = OverlappedComponent ? OverlappedComponent->GetName() : TEXT("Unknown");
+		FString DebugMessage = FString::Printf(TEXT("Flying Skull hit on %s by %s! Damage: %.1f"), 
+			*CollisionName, *OtherActor->GetName(), DamageAmount);
+		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, DebugMessage);
 	}
 }
 
