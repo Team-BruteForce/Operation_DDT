@@ -13,6 +13,8 @@ namespace AssetPaths
     constexpr const TCHAR* PLAYER_ANIM = TEXT("/Script/Engine.AnimBlueprint'/Game/MW/Blueprints/ABP_DDTPlayer_Billy.ABP_DDTPlayer_Billy_C'");
 
     constexpr const TCHAR* SWORD_HOLSTER = TEXT("/Script/Engine.StaticMesh'/Game/MW/Assets/Weapon/Sword/scene/StaticMeshes/SM_Holster.SM_Holster'");
+
+     constexpr const TCHAR* PlayerUI = TEXT("/Script/UMGEditor.WidgetBlueprint'/Game/MW/UI/WBP/WBP_PlayerUI.WBP_PlayerUI_C'");
 #pragma endregion PlayerAsset
     
 

@@ -123,7 +123,7 @@ private:
 	void Roll();
 	void Hitted();
 	void Dead();
-	//void Reload();
+	void Reload();
 	void Heal();
 
 public:

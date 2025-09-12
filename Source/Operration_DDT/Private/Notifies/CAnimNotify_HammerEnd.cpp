@@ -14,13 +14,8 @@ void UCAnimNotify_HammerEnd::Notify(USkeletalMeshComponent* MeshComp, UAnimSeque
 	CheckNull(MeshComp);
 	CheckNull(MeshComp->GetOwner());
 
-	StateComp = CHelpers::GetComponent<UCStateComponent>(MeshComp->GetOwner());
-	FireComp = CHelpers::GetComponent<UCFireComponent>(MeshComp->GetOwner());
+	StateComp = CHelpers::GetComponent<UCStateComponent>(MeshComp->GetOwner());	
+	CheckNull(StateComp);
 	
 	StateComp->SetIsHammerPulled(true);
-
-	AActor* Weapon = FireComp->GetActorAttachedToSocket(FName("Reload_Rifle"));
-	CheckNull(Weapon);
-	Weapon->DetachFromActor(FDetachmentTransformRules::KeepRelativeTransform);
-	Weapon->AttachToComponent (MeshComp, FAttachmentTransformRules(EAttachmentRule::KeepRelative, true), FName("Hand_Rifle"));
 }

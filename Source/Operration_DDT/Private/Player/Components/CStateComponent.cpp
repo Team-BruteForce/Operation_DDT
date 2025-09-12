@@ -74,6 +74,7 @@ void UCStateComponent::SetActionMode()
 
 void UCStateComponent::SetReloadMode()
 {
+	if (IsReloadMode()) return;
 	ChangeType(EStateType::RifleReload);
 }
 
