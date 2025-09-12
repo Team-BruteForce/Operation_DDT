@@ -5,6 +5,7 @@
 #include "Global.h"
 #include "GameFramework/Character.h"
 #include "Player/DDTPlayer.h"
+#include "Player/Components/CMagazineComponent.h"
 #include "Player/Components/CMovementComponent.h"
 
 void UCPlayerAnimInstance::NativeBeginPlay()
@@ -46,13 +47,15 @@ void UCPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		Pitch = UKismetMathLibrary::ClampAngle(Pitch, -90.f, 90.f);
 	}
 	
+	ForwardInput = FVector::DotProduct(OwnerCharacter->GetActorForwardVector(),OwnerCharacter->GetVelocity());
+	RightInput = FVector::DotProduct(OwnerCharacter->GetActorRightVector(),OwnerCharacter->GetVelocity());
+	
 	UCMovementComponent* Movement = CHelpers::GetComponent<UCMovementComponent>(OwnerCharacter);
-	if (Movement)
-	{
-		ForwardInput = Movement->GetForwardInput() * 100.f;
-		RightInput = Movement->GetRightInput() * 100.f;
-	}
+	
 	bIsSprinting = Movement->GetIsSprinting();
+
+	UCStateComponent* State = CHelpers::GetComponent<UCStateComponent>(OwnerCharacter);
+	bReloading = State->IsReloadMode();
 	
 }
 

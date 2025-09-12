@@ -5,6 +5,8 @@
 
 #include "Global.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Player/CPlayerUI.h"
+#include "Player/DDTGameMode.h"
 #include "Player/DDTPlayer.h"
 #include "Player/Components/CMovementComponent.h"
 #include "Player/Components/CWeaponComponent.h"
@@ -48,6 +50,9 @@ void UCCameraActionComponent::SetAimPosition()
 	//CLog::Log("SetAimPosition: " + OwnerCharacter->State->IsRifleAimMode() ? TEXT("true") : TEXT("false"));
 	OwnerCharacter->WeaponComp->SetRifleMode();
 	Movement->OnWalk();
+
+	CheckNull(GetWorld()->GetAuthGameMode<ADDTGameMode>());
+	GetWorld()->GetAuthGameMode<ADDTGameMode>()->playerUI->ShowCrosshair(true);
 	
 }
 
@@ -63,7 +68,9 @@ void UCCameraActionComponent::SetIdlePosition()
 	//CLog::Log("SetIdlePosition: " + OwnerCharacter->State->IsRifleAimMode() ? TEXT("true") : TEXT("false"));
 
 	OwnerCharacter->WeaponComp->SetUnarmedMode();
-	
 	Movement->OnRun();
+
+	CheckNull(GetWorld()->GetAuthGameMode<ADDTGameMode>());
+	GetWorld()->GetAuthGameMode<ADDTGameMode>()->playerUI->ShowCrosshair(false);
 }
 

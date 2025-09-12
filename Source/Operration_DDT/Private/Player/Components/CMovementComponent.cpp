@@ -5,7 +5,6 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Global.h"
 #include "Player/DDTPlayer.h"
-#include "Player/Components/CStateComponent.h"
 #include "../../../../Plugins/EnhancedInput/Source/EnhancedInput/Public/EnhancedInputComponent.h"
 
 // Sets default values for this component's properties
@@ -26,7 +25,6 @@ void UCMovementComponent::BeginPlay()
 
 	OwnerCharacter = Cast<ADDTPlayer>(GetOwner());
 	OwnerCharacter->InputBindingDelegate.AddUObject(this, &UCMovementComponent::SetupInputBinding);
-	OwnerState = CHelpers::GetComponent<UCStateComponent>(OwnerCharacter);
 	
 }
 
@@ -37,10 +35,9 @@ void UCMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	// ...
-	
+
 	if (!Direction.IsNearlyZero())
 	{
-		CheckTrue(OwnerState->GetIsDead());
 		FVector InputDirection = FTransform(OwnerCharacter->GetControlRotation()).TransformVector(Direction);
 
 		InputDirection.Z = 0.f;
@@ -70,30 +67,28 @@ void UCMovementComponent::SetupInputBinding(class UEnhancedInputComponent* input
 
 void UCMovementComponent::OnSprint()
 {
-	CheckTrue(OwnerState->IsRifleAimMode());
 	SetSpeed(ESpeedType::Sprint);
-	if (!bIsSprinting)
+	if (bIsSprinting == false)
 	{
-		SetIsSprinting(true);
+		bIsSprinting = true;
 	}
 }
 
 void UCMovementComponent::OnRun()
 {
 	SetSpeed (ESpeedType::Run);
-
-	if (bIsSprinting)
+	if (bIsSprinting == true)
 	{
-		SetIsSprinting(false);
+		bIsSprinting = false;
 	}
 }
 
 void UCMovementComponent::OnWalk()
 {
 	SetSpeed (ESpeedType::Walk);
-	if (bIsSprinting)
+	if (bIsSprinting == true)
 	{
-		SetIsSprinting(false);
+		bIsSprinting = false;
 	}
 }
 
@@ -117,6 +112,8 @@ void UCMovementComponent::OnMove(const struct FInputActionValue& InAxis)
 	Direction.Y = inputValue.Y;
 	CachedDirection = Direction;
 	CachedDirection.Z = 0.f;
+
+	//CLog::Log("Forward : " + FString::SanitizeFloat(GetForwardInput()) + " Right : " + FString::SanitizeFloat(GetRightInput()));
 }
 
 void UCMovementComponent::OnHorizontalLook(const struct FInputActionValue& InAxis)
@@ -165,13 +162,13 @@ FVector UCMovementComponent::GetLocalInputDirection() const
 {
 	if (!OwnerCharacter) return FVector::ZeroVector;
 	
-	// 입력 방향을 캐릭터의 로컬 좌표계로 변환
+	// 입력 방향을 월드 좌표계로 변환
 	FVector WorldDirection = Direction;
 	WorldDirection.Z = 0.0f;
 	WorldDirection.Normalize();
 	
-	// 캐릭터의 회전을 기준으로 로컬 방향 계산
-	FVector LocalDirection = OwnerCharacter->GetActorTransform().InverseTransformVector(WorldDirection);
+	// 컨트롤러 회전을 기준으로 로컬 방향 계산
+	FVector LocalDirection = FRotationMatrix(OwnerCharacter->GetControlRotation()).InverseTransformVector(WorldDirection);
 	
 	return LocalDirection;
 }

@@ -4,7 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Engine/DamageEvents.h"
+#include "Engine/Engine.h"
 #include "CPlayerBullet.generated.h"
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnReturnToPool, class ACPlayerBullet*, Bullet);
 
 UCLASS()
 class OPERRATION_DDT_API ACPlayerBullet : public AActor
@@ -46,7 +50,7 @@ public:
 	float LifeTime = 5.f;
 
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "Default")
-	float Speed = 1500.f;
+	float Speed = 5000.f;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Default")
 	float BulletDamage = 25.f;
@@ -68,5 +72,28 @@ public:
 		bool bFromSweep,
 		const FHitResult& SweepResult
 	);
+
+	void SetActive(bool bValue);
+	bool IsActive() const;
+
+	// 오브젝트 풀 관련 함수들
+	UFUNCTION()
+	void StartLifeTimer();
+	
+	UFUNCTION()
+	void StopLifeTimer();
+	
+	UFUNCTION()
+	void OnLifeTimeExpired();
+	
+	void ReturnToPool();
+
+	// 오브젝트 풀 델리게이트
+	UPROPERTY(BlueprintAssignable)
+	FOnReturnToPool OnReturnToPool;
+
+private:
+	bool bIsActive = false;
+	FTimerHandle LifeTimerHandle;
 
 };

@@ -38,6 +38,9 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category="Animation")
 	float RightInput;
 
+	UPROPERTY(BlueprintReadOnly, Category="Animation")
+	bool bReloading;
+	
 protected:
 		UPROPERTY(BlueprintReadOnly, EditAnywhere, Category="Animation")
 		EWeaponType WeaponType = EWeaponType::Max;

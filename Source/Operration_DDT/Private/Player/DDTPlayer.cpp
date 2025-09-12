@@ -135,7 +135,8 @@ void ADDTPlayer::SetupPlayerInputComponent(class UInputComponent* PlayerInputCom
 		input->BindAction(IA_AimRifle, ETriggerEvent::Completed, CameraActionComp, &UCCameraActionComponent::SetIdlePosition );
 		input->BindAction(IA_Roll, ETriggerEvent::Started, this, &ADDTPlayer::OnAvoid);
 		input->BindAction(IA_Heal, ETriggerEvent::Started, State, &UCStateComponent::SetHealingMode);
-		input->BindAction(IA_Reload, ETriggerEvent::Started, MagazineComp, &UCMagazineComponent::StartReloadSequence);
+		//input->BindAction(IA_Reload, ETriggerEvent::Started, MagazineComp, &UCMagazineComponent::StartReloadSequence);
+		input->BindAction(IA_Reload, ETriggerEvent::Started, State, &UCStateComponent::SetReloadMode);
 	}
 
 }
@@ -144,7 +145,6 @@ void ADDTPlayer::SetupPlayerInputComponent(class UInputComponent* PlayerInputCom
 float ADDTPlayer::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
 	class AController* EventInstigator, AActor* DamageCauser)
 {
-
 	if (State->IsCanDodge())
 	{
 		CLog::Print("Dodge!");
@@ -190,12 +190,20 @@ void ADDTPlayer::OnStateTypeChanged(EStateType InPrevType, EStateType InNewType)
 			Heal();
 			break;
 		}
+		case EStateType::RifleReload:
+		{
+				Reload();
+			break;
+		}
+		
 	}
 }
 
 void ADDTPlayer::OnAvoid()
 {
 	CheckFalse(State->IsIdleMode());
+	//CheckTrue(State->IsRollingMode());
+	//CheckTrue(State->IsReloadMode());
 	CheckFalse(Movement->CanMove());
 
 	// 현재 입력 방향 가져오기
@@ -234,6 +242,11 @@ void ADDTPlayer::Dead()
 	Movement->DisableControlRotation();
 }
 
+void ADDTPlayer::Reload()
+{
+	MagazineComp->Reloading();
+}
+
 
 void ADDTPlayer::Heal()
 {
@@ -254,6 +267,7 @@ void ADDTPlayer::End_Hitted()
 void ADDTPlayer::End_Healing()
 {
 	AActor* Weapon = FireComp->GetActorAttachedToSocket(FName("Reload_Rifle"));
+	CheckNull(Weapon);
 	Weapon->DetachFromActor(FDetachmentTransformRules::KeepRelativeTransform);
 	Weapon->AttachToComponent (GetMesh(), FAttachmentTransformRules(EAttachmentRule::KeepRelative, true), FName("Hand_Rifle"));
 	State->SetIdleMode();
@@ -262,6 +276,7 @@ void ADDTPlayer::End_Healing()
 void ADDTPlayer::End_Reload()
 {
 	AActor* Weapon = FireComp->GetActorAttachedToSocket(FName("Reload_Rifle"));
+	CheckNull(Weapon);
 	Weapon->DetachFromActor(FDetachmentTransformRules::KeepRelativeTransform);
 	Weapon->AttachToComponent (GetMesh(), FAttachmentTransformRules(EAttachmentRule::KeepRelative, true), FName("Hand_Rifle"));
 	State->SetIdleMode();

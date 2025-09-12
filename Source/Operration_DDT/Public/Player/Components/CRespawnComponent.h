@@ -56,6 +56,8 @@ public:
 private:
 	class ADDTPlayer* OwnerCharacter;
 	class UCStateComponent* State;
+	class UCapsuleComponent* Capsule;
+	class UCMovementComponent* Movement;
 
 	FVector RespawnLocation;
 	
