@@ -5,10 +5,16 @@
 #include "Global.h"
 #include "Components/ShapeComponent.h"
 #include "GameFramework/Character.h"
+#include "Engine/World.h"
+#include "DrawDebugHelpers.h"
+#include "Boss/Actor/BossCollision.h"
+#include "Components/BoxComponent.h"
 
 // Sets default values
 ACBossWeapon::ACBossWeapon()
 {
+	PrimaryActorTick.bCanEverTick = true;
+	
 	CHelpers::CreateComponent<USkeletalMeshComponent>(this, &SkeletalMesh, "SkeletalMesh");
 	CHelpers::CreateComponent(this, &Root, "Root");
 	SetRootComponent(Root);
@@ -16,6 +22,8 @@ ACBossWeapon::ACBossWeapon()
     
 	SkeletalMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	SkeletalMesh->SetVisibility(false);
+
+
 }
 
 // Called when the game starts or when spawned
@@ -40,6 +48,21 @@ void ACBossWeapon::BeginPlay()
 	OffBossCollisions();
 
 	Super::BeginPlay();
+	if (BossSkillCollisionClass){
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.Owner=this;
+	BossSkillCollision=GetWorld()->SpawnActor<ABossCollision>(
+	   BossSkillCollisionClass,
+	   FVector(1500),
+	   FRotator::ZeroRotator,
+	   SpawnParams
+   );
+	}
+}
+
+void ACBossWeapon::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
 }
 
 void ACBossWeapon::OnBossCollisions()
@@ -89,7 +112,8 @@ void ACBossWeapon::OnBossComponentEndOverlap(UPrimitiveComponent * OverlappedCom
 {
 	CheckTrue(OwnerCharacter == OtherActor);
 	CheckTrue(OwnerCharacter->GetClass() == OtherActor->GetClass());
-	CheckNull(OtherActor);
+	CheckNull(Cast<ACharacter>(OtherActor));
+	
 	
 	if (OnBossAttachmentEndOverlap.IsBound())
 		OnBossAttachmentEndOverlap.Broadcast(OwnerCharacter, Cast<ACharacter>(OtherActor));
@@ -113,3 +137,29 @@ void ACBossWeapon::BossAttachToCollision(FName InCollisionName, FName InSocketNa
 	}
 }
 
+void ACBossWeapon::StartCollisionAtSocket(FName InSocketName,bool IsMove)
+{
+	CheckNull(OwnerCharacter);
+	CheckNull(BossSkillCollision);
+	CheckNull(OwnerCharacter->GetMesh());
+
+	FVector SocketLocation = OwnerCharacter->GetMesh()->GetSocketLocation(InSocketName);
+	FRotator SocketRotation = OwnerCharacter->GetMesh()->GetSocketRotation(InSocketName);
+
+	if (IsMove){
+		BossSkillCollision->SetActorLocation(SocketLocation);
+		BossSkillCollision->SetActorRotation(SocketRotation);
+	}
+	BossSkillCollision->BoxComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+}
+
+void ACBossWeapon::EndCollisionToOwner(bool IsEndMove)
+{
+	CheckNull(OwnerCharacter);
+	CheckNull(OwnerCharacter->GetMesh());
+
+	if (IsEndMove)
+		BossSkillCollision->SetActorLocation(FVector(1500));
+	BossSkillCollision->BoxComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	
+}

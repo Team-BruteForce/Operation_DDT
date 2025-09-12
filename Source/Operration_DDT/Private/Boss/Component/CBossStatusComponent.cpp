@@ -94,7 +94,7 @@ void UCBossStatusComponent::IncreaseAP(float AP)
 void UCBossStatusComponent::SetDamage(float Damage)
 {
 	if (!GetIsGroggy())
-		BossCurrentStats.CurrentHP-=Damage;
+		BossCurrentStats.CurrentHP-=Damage-BossCurrentStats.CurrentDEF;
 		
 		// BossCurrentStats.CurrentHP-=Damage-BossCurrentStats.CurrentDEF;
 	else

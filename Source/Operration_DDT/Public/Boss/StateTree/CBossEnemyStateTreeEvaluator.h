@@ -144,6 +144,13 @@ public:
 	/** 비행 상태*/
 	UPROPERTY(EditDefaultsOnly, Category="Fly")
 	bool IsFly=false;
+
+	/** 상태 전환 */
+	UPROPERTY(EditDefaultsOnly, Category="Fly")
+	bool IsArrowChange=false;
+
+	float MaxChangeTime=10;
+	float CurrentChangeTime=0;
 	
 private:
 	// ========================================

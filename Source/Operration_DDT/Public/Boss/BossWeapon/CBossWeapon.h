@@ -18,11 +18,12 @@ protected:
 	UPROPERTY(BlueprintReadOnly,VisibleAnywhere)
 	class USceneComponent* Root;
 
-public:
+public:	
 	ACBossWeapon();
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaTime) override;
 
 public:
 	UFUNCTION(BlueprintNativeEvent)
@@ -70,8 +71,20 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class UNiagaraSystem* HitEffect2;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<AActor> BossSkillCollisionClass;
+public:
+	UPROPERTY()
+	class ABossCollision* BossSkillCollision; 
+	
 	UFUNCTION(BlueprintCallable, Category = "Attach")
 	void BossAttachToCollision(FName InCollisionName, FName InSocketName);
+public:
+	UFUNCTION(BlueprintCallable, Category = "Collision")
+	void StartCollisionAtSocket(FName InSocketName,bool IsMove);
+	
+	UFUNCTION(BlueprintCallable, Category = "Collision")
+	void EndCollisionToOwner(bool IsEndMove);
 
 public:
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
