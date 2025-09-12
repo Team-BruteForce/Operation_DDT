@@ -10,6 +10,7 @@
 #include "Player/Components/CMovementComponent.h"
 #include "Engine/World.h"
 #include "TimerManager.h"
+#include "Components/CapsuleComponent.h"
 
 // Sets default values for this component's properties
 UCRespawnComponent::UCRespawnComponent()
@@ -31,6 +32,8 @@ void UCRespawnComponent::BeginPlay()
 	OwnerCharacter = Cast<ADDTPlayer>(GetOwner());
 	State = CHelpers::GetComponent<UCStateComponent>(OwnerCharacter);
 	RespawnLocation = OwnerCharacter->GetActorLocation();
+	Capsule = CHelpers::GetComponent<UCapsuleComponent>(OwnerCharacter);
+	Movement = CHelpers::GetComponent<UCMovementComponent>(OwnerCharacter);
 	
 	// DieDelegate 구독
 	if (OwnerCharacter && OwnerCharacter->Montages)
@@ -57,6 +60,10 @@ void UCRespawnComponent::OnPlayerDied()
 {
 	// 플레이어가 사망했을 때 호출되는 함수
 	CLog::Log("RespawnComponent: Player Died! Starting respawn timer...");
+
+	
+	Capsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	Movement->Stop();
 	
 	// 기존 타이머가 있다면 클리어
 	if (GetWorld())
@@ -109,6 +116,10 @@ void UCRespawnComponent::RespawnPlayer()
 		OwnerCharacter->Movement->EnableControlRotation();
 		CLog::Log("RespawnComponent: Control rotation enabled");
 	}
+	
+	//OwnerCharacter->SetActorEnableCollision(ECollisionEnabled::QueryAndPhysics);
+	Capsule->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	Movement->Move();
 	
 	// 5. 부활 델리게이트 브로드캐스트
 	OnPlayerRespawned.Broadcast();

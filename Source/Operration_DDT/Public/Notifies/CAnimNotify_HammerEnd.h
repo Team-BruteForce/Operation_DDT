@@ -17,6 +17,5 @@ class OPERRATION_DDT_API UCAnimNotify_HammerEnd : public UAnimNotify
 	virtual void Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference) override;
 
 	class UCStateComponent* StateComp;
-	class UCFireComponent* FireComp;
 	
 };

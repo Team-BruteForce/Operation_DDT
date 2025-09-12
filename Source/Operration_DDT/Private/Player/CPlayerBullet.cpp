@@ -43,8 +43,9 @@ ACPlayerBullet::ACPlayerBullet()
 void ACPlayerBullet::BeginPlay()
 {
 	Super::BeginPlay();
-	SetLifeSpan (LifeTime);
+	// SetLifeSpan 제거 - 오브젝트 풀에서 관리
 	OwnerCharacter = Cast<ADDTPlayer>(GetOwner());
+	bIsActive = false;  // 초기에는 비활성화
 	
 	// 랜덤 데미지 설정
 	SetRandomDamage();
@@ -64,9 +65,10 @@ void ACPlayerBullet::BeginPlay()
 			FVector::ZeroVector,
 			FRotator::ZeroRotator,
 			EAttachLocation::SnapToTarget,
-			true  // bAutoDestroy
+			false  // bAutoDestroy
 		);
 	}
+	
 }
 
 // Called every frame
@@ -80,8 +82,8 @@ void ACPlayerBullet::SetVelocity(FVector value)
 {
 	Movement->Velocity = value * Speed;
 	
-	// 이펙트 방향을 총알 진행 방향에 맞춰 조정
-	if (BulletTrailComp)
+	// 이펙트 방향을 총알 진행 방향에 맞춰 조정 (이펙트가 존재할 때만)
+	if (BulletTrailComp && BulletTrailComp->IsValidLowLevel())
 	{
 		// 속도 벡터를 회전으로 변환
 		FRotator EffectRotation = value.Rotation();
@@ -115,9 +117,103 @@ void ACPlayerBullet::OnBulletOverlap(UPrimitiveComponent* OverlappedComponent, A
 		return;
 	
 	CLog::Log("Overlap Occured");
-	UGameplayStatics::ApplyDamage(OtherActor, BulletDamage, OwnerCharacter->GetInstigatorController(), this, UDamageType::StaticClass());
 	
-	// 충돌 후 총알 제거
-	Destroy();
+	// FPointDamageEvent 생성 및 설정
+	FPointDamageEvent PointDamageEvent;
+	PointDamageEvent.Damage = BulletDamage;
+	PointDamageEvent.HitInfo = SweepResult;  // 충돌 정보 사용
+	PointDamageEvent.ShotDirection = Movement->Velocity.GetSafeNormal();  // 총알 방향
+	PointDamageEvent.DamageTypeClass = UDamageType::StaticClass();
+	
+	// UGameplayStatics::ApplyPointDamage로 데미지 적용
+	UGameplayStatics::ApplyPointDamage(OtherActor, BulletDamage, PointDamageEvent.ShotDirection, PointDamageEvent.HitInfo, OwnerCharacter->GetInstigatorController(), this, PointDamageEvent.DamageTypeClass);
+	
+	// 충돌 후 Destroy() 대신 풀로 돌아가기
+	ReturnToPool();
+}
+
+void ACPlayerBullet::SetActive(bool bValue)
+{
+	bIsActive = bValue;
+	MeshComp->SetVisibility(bValue);
+
+	if (bValue)
+	{
+		CapsuleComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		
+		// 활성화 시 나이아가라 이펙트 생성
+		if (BulletTrailSystem && !BulletTrailComp)
+		{
+			BulletTrailComp = UNiagaraFunctionLibrary::SpawnSystemAttached(
+				BulletTrailSystem,
+				CapsuleComp,
+				NAME_None,
+				FVector::ZeroVector,
+				FRotator::ZeroRotator,
+				EAttachLocation::SnapToTarget,
+				true  // bAutoDestroy
+			);
+		}
+	}
+	else
+	{
+		CapsuleComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		// 비활성화 시 속도 초기화
+		Movement->Velocity = FVector::ZeroVector;
+		
+		// 비활성화 시 나이아가라 이펙트 제거
+		if (BulletTrailComp)
+		{
+			BulletTrailComp->DestroyComponent();
+			BulletTrailComp = nullptr;
+		}
+	}
+}
+
+bool ACPlayerBullet::IsActive() const
+{
+	return bIsActive;
+}
+
+void ACPlayerBullet::StartLifeTimer()
+{
+	// 수명 타이머 시작
+	GetWorld()->GetTimerManager().SetTimer(
+		LifeTimerHandle,
+		this,
+		&ACPlayerBullet::OnLifeTimeExpired,
+		LifeTime,
+		false  // 한 번만 실행
+	);
+}
+
+void ACPlayerBullet::StopLifeTimer()
+{
+	// 수명 타이머 중지
+	GetWorld()->GetTimerManager().ClearTimer(LifeTimerHandle);
+}
+
+void ACPlayerBullet::OnLifeTimeExpired()
+{
+	// 수명이 만료되면 풀로 돌아가기
+	ReturnToPool();
+}
+
+void ACPlayerBullet::ReturnToPool()
+{
+	// 풀로 돌아가기
+	if (bIsActive)
+	{
+		SetActive(false);
+		
+		// 나이아가라 이펙트가 남아있다면 강제로 제거
+		if (BulletTrailComp && BulletTrailComp->IsValidLowLevel())
+		{
+			BulletTrailComp->DestroyComponent();
+			BulletTrailComp = nullptr;
+		}
+		
+		OnReturnToPool.Broadcast(this);
+	}
 }
 

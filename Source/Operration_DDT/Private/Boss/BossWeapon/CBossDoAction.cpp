@@ -97,6 +97,7 @@ void UCBossDoAction::OnBossWeaponBeginOverlap(class ACharacter* InAttacker, AAct
                                               class ACharacter* InOther)
 {
 	UCBossStatusComponent* Status=CHelpers::GetComponent<UCBossStatusComponent>(InAttacker);
+	CheckNull(InOther);
 	UGameplayStatics::ApplyDamage(InOther,BossDoActionDatas[CurrentWeaponActionTag].Damage*Status->BossCurrentStats.CurrentATK,InOther->GetController(),InOther,nullptr);
 	
 }

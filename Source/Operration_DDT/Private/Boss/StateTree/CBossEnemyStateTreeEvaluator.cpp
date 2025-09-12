@@ -66,7 +66,17 @@ void UCBossEnemyStateTreeEvaluator::Tick(FStateTreeExecutionContext& Context, co
 	CLog::Print("Current Range Tag: " + CurrentRangeTag.ToString(), 5);
 	CLog::Print("Current Pase Tag: " + WeaponComponent->GetCurrentWeaponMode().ToString(), 6);
 	CLog::Print(FString::Printf(TEXT("CurrentHP : %d"), Status->BossCurrentStats.CurrentHP), 7);
+
+	CurrentChangeTime += DeltaTime;
 	
+	if (CurrentChangeTime>=MaxChangeTime){
+		IsArrowChange=true;
+		CurrentChangeTime=0;
+	}
+	else
+	{
+		IsArrowChange=false;
+	}
 }
 
 void UCBossEnemyStateTreeEvaluator::TreeStart(FStateTreeExecutionContext& Context)

@@ -179,6 +179,15 @@ void UFlyingComponent::UpdateLanding(float DeltaTime)
 	
 	MoveToLocation(TargetLocation, LandingSpeed);
 	
+	// 착륙 중 회전 조정 (Z축 각도를 0으로)
+	FRotator CurrentRotation = OwnerCharacter->GetActorRotation();
+	FRotator TargetRotation = CurrentRotation;
+	TargetRotation.Pitch = FMath::Lerp(CurrentRotation.Pitch, 0.0f, LandingProgress);
+	
+	// 부드러운 회전 적용
+	FRotator NewRotation = FMath::RInterpTo(CurrentRotation, TargetRotation, DeltaTime, RotationSpeed);
+	OwnerCharacter->SetActorRotation(NewRotation);
+	
 	// 착륙 완료 체크
 	if (LandingProgress >= 1.0f)
 	{
@@ -188,6 +197,10 @@ void UFlyingComponent::UpdateLanding(float DeltaTime)
 		// 지상 이동 모드로 전환
 		CharacterMovement->SetMovementMode(MOVE_NavWalking);
 		
+		// 최종 회전 보정 (완전히 수평으로)
+		FRotator FinalRotation = OwnerCharacter->GetActorRotation();
+		FinalRotation.Pitch = 0.0f;
+		OwnerCharacter->SetActorRotation(FinalRotation);
 	}
 	
 	// 디버그 시각화

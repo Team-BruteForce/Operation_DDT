@@ -12,10 +12,9 @@
 
 #include "Boss/CBoss.h"
 #include "Global.h"
-#include "Boss/CBossAIC.h"
+#include "Boss/CBossAIC.h" 
 #include "Boss/Component/CBossWeaponComponent.h"
 #include "MotionWarpingComponent.h"
-#include "Boss/BossAnimInstance.h"
 #include "Boss/Component/BossEffectComponent.h"
 #include "Boss/Component/CBossStatusComponent.h"
 #include "Boss/Component/FlyingComponent.h"
