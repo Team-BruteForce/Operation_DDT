@@ -217,12 +217,13 @@ void UCFireComponent::Fire()
 	CLog::Log("Fire Direction: " + FireDirection.ToString());
 	
 	// 7. 오브젝트 풀에서 비활성화된 총알 가져오기
-	ACPlayerBullet* Bullet = GetInactiveBullet();
+	/*ACPlayerBullet* Bullet = GetInactiveBullet();
 	if (!Bullet)
 	{
 		CLog::Log("No available bullets in pool");
 		return;
-	}
+	}*/
+	ACPlayerBullet* Bullet = CreateBulletForPool();
 	
 	// 8. 총알 재활성화 및 위치/방향 설정
 	// 먼저 위치와 회전 설정

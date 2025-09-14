@@ -171,7 +171,8 @@ void ACPlayerBullet::OnBulletHit(UPrimitiveComponent* HitComponent, AActor* Othe
 	UGameplayStatics::ApplyPointDamage(OtherActor, FinalDamage, PointDamageEvent.ShotDirection, PointDamageEvent.HitInfo, OwnerCharacter->GetInstigatorController(), this, PointDamageEvent.DamageTypeClass);
 	
 	// 충돌 후 Destroy() 대신 풀로 돌아가기
-	ReturnToPool();
+	//ReturnToPool();
+	Destroy();
 }
 
 void ACPlayerBullet::SetActive(bool bValue)
