@@ -145,13 +145,14 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category="Fly")
 	bool IsFly=false;
 
-	/** 상태 전환 */
 	UPROPERTY(EditDefaultsOnly, Category="Fly")
-	bool IsArrowChange=false;
-
-	float MaxChangeTime=10;
-	float CurrentChangeTime=0;
+	bool CanTakeoff = true;
 	
+	UPROPERTY(EditDefaultsOnly, Category="Fly")
+	bool CanLanding = true;
+
+	UPROPERTY(EditDefaultsOnly, Category="percent")
+	float ActionPercent=0.0f;
 private:
 	// ========================================
 	// Private Functions

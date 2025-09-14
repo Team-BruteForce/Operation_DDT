@@ -8,6 +8,7 @@
 #include "TimerManager.h"
 #include "Global.h"
 #include "Boss/Component/BossProjectileComponent.h"
+#include "Boss/Component/CBossTargetingComponent.h"
 
 // Sets default values
 AGateOfBabylon::AGateOfBabylon()
@@ -42,6 +43,12 @@ void AGateOfBabylon::BeginPlay()
 void AGateOfBabylon::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	
+	// 활성화되어 있고 오브젝트 풀 사용 중일 때만 플레이어 추적
+	if (!IsHidden() && bUseObjectPool)
+	{
+		UpdateLookAtPlayer();
+	}
 }
 
 void AGateOfBabylon::ActivateGate()
@@ -239,6 +246,26 @@ void AGateOfBabylon::SpawnProjectile()
 		{
 			NewProjectile->ActivateProjectile();
 		}
+	}
+}
+
+void AGateOfBabylon::UpdateLookAtPlayer()
+{
+	// 보스 타겟팅 컴포넌트에서 플레이어 찾기
+	if (!GetOwner()) return;
+	
+	UCBossTargetingComponent* TargetingComp = CHelpers::GetComponent<UCBossTargetingComponent>(GetOwner());
+	if (TargetingComp && TargetingComp->FindPlayer())
+	{
+		FVector GateLocation = GetActorLocation();
+		FVector PlayerLocation = TargetingComp->FindPlayer()->GetActorLocation();
+		FVector Direction = (PlayerLocation - GateLocation).GetSafeNormal();
+		FRotator TargetRotation = Direction.Rotation();
+		
+		// 수직으로 서있게 (90도)
+		TargetRotation.Pitch = 90.0f;
+		
+		SetActorRotation(TargetRotation);
 	}
 }
 

@@ -14,7 +14,7 @@ EStateTreeRunStatus UTask_FlyKeepingDistance::EnterState(FStateTreeExecutionCont
 
 	// 스플라인 순차 이동 시작
 	FlyingComponent->StartSplineOrbit();
-	return Super::EnterState(Context, Transition);
+	return EStateTreeRunStatus::Running;
 }
 
 EStateTreeRunStatus UTask_FlyKeepingDistance::Tick(FStateTreeExecutionContext& Context, const float DeltaTime)

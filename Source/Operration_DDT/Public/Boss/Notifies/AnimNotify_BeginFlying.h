@@ -17,4 +17,9 @@ public:
 	FString GetNotifyName_Implementation() const override;
 
 	void Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation) override;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	float Height= 300.0f;
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	float speed=300.0f;
 };

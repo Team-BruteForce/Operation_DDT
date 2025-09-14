@@ -33,9 +33,10 @@ public:
 	/**
 	 * @brief 이륙 시작
 	 * @param TargetHeight 목표 고도
+	 * @param Speed 이륙 속도
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Flying")
-	void StartTakeoff(float TargetHeight = 300.0f);
+	void StartTakeoff(float TargetHeight = 300.0f, float Speed = 300.0f);
 	
 	/**
 	 * @brief 착륙 시작
@@ -356,6 +357,33 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spline Semicircle")
 	FVector CurrentSplineSemicircleTarget = FVector::ZeroVector;
 	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spline Semicircle")
+	int32 SplineMoveCount = 0;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spline Semicircle")
+	int32 StartSplineSemicircleIndex = 0;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spline Semicircle")
+	float MovedAngle = 0.0f;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
+	bool bJustStartedMovement = false;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
+	bool bWaitingForRandomCompletion = false;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
+	bool bWaitingForSideCompletion = false;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
+	bool bWaitingForSplineCompletion = false;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
+	float CompletionDelayTimer = 0.0f;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+	float CompletionDelay = 0.5f;
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Hovering")
 	float PeriodicMovementTimer = 0.0f;
 	
@@ -388,6 +416,8 @@ protected:
 	FVector LandingLocation = FVector::ZeroVector;
 	float TakeoffProgress = 0.0f;
 	float LandingProgress = 0.0f;
+	
+
 
 	// ===== 내부 함수들 =====
 	
@@ -460,4 +490,28 @@ protected:
 	 */
 	void SetTargetAltitude(float NewAltitude);
 	
+	/**
+	 * @brief 쿨타임 업데이트
+	 */
+	void UpdateCooldowns(float DeltaTime);
+public:
+	// ===== 쿨타임 관련 =====
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Flight Cooldown")
+	bool bCanTakeoff = true;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Flight Cooldown")
+	bool bCanLanding = true;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flight Cooldown")
+	float TakeoffCooldownTime = 10.0f;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flight Cooldown")
+	float LandingCooldownTime = 10.0f;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Flight Cooldown")
+	float TakeoffCooldownTimer = 0.0f;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Flight Cooldown")
+	float LandingCooldownTimer = 0.0f;
 };

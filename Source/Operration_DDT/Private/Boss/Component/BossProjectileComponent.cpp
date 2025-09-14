@@ -307,13 +307,17 @@ void UBossProjectileComponent::ShotProjectileToLocation(AActor* Target, float Wa
 void UBossProjectileComponent::DestroyOrb()
 {
 	OrbSpawnCount--;
+	CLog::Log(FString::Printf(TEXT("DestroyOrb - Remaining Orbs: %d"), OrbSpawnCount));
+	
 	if (OrbSpawnCount > 0)
 	{
 		ExitOrb = false;
+		CLog::Log("DestroyOrb - ExitOrb = false (Still has orbs)");
 	}
 	else
 	{
 		ExitOrb = true;
+		CLog::Log("DestroyOrb - ExitOrb = true (All orbs destroyed)");
 	}
 }
 
@@ -484,12 +488,25 @@ void UBossProjectileComponent::DrawRectangleRangeDebug()
 	if (!World) return;
 	
 	FVector OwnerLocation = GetOwner()->GetActorLocation();
-	FRotator OwnerRotation = GetOwner()->GetActorRotation();
 	
-	// 보스 회전에 따른 방향 벡터 계산
-	FVector ForwardDirection = OwnerRotation.Vector(); // 보스가 바라보는 방향
-	FVector RightDirection = FRotationMatrix(OwnerRotation).GetUnitAxis(EAxis::Y); // 보스 오른쪽 방향
-	FVector UpDirection = FRotationMatrix(OwnerRotation).GetUnitAxis(EAxis::Z); // 보스 위쪽 방향
+	// 플레이어 방향 계산 (게이트 스폰과 동일하게)
+	UCBossTargetingComponent* TargetingComp = CHelpers::GetComponent<UCBossTargetingComponent>(GetOwner());
+	FVector ForwardDirection;
+	if (TargetingComp && TargetingComp->FindPlayer())
+	{
+		FVector PlayerLocation = TargetingComp->FindPlayer()->GetActorLocation();
+		ForwardDirection = (PlayerLocation - OwnerLocation).GetSafeNormal();
+	}
+	else
+	{
+		// 플레이어를 찾지 못했을 때는 기존 방식 사용
+		FRotator OwnerRotation = GetOwner()->GetActorRotation();
+		ForwardDirection = OwnerRotation.Vector();
+	}
+	
+	// 플레이어 방향을 기준으로 오른쪽과 위쪽 방향 계산
+	FVector RightDirection = FVector::CrossProduct(ForwardDirection, FVector::UpVector).GetSafeNormal();
+	FVector UpDirection = FVector::UpVector;
 	
 	// 2차원 사각형 면 (보스 앞쪽에 위치)
 	float HalfWidth = RectangleWidth * 0.5f;  // 좌우 폭
@@ -587,11 +604,27 @@ void UBossProjectileComponent::SpawnMagicCirclesAtCirclePositions()
 	TArray<FVector> CirclePositions;
 	
 	FVector OwnerLocation = GetOwner()->GetActorLocation();
-	FRotator OwnerRotation = GetOwner()->GetActorRotation();
 	
-	FVector ForwardDirection = OwnerRotation.Vector();
-	FVector RightDirection = FRotationMatrix(OwnerRotation).GetUnitAxis(EAxis::Y);
-	FVector UpDirection = FRotationMatrix(OwnerRotation).GetUnitAxis(EAxis::Z);
+	// 플레이어 방향 계산
+	UCBossTargetingComponent* TargetingComp = CHelpers::GetComponent<UCBossTargetingComponent>(GetOwner());
+	FVector ForwardDirection;
+	if (TargetingComp && TargetingComp->FindPlayer())
+	{
+		FVector PlayerLocation = TargetingComp->FindPlayer()->GetActorLocation();
+		ForwardDirection = (PlayerLocation - OwnerLocation).GetSafeNormal();
+		CLog::Log("게이트 오브 바빌론 - 플레이어 방향으로 스폰!");
+	}
+	else
+	{
+		// 플레이어를 찾지 못했을 때는 기존 방식 사용
+		FRotator OwnerRotation = GetOwner()->GetActorRotation();
+		ForwardDirection = OwnerRotation.Vector();
+		CLog::Log("게이트 오브 바빌론 - 보스 방향으로 스폰 (플레이어 없음)");
+	}
+	
+	// 플레이어 방향을 기준으로 오른쪽과 위쪽 방향 계산
+	FVector RightDirection = FVector::CrossProduct(ForwardDirection, FVector::UpVector).GetSafeNormal();
+	FVector UpDirection = FVector::UpVector;
 	
 	int32 CircleRadius = 100;
 	float MinDistance = CircleRadius * 2.1f;
@@ -639,9 +672,29 @@ void UBossProjectileComponent::SpawnMagicCirclesAtCirclePositions()
 			AGateOfBabylon* Gate = GetGateFromPool();
 			if (Gate)
 			{
-				// 위치 설정 후 활성화
+				// 위치 설정
 				Gate->SetActorLocation(CirclePositions[CurrentIndex]);
-				Gate->SetActorRotation(FRotator(90, 0, 0));
+				
+				// 플레이어 방향으로 회전 설정
+				UCBossTargetingComponent* TargetingComp = CHelpers::GetComponent<UCBossTargetingComponent>(GetOwner());
+				if (TargetingComp && TargetingComp->FindPlayer())
+				{
+					FVector GateLocation = CirclePositions[CurrentIndex];
+					FVector PlayerLocation = TargetingComp->FindPlayer()->GetActorLocation();
+					FVector Direction = (PlayerLocation - GateLocation).GetSafeNormal();
+					FRotator TargetRotation = Direction.Rotation();
+					
+					// 아래를 내려다보는 각도로 설정 (공중 패턴)
+					TargetRotation.Pitch = 90.0f;  // 30도 아래로 기울임
+					
+					Gate->SetActorRotation(TargetRotation);
+				}
+				else
+				{
+					// 플레이어를 찾지 못했을 때 기본 방향 (아래를 내려다보게)
+					Gate->SetActorRotation(FRotator(90, 0, 0));
+				}
+				
 				Gate->ActivateGate();
 			}
 			
