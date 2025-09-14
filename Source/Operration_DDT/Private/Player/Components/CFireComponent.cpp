@@ -51,7 +51,8 @@ void UCFireComponent::BeginPlay()
 void UCFireComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
+	//CLog::Print("MagazinePool : " +FString::FromInt( MagazinePool.Num()));
+	
 	// ...
 }
 
@@ -152,69 +153,9 @@ void UCFireComponent::Fire()
 		FCollisionQueryParams::DefaultQueryParam
 	);
 	
-	/*// 디버그 라인 그리기
-	FColor DebugColor = bHit ? FColor::Red : FColor::Green;
-	float DebugThickness = 2.0f;
-	float DebugDuration = 1.0f; // 1초간 표시
-	
-	DrawDebugLine(
-		GetWorld(),
-		TraceStart,
-		TraceEnd,
-		DebugColor,
-		false, // bPersistentLines
-		DebugDuration,
-		0, // DepthPriority
-		DebugThickness
-	);
-	
-	// 충돌 지점에 구체 그리기 (충돌했을 때만)
-	if (bHit)
-	{
-		DrawDebugSphere(
-			GetWorld(),
-			HitResult.ImpactPoint,
-			10.0f, // 반지름
-			12, // 세그먼트 수
-			FColor::Yellow,
-			false, // bPersistentLines
-			DebugDuration
-		);
-	}
-	
-	// 시작점과 끝점에 작은 구체 그리기
-	DrawDebugSphere(
-		GetWorld(),
-		TraceStart,
-		5.0f,
-		8,
-		FColor::Blue,
-		false,
-		DebugDuration
-	);
-	
-	DrawDebugSphere(
-		GetWorld(),
-		TraceEnd,
-		5.0f,
-		8,
-		FColor::Cyan,
-		false,
-		DebugDuration
-	);
-	
-	// 디버그 정보 출력
-	CLog::Log("=== TRACE DEBUG INFO ===");
-	CLog::Log("Camera Location: " + CameraLocation.ToString());
-	CLog::Log("Camera Forward: " + CameraForwardVector.ToString());
-	CLog::Log("Trace Start: " + TraceStart.ToString());
-	CLog::Log("Trace End: " + TraceEnd.ToString());
-	CLog::Log("Hit Result: " + FString(bHit ? TEXT("TRUE") : TEXT("FALSE")));
-	if (bHit)
-	{
-		CLog::Log("Hit Actor: " + (HitResult.GetActor() ? HitResult.GetActor()->GetName() : FString(TEXT("NULL"))));
-		CLog::Log("Hit Component: " + (HitResult.GetComponent() ? HitResult.GetComponent()->GetName() : FString(TEXT("NULL"))));
-	}*/
+	// 5. 총구 정보 가져오기
+	SetMuzzleVector(RifleSocketName);
+	FVector MuzzleLocation = MuzzleVector;
 	
 	// 4. 충돌지점 결정
 	FVector TargetPoint;
@@ -223,6 +164,19 @@ void UCFireComponent::Fire()
 		// 적이나 오브젝트와 충돌한 경우
 		TargetPoint = HitResult.ImpactPoint;
 		CLog::Log("Hit target at: " + TargetPoint.ToString());
+		
+		/*// 충돌한 지점에 빨간색 구체 그리기
+		DrawDebugSphere(
+			GetWorld(),
+			TargetPoint,
+			20.0f,  // 구체 반지름
+			12,     // 구체 세그먼트 수
+			FColor::Yellow,
+			false,  // bPersistentLines
+			30.0f,   // LifeTime (초)
+			0,      // DepthPriority
+			1.0f    // Thickness
+		);*/
 	}
 	else
 	{
@@ -231,12 +185,36 @@ void UCFireComponent::Fire()
 		CLog::Log("No hit, using far point: " + TargetPoint.ToString());
 	}
 	
-	// 5. 총구 정보 가져오기
-	SetMuzzleVector(RifleSocketName);
-	FVector MuzzleLocation = MuzzleVector;
+	/*// 카메라에서 발사하는 라인트레이스 그리기 (파란색)
+	DrawDebugLine(
+		GetWorld(),
+		TraceStart,
+		TraceEnd,
+		FColor::Blue,
+		false,  // bPersistentLines
+		30.0f,   // LifeTime (초)
+		0,      // DepthPriority
+		1.0f    // Thickness
+	);
+	
+	// 총구에서 발사하는 라인트레이스 그리기 (녹색)
+	FVector MuzzleTraceEnd = MuzzleLocation + ((TargetPoint - MuzzleLocation).GetSafeNormal() * MaxTraceDistance);
+	DrawDebugLine(
+		GetWorld(),
+		MuzzleLocation,
+		MuzzleTraceEnd,
+		FColor::White,
+		false,  // bPersistentLines
+		30.0f,   // LifeTime (초)
+		0,      // DepthPriority
+		1.0f    // Thickness
+	);*/
+	
 	
 	// 6. 총구에서 충돌지점으로의 방향 벡터 계산
 	FVector FireDirection = (TargetPoint - MuzzleLocation).GetSafeNormal();
+
+	CLog::Log("Fire Direction: " + FireDirection.ToString());
 	
 	// 7. 오브젝트 풀에서 비활성화된 총알 가져오기
 	ACPlayerBullet* Bullet = GetInactiveBullet();
@@ -247,10 +225,17 @@ void UCFireComponent::Fire()
 	}
 	
 	// 8. 총알 재활성화 및 위치/방향 설정
-	Bullet->SetActive(true);
+	// 먼저 위치와 회전 설정
 	Bullet->SetActorLocation(MuzzleLocation);
 	Bullet->SetActorRotation(FireDirection.Rotation());
+	
+	// 그 다음 활성화
+	Bullet->SetActive(true);
+	
+	// 마지막으로 속도 설정 및 타이머 시작
 	Bullet->SetVelocity(FireDirection);
+
+	
 	Bullet->StartLifeTimer();  // 수명 타이머 시작
 	
 	CLog::Log("Fired bullet towards target: " + TargetPoint.ToString());
@@ -288,7 +273,8 @@ ACPlayerBullet* UCFireComponent::CreateBulletForPool()
 	
 	ACPlayerBullet* bullet = GetWorld()->SpawnActor<ACPlayerBullet>(PlayerBulletClass, params);
 	
-	// 생성 즉시 비활성화
+	// 생성 즉시 상태 완전 초기화
+	bullet->ResetBulletState();
 	bullet->SetActive(false);
 	
 	// 풀로 돌아갈 때 사용할 콜백 등록
@@ -303,10 +289,14 @@ ACPlayerBullet* UCFireComponent::GetInactiveBullet()
 	for (int32 i = 0; i < MagazinePool.Num(); i++)
 	{
 		int32 index = (CurrentPoolIndex + i) % MagazinePool.Num();
-		if (!MagazinePool[index]->IsActive())
+		ACPlayerBullet* bullet = MagazinePool[i];
+		
+		// 더 엄격한 체크 - 사용 중이 아닌 총알만 반환
+		if (!bullet->IsActive() && !bullet->GetIsInUse())
 		{
 			CurrentPoolIndex = (index + 1) % MagazinePool.Num();
-			return MagazinePool[index];
+			CLog::Log("Return Bullet : " + FString::FromInt(CurrentPoolIndex));
+			return bullet;
 		}
 	}
 	return nullptr; // 모든 총알이 활성화된 상태
@@ -317,22 +307,10 @@ void UCFireComponent::ReturnBulletToPool(ACPlayerBullet* bullet)
 	// 총알을 풀로 돌려보내기
 	if (bullet)
 	{
+		// 상태 완전 초기화
+		bullet->ResetBulletState();
 		bullet->SetActive(false);
-		bullet->SetActorLocation(FVector::ZeroVector); // 안전한 위치로 이동
-		bullet->StopLifeTimer();
 	}
 }
 
-void UCFireComponent::FindInactiveBullet()
-{
-	bool findResult = false;
-
-	for (int32 i = 0; i < MagazinePool.Num(); i++)
-	{
-		if (!MagazinePool[i]->IsActive())
-		{
-			findResult = true;
-		}
-	}
-}
 

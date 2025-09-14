@@ -71,7 +71,6 @@ public:
 	void SetReloadMode();
 	void SetHealingMode();
 	
-		
 	FORCEINLINE void SetRifleAimMode(bool inBool) { bRifleAimMode = inBool; }
 	FORCEINLINE void SetCanDodge(bool inBool) { bCanDodge = inBool; }
 	FORCEINLINE void SetIsHammerPulled(bool inBool) {bIsHammerPulled = inBool; }
@@ -99,5 +98,9 @@ private:
 
 	bool bIsHammerPulled = true;
 	
+	// 장전 중단 추적 변수
+	bool bReloadInterrupted = false;
+
+
 		
 };

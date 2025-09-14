@@ -61,17 +61,25 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Damage")
 	void SetRandomDamage();
 
+	// 본별 데미지 배율 반환 함수
+	UFUNCTION(BlueprintCallable, Category = "Damage")
+	float GetDamageMultiplierForBone(const FName& BoneName) const;
+
+	// 타이머가 활성화되어 있는지 확인하는 함수
+	UFUNCTION(BlueprintCallable, Category = "Timer")
+	bool IsLifeTimerActive() const;
+
 	class ADDTPlayer* OwnerCharacter;
 
 	UFUNCTION()
-	void OnBulletOverlap(
-		UPrimitiveComponent* OverlappedComponent,
+	void OnBulletHit(
+		UPrimitiveComponent* HitComponent,
 		AActor* OtherActor,
 		UPrimitiveComponent* OtherComp,
-		int32 OtherBodyIndex,
-		bool bFromSweep,
-		const FHitResult& SweepResult
+		FVector NormalImpulse,
+		const FHitResult& Hit
 	);
+	
 
 	void SetActive(bool bValue);
 	bool IsActive() const;
@@ -87,13 +95,22 @@ public:
 	void OnLifeTimeExpired();
 	
 	void ReturnToPool();
+	
+	// 총알 상태 초기화 함수
+	void ResetBulletState();
 
 	// 오브젝트 풀 델리게이트
 	UPROPERTY(BlueprintAssignable)
 	FOnReturnToPool OnReturnToPool;
 
+	FORCEINLINE bool GetIsInUse() { return bIsInUse; }
+	FORCEINLINE void SetIsInUse(bool bValue) { bIsInUse = bValue; }
+
 private:
 	bool bIsActive = false;
+	bool bIsInUse = false;  // 사용 중 플래그 추가
 	FTimerHandle LifeTimerHandle;
+
+	
 
 };
