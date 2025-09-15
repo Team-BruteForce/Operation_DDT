@@ -1256,3 +1256,95 @@ void UFlyingComponent::UpdateCooldowns(float DeltaTime)
 		}
 	}
 }
+
+/**
+ * @brief 비행 시스템 완전 초기화 (매니저용)
+ * 
+ * 모든 비행 관련 상태를 초기화하고 착륙 상태로 리셋합니다.
+ * 보스 매니저에서 보스 리셋 시 사용됩니다.
+ */
+void UFlyingComponent::ResetFlyingSystem()
+{
+	// 1. 모든 비행 상태 플래그 초기화
+	bIsFlying = false;
+	bIsTakingOff = false;
+	bIsLanding = false;
+	bIsOrbiting = false;
+	bIsHovering = false;
+	bIsOrbitingWithSpline = false;
+
+	// 2. 이동 관련 상태 초기화
+	bIsMovingToRandomPoint = false;
+	bIsMovingSideways = false;
+	bIsMovingSplineSemicircle = false;
+	bJustStartedMovement = false;
+	bWaitingForRandomCompletion = false;
+	bWaitingForSideCompletion = false;
+	bWaitingForSplineCompletion = false;
+
+	// 3. 위치 및 타겟 초기화
+	if (OwnerCharacter)
+	{
+		StartLocation = OwnerCharacter->GetActorLocation();
+		CurrentAltitude = StartLocation.Z;
+		TargetAltitude = StartLocation.Z; // 지상 고도로 설정
+		
+		// 캐릭터 이동 모드를 걷기로 변경
+		if (CharacterMovement)
+		{
+			CharacterMovement->SetMovementMode(MOVE_Walking);
+		}
+	}
+
+	// 4. 타겟 위치들 초기화
+	LandingLocation = FVector::ZeroVector;
+	HoveringLocation = FVector::ZeroVector;
+	RandomTargetLocation = FVector::ZeroVector;
+	SideTargetLocation = FVector::ZeroVector;
+	CurrentSplineSemicircleTarget = FVector::ZeroVector;
+	CurrentRandomOffset = FVector::ZeroVector;
+
+	// 5. 프로그레스 및 타이머 초기화
+	TakeoffProgress = 0.0f;
+	LandingProgress = 0.0f;
+	HoveringProgress = 0.0f;
+	HoveringFloatTimer = 0.0f;
+	PeriodicMovementTimer = 0.0f;
+	CompletionDelayTimer = 0.0f;
+	AltitudeVariationTimer = 0.0f;
+	AltitudeVariationOffset = 0.0f;
+
+	// 6. 스플라인 관련 초기화
+	CurrentSplineIndex = 0;
+	SplineProgress = 0.0f;
+	CurrentSplineSemicircleIndex = 0;
+	TargetSplineSemicircleIndex = 0;
+	SplineMoveCount = 0;
+	StartSplineSemicircleIndex = 0;
+	MovedAngle = 0.0f;
+
+	// 7. 궤도 이동 관련 초기화
+	OrbitCenter = FVector::ZeroVector;
+	CurrentOrbitAngle = 0.0f;
+
+	// 8. 쿨타임 초기화
+	bCanTakeoff = true;
+	bCanLanding = true;
+	TakeoffCooldownTimer = 0.0f;
+	LandingCooldownTimer = 0.0f;
+
+	// 9. 자동 호버링 로직 비활성화
+	bAutoHoveringLogicEnabled = false;
+
+	// 10. 다음 주기적 이동 시간 재설정
+	NextPeriodicMovementTime = FMath::RandRange(PeriodicMovementMinTime, PeriodicMovementMaxTime);
+
+	// 11. 스폰된 스플라인 액터 정리 (필요시)
+	if (SpawnedSplineActor)
+	{
+		SpawnedSplineActor->Destroy();
+		SpawnedSplineActor = nullptr;
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("비행 시스템 완전 초기화 완료 - 착륙 상태로 리셋"));
+}

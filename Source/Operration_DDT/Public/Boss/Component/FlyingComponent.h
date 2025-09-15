@@ -182,6 +182,16 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Hovering")
 	void SetAutoHoveringLogic(bool bEnabled);
+
+	/**
+	 * @brief 비행 시스템 완전 초기화 (매니저용)
+	 * 
+	 * @details
+	 * 모든 비행 관련 상태를 초기화하고 착륙 상태로 리셋합니다.
+	 * 보스 매니저에서 보스 리셋 시 사용됩니다.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Boss Reset")
+	void ResetFlyingSystem();
 	
 	/**
 	 * @brief 거리 체크 결과 반환 (StateTree용)

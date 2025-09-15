@@ -10,6 +10,7 @@
 #include "TimerManager.h"
 #include "DrawDebugHelpers.h"
 #include "Components/CapsuleComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values for this component's properties
 UBossProjectileComponent::UBossProjectileComponent()
@@ -968,4 +969,88 @@ void UBossProjectileComponent::ReturnBossProjectileToPool(ABossProjectileActor* 
 		BossProjectile->SetActorTickEnabled(false);
 		
 	}
+}
+
+/**
+ * @brief 보스 투사체 시스템 완전 초기화 (매니저용)
+ * 
+ * 모든 활성화된 투사체들을 비활성화하고 타이머들을 정리합니다.
+ * 보스 매니저에서 보스 리셋 시 사용됩니다.
+ */
+void UBossProjectileComponent::ResetProjectileSystem()
+{
+	UWorld* World = GetWorld();
+	if (!World) return;
+
+	// 1. 모든 타이머 정리
+	World->GetTimerManager().ClearTimer(OrbTimerHandle);
+	World->GetTimerManager().ClearTimer(OrbContinuousTimerHandle);
+	World->GetTimerManager().ClearTimer(ProjectileContinuousTimerHandle);
+	World->GetTimerManager().ClearTimer(HolySwordMagicTimerHandle);
+	World->GetTimerManager().ClearTimer(MagicCircleSpawnTimerHandle);
+
+	// 2. 연속 스폰 상태 초기화
+	bOrbContinuousSpawning = false;
+	bProjectileContinuousSpawning = false;
+	bHolySwordMagicSpawning = false;
+
+	// 3. 카운터 및 상태 변수 초기화
+	OrbSpawnCount = 0;
+	HolySwordMagicExecuteCount = 0;
+	HolySwordMagicCurrentCount = 0;
+	ExitOrb = false;
+
+	// 4. 모든 투사체 풀의 객체들을 풀로 반환 (비활성화)
+	for (AProjectile_LightSpear* Projectile : ProjectilePool)
+	{
+		if (Projectile)
+		{
+			// 타이머 클리어
+			if (Projectile->LifeTimeTimerHandle.IsValid())
+			{
+				World->GetTimerManager().ClearTimer(Projectile->LifeTimeTimerHandle);
+			}
+			
+			// 풀로 반환 (비활성화)
+			ReturnProjectileToPool(Projectile);
+		}
+	}
+
+	// 5. 모든 오브 풀의 객체들을 풀로 반환 (비활성화)
+	for (ABossProjectileOrb* Orb : OrbPool)
+	{
+		if (Orb)
+		{
+			ReturnOrbToPool(Orb);
+		}
+	}
+
+	// 6. 보스 투사체 풀의 객체들을 풀로 반환 (비활성화)
+	for (ABossProjectileActor* BossProjectile : BossProjectilePool)
+	{
+		if (BossProjectile)
+		{
+			ReturnBossProjectileToPool(BossProjectile);
+		}
+	}
+
+	// 7. HolySwordMagic 풀의 모든 객체들을 풀로 반환 (비활성화)
+	for (AHolySwordMagic* HolySwordMagic : HolySwordMagicPool)
+	{
+		if (HolySwordMagic)
+		{
+			ReturnHolySwordMagicToPool(HolySwordMagic);
+		}
+	}
+
+	// 8. GateOfBabylon 풀의 모든 객체들을 풀로 반환 (비활성화)
+	for (AGateOfBabylon* Gate : GatePool)
+	{
+		if (Gate)
+		{
+			ReturnGateToPool(Gate);
+		}
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("보스 투사체 시스템 완전 초기화 완료"));
 }

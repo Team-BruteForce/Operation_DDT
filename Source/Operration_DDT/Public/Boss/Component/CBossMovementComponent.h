@@ -132,6 +132,16 @@ public:
 	 */
 public:
 	class APawn* FindPlayer();
+
+	/**
+	 * @brief 보스 이동 시스템 완전 초기화 (매니저용)
+	 * 
+	 * @details
+	 * 모든 이동 관련 상태를 초기화하고 기본 이동 상태로 리셋합니다.
+	 * 보스 매니저에서 보스 리셋 시 사용됩니다.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Boss Reset")
+	void ResetMovementSystem();
 private:
 	/** 소유자 액터 */
 	UPROPERTY()

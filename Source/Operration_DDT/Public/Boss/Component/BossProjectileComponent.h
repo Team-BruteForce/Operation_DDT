@@ -57,6 +57,10 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = "Holy Sword Magic")
 	void CancelHolySwordMagicSpawning();
+
+	// 보스 투사체 시스템 완전 초기화 (매니저용)
+	UFUNCTION(BlueprintCallable, Category = "Boss Reset")
+	void ResetProjectileSystem();
 	
 	// 프로퍼티들
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

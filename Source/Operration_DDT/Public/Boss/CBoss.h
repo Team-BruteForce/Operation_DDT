@@ -46,6 +46,51 @@ public:
 	// class USkeletalMeshComponent* WingMeshComp; 
 
 	/**
+	 * @brief 보스 초기 위치 (BeginPlay에서 저장)
+	 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Boss Location")
+	FVector InitialLocation;
+
+	/**
+	 * @brief 듀얼 레이어 디졸브 시스템
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dissolve Materials")
+	TArray<class UMaterialInterface*> MetalDissolveMaterials;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dissolve Materials") 
+	TArray<class UMaterialInterface*> GoldenDissolveMaterials;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dissolve")
+	TArray<class UMaterialInstanceDynamic*> DynamicMaterials;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dissolve")
+	TArray<class UMaterialInterface*> OriginalMaterials;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dissolve")
+	bool bIsTransforming = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dissolve")
+	float DissolveProgress = 0.0f;
+
+	UPROPERTY()
+	FTimerHandle DissolveTimerHandle;
+
+	UPROPERTY()
+	TArray<bool> bGoldenApplied = {false, false, false, false};
+
+	UFUNCTION(BlueprintCallable, Category = "Dissolve")
+	void StartDualLayerDissolve();
+
+	UFUNCTION()
+	void UpdateDualDissolve(float Progress);
+
+	/**
+	 * @brief 기존 메테리얼로 복구
+	 */
+	UFUNCTION()
+	void RestoreToOriginalMaterials();
+
+	/**
 	 * @brief 보스 상태 컴포넌트
 	 */
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = "State")
