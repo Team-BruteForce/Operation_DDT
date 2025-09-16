@@ -91,6 +91,12 @@ public:
 	UPROPERTY(visibleAnywhere, BlueprintReadOnly)
 	class UCMagazineComponent* MagazineComp;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	class UCStaminaComponent* StaminaComp;
+
+	UPROPERTY(visibleAnywhere)
+	class UCBulletObjectPoolComponent* BulletPool;
+
   
 protected:
 	virtual void BeginPlay() override;

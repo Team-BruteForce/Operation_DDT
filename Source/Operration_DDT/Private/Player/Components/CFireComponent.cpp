@@ -13,6 +13,7 @@
 #include "Player/Components/CMagazineComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Player/Components/CBulletObjectPoolComponent.h"
 
 // Sets default values for this component's properties
 UCFireComponent::UCFireComponent()
@@ -35,14 +36,7 @@ void UCFireComponent::BeginPlay()
 	RifleSocketName = FName("MuzzlePos");
 	Rifle = Cast<ACAttachment>(GetActorAttachedToSocket(HandSocketName));
 	MagazineComponent = CHelpers::GetComponent<UCMagazineComponent>(OwnerCharacter);
-
-	// 오브젝트 풀 초기화
-	for (int32 i = 0; i < MaxMagazinePool; i++)
-	{
-		ACPlayerBullet* bullet = CreateBulletForPool();
-		MagazinePool.Add(bullet);
-	}
-	CurrentPoolIndex = 0;
+	BulletPool = CHelpers::GetComponent<UCBulletObjectPoolComponent>(OwnerCharacter);
 	
 }
 
@@ -165,18 +159,6 @@ void UCFireComponent::Fire()
 		TargetPoint = HitResult.ImpactPoint;
 		CLog::Log("Hit target at: " + TargetPoint.ToString());
 		
-		/*// 충돌한 지점에 빨간색 구체 그리기
-		DrawDebugSphere(
-			GetWorld(),
-			TargetPoint,
-			20.0f,  // 구체 반지름
-			12,     // 구체 세그먼트 수
-			FColor::Yellow,
-			false,  // bPersistentLines
-			30.0f,   // LifeTime (초)
-			0,      // DepthPriority
-			1.0f    // Thickness
-		);*/
 	}
 	else
 	{
@@ -185,7 +167,8 @@ void UCFireComponent::Fire()
 		CLog::Log("No hit, using far point: " + TargetPoint.ToString());
 	}
 	
-	/*// 카메라에서 발사하는 라인트레이스 그리기 (파란색)
+	/*
+	// 카메라에서 발사하는 라인트레이스 그리기 (파란색)
 	DrawDebugLine(
 		GetWorld(),
 		TraceStart,
@@ -208,7 +191,8 @@ void UCFireComponent::Fire()
 		30.0f,   // LifeTime (초)
 		0,      // DepthPriority
 		1.0f    // Thickness
-	);*/
+	);
+	*/
 	
 	
 	// 6. 총구에서 충돌지점으로의 방향 벡터 계산
@@ -223,21 +207,27 @@ void UCFireComponent::Fire()
 		CLog::Log("No available bullets in pool");
 		return;
 	}*/
-	ACPlayerBullet* Bullet = CreateBulletForPool();
+	//ACPlayerBullet* vfx = BulletPool->CreateBulletVFXForPool();
+	ACPlayerBullet* vfx = BulletPool->GetInactiveVFX();
 	
-	// 8. 총알 재활성화 및 위치/방향 설정
-	// 먼저 위치와 회전 설정
-	Bullet->SetActorLocation(MuzzleLocation);
-	Bullet->SetActorRotation(FireDirection.Rotation());
-	
-	// 그 다음 활성화
-	Bullet->SetActive(true);
-	
-	// 마지막으로 속도 설정 및 타이머 시작
-	Bullet->SetVelocity(FireDirection);
+	vfx->SetActorLocation(MuzzleLocation);
+	vfx->SetActorRotation(FireDirection.Rotation());
+	vfx->SetActive(true);
+	vfx->SetVelocity(FireDirection);
+	//vfx->SetTargetPoint(FireDirection);
 
+	CLog::Log("Pool)   Bullet Vfx Velocity: " + vfx->GetVelocity().ToString());
+	vfx->StartLifeTimer();
+
+	//ACPlayerBullet* bullet = BulletPool->CreateBulletForPool();
+	ACPlayerBullet* bullet = BulletPool->GetInactiveBullet();
 	
-	Bullet->StartLifeTimer();  // 수명 타이머 시작
+	bullet->SetActorLocation(CameraLocation);
+	bullet->SetActorRotation(CameraForwardVector.Rotation());
+	bullet->SetActive(true);
+	bullet->SetVelocity(CameraForwardVector);
+	//bullet->SetTargetPoint(CameraForwardVector);
+	bullet->StartLifeTimer();
 	
 	CLog::Log("Fired bullet towards target: " + TargetPoint.ToString());
 	
@@ -261,57 +251,3 @@ void UCFireComponent::Fire()
 		}
 	}
 }
-
-
-
-ACPlayerBullet* UCFireComponent::CreateBulletForPool()
-{
-	// 총알 생성 (기존과 동일한 방식)
-	FActorSpawnParameters params;
-	params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-	params.bNoFail = true;
-	params.Owner = OwnerCharacter;
-	
-	ACPlayerBullet* bullet = GetWorld()->SpawnActor<ACPlayerBullet>(PlayerBulletClass, params);
-	
-	// 생성 즉시 상태 완전 초기화
-	bullet->ResetBulletState();
-	bullet->SetActive(false);
-	
-	// 풀로 돌아갈 때 사용할 콜백 등록
-	bullet->OnReturnToPool.AddDynamic(this, &UCFireComponent::ReturnBulletToPool);
-	
-	return bullet;
-}
-
-ACPlayerBullet* UCFireComponent::GetInactiveBullet()
-{
-	// 순환 방식으로 비활성화된 총알 찾기
-	for (int32 i = 0; i < MagazinePool.Num(); i++)
-	{
-		int32 index = (CurrentPoolIndex + i) % MagazinePool.Num();
-		ACPlayerBullet* bullet = MagazinePool[i];
-		
-		// 더 엄격한 체크 - 사용 중이 아닌 총알만 반환
-		if (!bullet->IsActive() && !bullet->GetIsInUse())
-		{
-			CurrentPoolIndex = (index + 1) % MagazinePool.Num();
-			CLog::Log("Return Bullet : " + FString::FromInt(CurrentPoolIndex));
-			return bullet;
-		}
-	}
-	return nullptr; // 모든 총알이 활성화된 상태
-}
-
-void UCFireComponent::ReturnBulletToPool(ACPlayerBullet* bullet)
-{
-	// 총알을 풀로 돌려보내기
-	if (bullet)
-	{
-		// 상태 완전 초기화
-		bullet->ResetBulletState();
-		bullet->SetActive(false);
-	}
-}
-
-

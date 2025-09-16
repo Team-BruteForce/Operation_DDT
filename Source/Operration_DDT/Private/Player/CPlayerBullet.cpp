@@ -15,30 +15,17 @@ ACPlayerBullet::ACPlayerBullet()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-	//CapsuleComp = CreateDefaultSubobject <UCapsuleComponent>(TEXT("CapsuleComp"));
-	//CHelpers::CreateComponent<USceneComponent>(this, &Root, "Root");
-	//SetRootComponent(Root);
-	//CHelpers::CreateComponent<UCapsuleComponent>(this, &CapsuleComp, "CapsuleComp", Root);
+
 	CapsuleComp = CreateDefaultSubobject<UCapsuleComponent>(TEXT("CapsuleComp"));
 	RootComponent = CapsuleComp;
-	
 
-	//CapsuleComp->SetCapsuleHalfHeight (4.f);
-	//CapsuleComp->SetCapsuleRadius (2.f);
 	
 	// 충돌 설정
 	CapsuleComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	//CapsuleComp->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
-	//CapsuleComp->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-	//CapsuleComp->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Block);
-	//CapsuleComp->SetCollisionResponseToChannel(ECollisionChannel::ECC_WorldStatic, ECollisionResponse::ECR_Block);
-	
-	//CHelpers::CreateComponent<UStaticMeshComponent>(this, &MeshComp, "MeshComp", Root);
+
 	MeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComp"));
 	MeshComp->SetupAttachment(RootComponent);
-
-	//ProjectileMovement 부착
-	//CHelpers::CreateActorComponent<UProjectileMovementComponent>(this, &Movement, "Movement");
+	
 	Movement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("Movement"));
 	Movement->ProjectileGravityScale = 0.0f;
 	Movement->UpdatedComponent = RootComponent;
@@ -83,6 +70,12 @@ void ACPlayerBullet::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 	//CLog::Log("Bullet Speed:" + FString:: SanitizeFloat(this->GetVelocity().Size()));
 
+	//if (bCanMove)
+	//{
+	//	FVector point = GetActorLocation() + TargetPoint * Speed * DeltaTime;
+	//	SetActorLocation(point);
+	//}
+
 }
 
 void ACPlayerBullet::SetVelocity(FVector value)
@@ -97,7 +90,7 @@ void ACPlayerBullet::SetVelocity(FVector value)
 		BulletTrailComp->SetWorldRotation(EffectRotation);
 		
 		// 나이아가라 파라미터로 방향 전달 (선택사항)
-		BulletTrailComp->SetVectorParameter("Direction", value);
+		//BulletTrailComp->SetVectorParameter("Direction", value);
 	}
 }
 
@@ -122,6 +115,13 @@ void ACPlayerBullet::OnBulletHit(UPrimitiveComponent* HitComponent, AActor* Othe
 	// 자기 자신과의 충돌 무시
 	if (OtherActor == this || OtherActor == OwnerCharacter)
 		return;
+
+	if (!CanApplyDamage)
+	{
+		//Destroy();
+		ReturnToPool();
+		return;
+	}
 	
 	// 충돌한 액터 정보 로그 출력
 	FString ActorName = OtherActor ? OtherActor->GetName() : TEXT("NULL");
@@ -171,19 +171,25 @@ void ACPlayerBullet::OnBulletHit(UPrimitiveComponent* HitComponent, AActor* Othe
 	UGameplayStatics::ApplyPointDamage(OtherActor, FinalDamage, PointDamageEvent.ShotDirection, PointDamageEvent.HitInfo, OwnerCharacter->GetInstigatorController(), this, PointDamageEvent.DamageTypeClass);
 	
 	// 충돌 후 Destroy() 대신 풀로 돌아가기
-	//ReturnToPool();
-	Destroy();
+	ReturnToPool();
+	
 }
 
 void ACPlayerBullet::SetActive(bool bValue)
 {
 	bIsActive = bValue;
 	bIsInUse = bValue;  // 사용 중 플래그도 함께 설정
+	bCanMove = bValue;
 	MeshComp->SetVisibility(bValue);
 
 	if (bValue)
 	{
 		CapsuleComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+
+		Movement->bSimulationEnabled = true;
+		Movement->UpdateComponentVelocity();
+		Movement->Activate(true);
+		Movement->SetUpdatedComponent(RootComponent);
 		
 		// 활성화 시 나이아가라 이펙트 생성
 		if (BulletTrailSystem && !BulletTrailComp)
@@ -202,9 +208,8 @@ void ACPlayerBullet::SetActive(bool bValue)
 	else
 	{
 		CapsuleComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		// 비활성화 시 속도 및 상태 완전 초기화
+		Movement->Deactivate();
 		ResetBulletState();
-		bIsInUse = false;  // 사용 중 플래그 해제
 		
 		// 비활성화 시 나이아가라 이펙트 제거
 		if (BulletTrailComp)
@@ -268,8 +273,8 @@ void ACPlayerBullet::ResetBulletState()
 	// ProjectileMovementComponent 상태 완전 초기화
 	if (Movement)
 	{
-		Movement->Velocity = FVector::ZeroVector;
-		Movement->StopMovementImmediately();
+		//Movement->Velocity = FVector::ZeroVector;
+		//Movement->StopMovementImmediately();
 		//Movement->ResetMovementMode();
 	}
 	
@@ -295,8 +300,7 @@ void ACPlayerBullet::ReturnToPool()
 			BulletTrailComp->DestroyComponent();
 			BulletTrailComp = nullptr;
 		}
-		
-		OnReturnToPool.Broadcast(this);
+
 	}
 }
 
