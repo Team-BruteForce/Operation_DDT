@@ -16,24 +16,30 @@ ACPlayerBullet::ACPlayerBullet()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	//CapsuleComp = CreateDefaultSubobject <UCapsuleComponent>(TEXT("CapsuleComp"));
-	CHelpers::CreateComponent<USceneComponent>(this, &Root, "Root");
-	SetRootComponent(Root);
-	CHelpers::CreateComponent<UCapsuleComponent>(this, &CapsuleComp, "CapsuleComp", Root);
+	//CHelpers::CreateComponent<USceneComponent>(this, &Root, "Root");
+	//SetRootComponent(Root);
+	//CHelpers::CreateComponent<UCapsuleComponent>(this, &CapsuleComp, "CapsuleComp", Root);
+	CapsuleComp = CreateDefaultSubobject<UCapsuleComponent>(TEXT("CapsuleComp"));
+	RootComponent = CapsuleComp;
+	
 
 	//CapsuleComp->SetCapsuleHalfHeight (4.f);
 	//CapsuleComp->SetCapsuleRadius (2.f);
 	
 	// 충돌 설정
-	CapsuleComp->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	CapsuleComp->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
-	CapsuleComp->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-	CapsuleComp->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
-	CapsuleComp->SetCollisionResponseToChannel(ECollisionChannel::ECC_WorldStatic, ECollisionResponse::ECR_Overlap);
+	CapsuleComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	//CapsuleComp->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
+	//CapsuleComp->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+	//CapsuleComp->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Block);
+	//CapsuleComp->SetCollisionResponseToChannel(ECollisionChannel::ECC_WorldStatic, ECollisionResponse::ECR_Block);
 	
-	CHelpers::CreateComponent<UStaticMeshComponent>(this, &MeshComp, "MeshComp", Root);
+	//CHelpers::CreateComponent<UStaticMeshComponent>(this, &MeshComp, "MeshComp", Root);
+	MeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComp"));
+	MeshComp->SetupAttachment(RootComponent);
 
 	//ProjectileMovement 부착
-	CHelpers::CreateActorComponent<UProjectileMovementComponent>(this, &Movement, "Movement");
+	//CHelpers::CreateActorComponent<UProjectileMovementComponent>(this, &Movement, "Movement");
+	Movement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("Movement"));
 	Movement->ProjectileGravityScale = 0.0f;
 	Movement->UpdatedComponent = RootComponent;
 
@@ -53,7 +59,7 @@ void ACPlayerBullet::BeginPlay()
 	// 충돌 이벤트 바인딩
 	if (CapsuleComp)
 	{
-		CapsuleComp->OnComponentBeginOverlap.AddDynamic(this, &ACPlayerBullet::OnBulletOverlap);
+		CapsuleComp->OnComponentHit.AddDynamic(this, &ACPlayerBullet::OnBulletHit);
 	}
 
 	if (BulletTrailSystem)
@@ -75,6 +81,7 @@ void ACPlayerBullet::BeginPlay()
 void ACPlayerBullet::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	//CLog::Log("Bullet Speed:" + FString:: SanitizeFloat(this->GetVelocity().Size()));
 
 }
 
@@ -109,32 +116,69 @@ void ACPlayerBullet::SetRandomDamage()
 	CLog::Log("Random Integer Bullet Damage: " + FString::FromInt(RandomInt));
 }
 
-void ACPlayerBullet::OnBulletOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void ACPlayerBullet::OnBulletHit(UPrimitiveComponent* HitComponent, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
 	// 자기 자신과의 충돌 무시
 	if (OtherActor == this || OtherActor == OwnerCharacter)
 		return;
 	
-	CLog::Log("Overlap Occured");
+	// 충돌한 액터 정보 로그 출력
+	FString ActorName = OtherActor ? OtherActor->GetName() : TEXT("NULL");
+	FString ActorClass = OtherActor ? OtherActor->GetClass()->GetName() : TEXT("NULL");
+	CLog::Log("Bullet Hit with Actor: " + ActorName + " (Class: " + ActorClass + ")");
+	
+	// 충돌한 본 정보 가져오기
+	FName HitBoneName = Hit.BoneName;
+	CLog::Log("Hit Bone: " + HitBoneName.ToString());
+	
+	// 본별 데미지 배율 계산
+	float DamageMultiplier = GetDamageMultiplierForBone(HitBoneName);
+	float FinalDamage = BulletDamage * DamageMultiplier;
+	
+	// 본별 로그 출력
+	if (DamageMultiplier > 1.0f)
+	{
+		CLog::Log("HEADSHOT! Damage: " + FString::SanitizeFloat(FinalDamage));
+	}
+	else
+	{
+		CLog::Log("BODYSHOT! Damage: " + FString::SanitizeFloat(FinalDamage));
+	}
+	
+	// 충돌 지점에 본별 색상 디버그 구체 그리기
+	FColor HitColor = (DamageMultiplier > 1.0f) ? FColor::Red : FColor::Green;  // 헤드샷: 빨간색, 바디샷: 녹색
+	DrawDebugSphere(
+		GetWorld(),
+		Hit.ImpactPoint,
+		15.0f,  // 구체 반지름
+		12,     // 구체 세그먼트 수
+		HitColor,
+		false,  // bPersistentLines
+		30.0f,  // LifeTime (초)
+		0,      // DepthPriority
+		2.0f    // Thickness
+	);
 	
 	// FPointDamageEvent 생성 및 설정
 	FPointDamageEvent PointDamageEvent;
-	PointDamageEvent.Damage = BulletDamage;
-	PointDamageEvent.HitInfo = SweepResult;  // 충돌 정보 사용
+	PointDamageEvent.Damage = FinalDamage;
+	PointDamageEvent.HitInfo = Hit;  // Hit 정보 사용
 	PointDamageEvent.ShotDirection = Movement->Velocity.GetSafeNormal();  // 총알 방향
 	PointDamageEvent.DamageTypeClass = UDamageType::StaticClass();
 	
 	// UGameplayStatics::ApplyPointDamage로 데미지 적용
-	UGameplayStatics::ApplyPointDamage(OtherActor, BulletDamage, PointDamageEvent.ShotDirection, PointDamageEvent.HitInfo, OwnerCharacter->GetInstigatorController(), this, PointDamageEvent.DamageTypeClass);
+	UGameplayStatics::ApplyPointDamage(OtherActor, FinalDamage, PointDamageEvent.ShotDirection, PointDamageEvent.HitInfo, OwnerCharacter->GetInstigatorController(), this, PointDamageEvent.DamageTypeClass);
 	
 	// 충돌 후 Destroy() 대신 풀로 돌아가기
-	ReturnToPool();
+	//ReturnToPool();
+	Destroy();
 }
 
 void ACPlayerBullet::SetActive(bool bValue)
 {
 	bIsActive = bValue;
+	bIsInUse = bValue;  // 사용 중 플래그도 함께 설정
 	MeshComp->SetVisibility(bValue);
 
 	if (bValue)
@@ -158,8 +202,9 @@ void ACPlayerBullet::SetActive(bool bValue)
 	else
 	{
 		CapsuleComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		// 비활성화 시 속도 초기화
-		Movement->Velocity = FVector::ZeroVector;
+		// 비활성화 시 속도 및 상태 완전 초기화
+		ResetBulletState();
+		bIsInUse = false;  // 사용 중 플래그 해제
 		
 		// 비활성화 시 나이아가라 이펙트 제거
 		if (BulletTrailComp)
@@ -199,11 +244,49 @@ void ACPlayerBullet::OnLifeTimeExpired()
 	ReturnToPool();
 }
 
+float ACPlayerBullet::GetDamageMultiplierForBone(const FName& BoneName) const
+{
+	// 헤드 본들에 대한 데미지 배율 (2배)
+	if (BoneName == "head" || BoneName == "Head" || 
+		BoneName == "head_01" || BoneName == "Head_01" ||
+		BoneName == "skull" || BoneName == "Skull")
+	{
+		return 2.0f;  // 헤드샷 데미지 2배
+	}
+	
+	// 기본 데미지 (1배)
+	return 1.0f;
+}
+
+bool ACPlayerBullet::IsLifeTimerActive() const
+{
+	return GetWorld()->GetTimerManager().IsTimerActive(LifeTimerHandle);
+}
+
+void ACPlayerBullet::ResetBulletState()
+{
+	// ProjectileMovementComponent 상태 완전 초기화
+	if (Movement)
+	{
+		Movement->Velocity = FVector::ZeroVector;
+		Movement->StopMovementImmediately();
+		//Movement->ResetMovementMode();
+	}
+	
+	// 위치 초기화
+	SetActorLocation(FVector::ZeroVector);
+	SetActorRotation(FRotator::ZeroRotator);
+}
+
 void ACPlayerBullet::ReturnToPool()
 {
 	// 풀로 돌아가기
 	if (bIsActive)
 	{
+		// 타이머 먼저 정지
+		StopLifeTimer();
+		
+		// 상태 초기화
 		SetActive(false);
 		
 		// 나이아가라 이펙트가 남아있다면 강제로 제거

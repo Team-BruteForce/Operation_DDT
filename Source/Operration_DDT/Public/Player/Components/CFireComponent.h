@@ -74,8 +74,7 @@ private:
 	
 	UFUNCTION()
 	void ReturnBulletToPool(class ACPlayerBullet* bullet);
-
-	void FindInactiveBullet();
+	
 
 		
 };
