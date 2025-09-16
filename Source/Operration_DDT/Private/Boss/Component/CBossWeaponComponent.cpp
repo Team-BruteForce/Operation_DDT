@@ -105,7 +105,6 @@ void UCBossWeaponComponent::SetMode(const FGameplayTag& InTag)
 		return;
 	}
     
-	// 현재 무기가 있으면 해제
 	if (!IsPaseZeroMode())
 	{
 		CLog::Log("Unequip");
@@ -217,4 +216,31 @@ void UCBossWeaponComponent::BossHitAction(FGameplayTag Tag)
 	{
 		DoAction->HitAction(Tag);
 	}
+}
+
+/**
+ * @brief 보스 무기 시스템 완전 초기화 (매니저용)
+ * 
+ * 무기 모드를 초기 상태로 리셋하고 모든 액션을 중단합니다.
+ * 보스 매니저에서 보스 리셋 시 사용됩니다.
+ */
+void UCBossWeaponComponent::ResetWeaponSystem()
+{
+
+
+	// 2. 무기 모드를 완전 초기 상태로 리셋 (PaseZero)
+	// 초기화 시에는 몽타주 없이 조용히 변경
+	if (!IsPaseZeroMode())
+	{
+		// 현재 무기가 있다면 조용히 해제 (몽타주 없이)
+		GetBossEquipment()->Unequip(CurrentWeaponMode);
+	}
+	
+	CurrentWeaponMode = BossTags.PaseZero;
+	UE_LOG(LogTemp, Warning, TEXT("🔇 무기 모드를 PaseZero로 조용히 초기화 (몽타주 없음)"));
+
+
+	// 4. 델리게이트 이벤트 발생 (무기 모드 변경 알림)
+	// OnWeaponModeChanged.Broadcast(CurrentWeaponMode, BossTags.PaseZero);
+
 }

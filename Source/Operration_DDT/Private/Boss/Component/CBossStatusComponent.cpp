@@ -55,9 +55,8 @@ void UCBossStatusComponent::BeginPlay()
 			BossCurrentStats.CurrentGroggyGauge = 0.0f;
 		}
 	}
-	Owner=Cast<APawn>(GetOwner());
-	AIC=Cast<AAIController>(Owner->GetController());
-	StateTreeComp=CHelpers::GetComponent<UStateTreeAIComponent>(AIC);
+	Owner = Cast<APawn>(GetOwner());
+	// AI 컨트롤러는 지연 초기화 (필요할 때 InitializeAIComponents에서 처리)
 }
 
 /**
@@ -68,10 +67,28 @@ void UCBossStatusComponent::BeginPlay()
 void UCBossStatusComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-	if (BossCurrentStats.CurrentAP>=BossCurrentStats.MaxAP){
-		StateTreeComp->SendStateTreeEvent(FGameplayTag::RequestGameplayTag("BOSS.Flag.IsActing"));
+	
+	// AI 컴포넌트가 초기화되지 않았다면 시도
+	if (!StateTreeComp && Owner)
+	{
+		InitializeAIComponents();
 	}
-	else{
+	
+	// StateTreeComp가 유효할 때만 실행
+	if (StateTreeComp)
+	{
+		if (BossCurrentStats.CurrentAP >= BossCurrentStats.MaxAP)
+		{
+			StateTreeComp->SendStateTreeEvent(FGameplayTag::RequestGameplayTag("BOSS.Flag.IsActing"));
+		}
+		else
+		{
+			IncreaseAP(BossCurrentStats.IncreaseAP);
+		}
+	}
+	else
+	{
+		// StateTreeComp가 없어도 AP는 증가시킴
 		IncreaseAP(BossCurrentStats.IncreaseAP);
 	}
 }
@@ -146,5 +163,63 @@ void UCBossStatusComponent::DecreaseGroggyGauge(float GroggyAmount)
 void UCBossStatusComponent::ResetGroggyGauge()
 {
 	BossCurrentStats.CurrentGroggyGauge = 0.0f;
+}
+
+/**
+ * @brief 보스 스탯 완전 초기화 (매니저용)
+ * 
+ * 모든 스탯을 데이터 테이블 기본값으로 초기화합니다.
+ * 보스 매니저에서 보스 리셋 시 사용됩니다.
+ */
+void UCBossStatusComponent::ResetAllStats()
+{
+	if (BossStatsTable)
+	{
+		FTBossStats* BossData = BossStatsTable->FindRow<FTBossStats>("Boss","",true);
+		if (BossData)
+		{
+			// 모든 스탯을 데이터 테이블 값으로 초기화
+			BossCurrentStats.MaxHP = BossData->MaxHP;
+			BossCurrentStats.CurrentHP = BossData->MaxHP;
+			BossCurrentStats.MaxAP = BossData->MaxAP;
+			BossCurrentStats.IncreaseAP = BossData->IncreaseAP;
+			BossCurrentStats.CurrentAP = 0.0f;
+			BossCurrentStats.ConstATK = BossData->ATK;
+			BossCurrentStats.CurrentATK = BossData->ATK;
+			BossCurrentStats.ConstDEF = BossData->DEF;
+			BossCurrentStats.CurrentDEF = BossData->DEF;
+			BossCurrentStats.MaxSpeed = BossData->Speed;
+			BossCurrentStats.CurrentSpeed = BossData->Speed;
+			BossCurrentStats.MaxGroggyGauge = BossData->MaxGroggyGauge;
+			BossCurrentStats.CurrentGroggyGauge = 0.0f;
+			
+			// 상태 플래그 초기화
+			IsGroggy = false;
+			IsPaseChange = false;
+			
+			UE_LOG(LogTemp, Warning, TEXT("보스 스탯 완전 초기화 완료"));
+		}
+	}
+}
+
+/**
+ * @brief AI 컴포넌트들 안전 초기화
+ * 
+ * AI 컨트롤러가 준비되었을 때 안전하게 초기화합니다.
+ */
+void UCBossStatusComponent::InitializeAIComponents()
+{
+	if (!Owner) return;
+	
+	// AI 컨트롤러가 준비될 때까지 기다림
+	AIC = Cast<AAIController>(Owner->GetController());
+	if (AIC)
+	{
+		StateTreeComp = CHelpers::GetComponent<UStateTreeAIComponent>(AIC);
+		if (StateTreeComp)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("BossStatusComponent: AI 컴포넌트 초기화 완료"));
+		}
+	}
 }
 

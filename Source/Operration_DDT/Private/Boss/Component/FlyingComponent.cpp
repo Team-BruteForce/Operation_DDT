@@ -70,9 +70,12 @@ void UFlyingComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 			UpdateAltitudeVariation(DeltaTime);
 		}
 	}
+	
+	// 쿨타임 업데이트
+	UpdateCooldowns(DeltaTime);
 }
 
-void UFlyingComponent::StartTakeoff(float TargetHeight)
+void UFlyingComponent::StartTakeoff(float TargetHeight, float Speed)
 {
 	if (!OwnerCharacter || bIsFlying) return;
 	
@@ -83,6 +86,9 @@ void UFlyingComponent::StartTakeoff(float TargetHeight)
 	StartLocation = OwnerCharacter->GetActorLocation();
 	TargetAltitude = StartLocation.Z + TargetHeight;
 	TakeoffProgress = 0.0f;
+	
+	// 이륙 속도 설정
+	TakeoffSpeed = Speed;
 	
 	// 비행 모드로 전환
 	CharacterMovement->SetMovementMode(MOVE_Flying);
@@ -151,6 +157,9 @@ void UFlyingComponent::UpdateTakeoff(float DeltaTime)
 		bIsFlying = true;
 		CurrentAltitude = TargetAltitude;
 		
+		// 이륙 완료 후 착륙 쿨타임 시작
+		bCanLanding = false;
+		LandingCooldownTimer = LandingCooldownTime;
 	}
 	
 	// 디버그 시각화
@@ -201,6 +210,10 @@ void UFlyingComponent::UpdateLanding(float DeltaTime)
 		FRotator FinalRotation = OwnerCharacter->GetActorRotation();
 		FinalRotation.Pitch = 0.0f;
 		OwnerCharacter->SetActorRotation(FinalRotation);
+		
+		// 착륙 완료 후 이륙 쿨타임 시작
+		bCanTakeoff = false;
+		TakeoffCooldownTimer = TakeoffCooldownTime;
 	}
 	
 	// 디버그 시각화
@@ -588,81 +601,181 @@ void UFlyingComponent::UpdateHovering(float DeltaTime)
 {
 	if (!OwnerCharacter || !bIsHovering) return;
 	
+	// 완료 딜레이 대기 중인지 확인
+	if (bWaitingForRandomCompletion || bWaitingForSideCompletion || bWaitingForSplineCompletion)
+	{
+		CompletionDelayTimer -= DeltaTime;
+		if (CompletionDelayTimer <= 0.0f)
+		{
+			CompletionDelayTimer = 0.0f;
+			
+			// 어떤 이동이 완료 대기 중인지 확인하고 해당 이벤트 전송
+			if (bWaitingForRandomCompletion)
+			{
+				bWaitingForRandomCompletion = false;
+				CLog::Log("0.5초 딜레이 완료 - 랜덤 이동 이벤트 전송!");
+				OnRandomMovementCompleted();
+			}
+			else if (bWaitingForSideCompletion)
+			{
+				bWaitingForSideCompletion = false;
+				CLog::Log("0.5초 딜레이 완료 - 사이드 이동 이벤트 전송!");
+				OnSideMovementCompleted();
+			}
+			else if (bWaitingForSplineCompletion)
+			{
+				bWaitingForSplineCompletion = false;
+				CLog::Log("0.5초 딜레이 완료 - 스플라인 반원 이동 이벤트 전송!");
+				OnSplineSemicircleMovementCompleted();
+			}
+		}
+		
+		// 딜레이 중에도 호버링 계속 실행 (return 제거)
+	}
+	
+	// 딜레이 중에는 새로운 이동 시작하지 않음
+	if (bWaitingForRandomCompletion || bWaitingForSideCompletion || bWaitingForSplineCompletion)
+	{
+		// 호버링만 실행하고 새로운 이동은 시작하지 않음
+		bool bReached = MoveToLocation(HoveringLocation, HoveringSpeed, 100.0f);
+		if (bReached && OwnerCharacter->GetController())
+		{
+			OwnerCharacter->GetController()->StopMovement();
+		}
+		return;
+	}
+	
 	// 랜덤 이동 중인지 확인
 	if (bIsMovingToRandomPoint)
 	{
+		// 첫 프레임은 스킵
+		if (bJustStartedMovement)
+		{
+			bJustStartedMovement = false;
+			MoveToLocation(RandomTargetLocation, RandomMovementSpeed, 50.0f); // 이동만 시작
+			return;
+		}
+		
 		// 랜덤 위치로 이동
 		bool bReached = MoveToLocation(RandomTargetLocation, RandomMovementSpeed, 50.0f);
 		
 		if (bReached)
 		{
-			// 도달했으면 다시 호버링 모드로
+			CLog::Log("랜덤 이동 완료! 호버링 전환 후 0.5초 딜레이");
+			
+			// 1단계: 이동 완료
 			bIsMovingToRandomPoint = false;
+			
+			// 2단계: 호버링으로 전환
 			HoveringLocation = RandomTargetLocation; // 새로운 호버링 위치로 설정
+			// bIsHovering = true; // 이미 true 상태
 			
-			// StateTree에 랜덤 이동 완료 이벤트 발생 (한 번만)
-			OnRandomMovementCompleted();
-			
-			// 호버링 모드 종료 (이벤트 중복 방지)
-			bIsHovering = false;
+			// 3단계: 0.5초 후 이벤트 전송 예약
+			bWaitingForRandomCompletion = true;
+			CompletionDelayTimer = CompletionDelay;
 		}
 	}
 	// 사이드 이동 중인지 확인
 	else if (bIsMovingSideways)
 	{
+		// 첫 프레임은 스킵
+		if (bJustStartedMovement)
+		{
+			bJustStartedMovement = false;
+			float SideMovementSpeed = FlyingSpeed * 1.5f;
+			MoveToLocation(SideTargetLocation, SideMovementSpeed, 50.0f); // 이동만 시작
+			return;
+		}
+		
 		// 사이드 위치로 이동
 		float SideMovementSpeed = FlyingSpeed * 1.5f;
 		bool bReached = MoveToLocation(SideTargetLocation, SideMovementSpeed, 50.0f);
 		
 		if (bReached)
 		{
-			// 도달했으면 다시 호버링 모드로
+			CLog::Log("사이드 이동 완료! 호버링 전환 후 0.5초 딜레이");
+			
+			// 1단계: 이동 완료
 			bIsMovingSideways = false;
+			
+			// 2단계: 호버링으로 전환
 			HoveringLocation = SideTargetLocation; // 새로운 호버링 위치로 설정
+			// bIsHovering = true; // 이미 true 상태
 			
-			// StateTree에 사이드 이동 완료 이벤트 발생 (한 번만)
-			OnSideMovementCompleted();
-			
-			// 호버링 모드 종료 (이벤트 중복 방지)
-			bIsHovering = false;
+			// 3단계: 0.5초 후 이벤트 전송 예약
+			bWaitingForSideCompletion = true;
+			CompletionDelayTimer = CompletionDelay;
 		}
 	}
 	// 스플라인 반원 이동 중인지 확인
 	else if (bIsMovingSplineSemicircle)
 	{
+		// 첫 프레임은 스킵
+		if (bJustStartedMovement)
+		{
+			bJustStartedMovement = false;
+			float SplineMovementSpeed = FlyingSpeed * 2.0f;
+			MoveToLocation(CurrentSplineSemicircleTarget, SplineMovementSpeed, 50.0f); // 이동만 시작
+			return;
+		}
+		
 		// 현재 스플라인 포인트로 이동 (속도 증가)
 		float SplineMovementSpeed = FlyingSpeed * 2.0f;
 		bool bReached = MoveToLocation(CurrentSplineSemicircleTarget, SplineMovementSpeed, 50.0f);
 		
 		if (bReached)
 		{
-			// 다음 스플라인 포인트로 이동
-			CurrentSplineSemicircleIndex++;
-			
-			// 15개 포인트를 모두 이동했으면 완료 (카운터 기반)
-			static int32 SplineMoveCount = 0;
-			SplineMoveCount++;
-			
-			if (SplineMoveCount >= 15)
+		// 이전 인덱스 저장
+		int32 PreviousIndex = CurrentSplineSemicircleIndex;
+		
+		// 다음 스플라인 포인트로 이동
+		CurrentSplineSemicircleIndex++;
+		
+		// 카운터 증가
+		SplineMoveCount++;
+		
+		// 각도 계산 (스플라인 포인트 간 각도)
+		if (SpawnedSplineActor)
+		{
+			TArray<USplineComponent*> Splines = SpawnedSplineActor->GetHorizontalSplines();
+			if (Splines.Num() > 2 && Splines[2])
 			{
-				// 스플라인 반원 이동 완료
-				bIsMovingSplineSemicircle = false;
-				CurrentSplineSemicircleIndex = 0;
-				TargetSplineSemicircleIndex = 0;
-				CurrentSplineSemicircleTarget = FVector::ZeroVector;
-				SplineMoveCount = 0; // 카운터 리셋
+				USplineComponent* TargetSpline = Splines[2];
+				int32 NumPoints = TargetSpline->GetNumberOfSplinePoints();
 				
-				// StateTree에 스플라인 반원 이동 완료 이벤트 발생 (한 번만)
-				OnSplineSemicircleMovementCompleted();
-				
-				// 호버링 모드 종료 (이벤트 중복 방지)
-				bIsHovering = false;
+				// 스플라인이 원형이므로 각 포인트 간 각도는 360도 / 포인트 수
+				float AnglePerPoint = 360.0f / NumPoints;
+				MovedAngle += AnglePerPoint;
 			}
-			else
-			{
-				// 다음 스플라인 포인트 설정
-				UpdateSplineSemicircleTarget();
-			}
+		}
+		
+		// 반원(180도) 완료 체크 (각도 기반)
+		if (MovedAngle >= 180.0f)
+		{
+			CLog::Log("스플라인 반원 이동 완료! 호버링 전환 후 0.5초 딜레이");
+			
+			// 1단계: 스플라인 반원 이동 완료
+			bIsMovingSplineSemicircle = false;
+			CurrentSplineSemicircleIndex = 0;
+			TargetSplineSemicircleIndex = 0;
+			StartSplineSemicircleIndex = 0;
+			CurrentSplineSemicircleTarget = FVector::ZeroVector;
+			SplineMoveCount = 0; // 카운터 리셋
+			MovedAngle = 0.0f; // 각도 리셋
+			
+			// 2단계: 호버링으로 전환 (현재 위치에서 호버링)
+			HoveringLocation = OwnerCharacter->GetActorLocation(); // 현재 위치에서 호버링
+			// bIsHovering = true; // 이미 true 상태
+			
+			// 3단계: 0.5초 후 이벤트 전송 예약
+			bWaitingForSplineCompletion = true;
+			CompletionDelayTimer = CompletionDelay;
+		}
+		else
+		{
+			// 다음 스플라인 포인트 설정
+			UpdateSplineSemicircleTarget();
+		}
 		}
 	}
 	else
@@ -827,9 +940,14 @@ void UFlyingComponent::StartRandomMovement()
 		return;
 	}
 	
+	// 로그 출력
+	CLog::Log(">>> StartRandomMovement 시작!");
+	CLog::Log(FString::Printf(TEXT("시작 시간: %f"), GetWorld()->GetTimeSeconds()));
+	
 	// 랜덤 이동 시작
 	bIsMovingToRandomPoint = true;
 	RandomTargetLocation = RandomPoint;
+	bJustStartedMovement = true; // 첫 프레임 플래그 설정
 	
 }
 
@@ -865,6 +983,10 @@ void UFlyingComponent::StartRandomMovementFromStateTree()
 
 void UFlyingComponent::OnRandomMovementCompleted()
 {
+	// 로그 출력
+	CLog::Log("=== OnRandomMovementCompleted! ===");
+	CLog::Log(FString::Printf(TEXT("현재 시간: %f"), GetWorld()->GetTimeSeconds()));
+	
 	// StateTree에 랜덤 이동 완료 이벤트 발생
 	if (OwnerCharacter && OwnerCharacter->GetController())
 	{
@@ -877,12 +999,17 @@ void UFlyingComponent::OnRandomMovementCompleted()
 			FGameplayTag RandomMovementCompletedTag = FGameplayTag::RequestGameplayTag("BOSS.Event.Interrupt");
 			StateTreeComp->SendStateTreeEvent(RandomMovementCompletedTag);
 			
+			CLog::Log("랜덤 이동 완료 - BOSS.Event.Interrupt!");
 		}
 	}
 }
 
 void UFlyingComponent::OnSideMovementCompleted()
 {
+	// 로그 출력
+	CLog::Log("=== OnSideMovementCompleted! ===");
+	CLog::Log(FString::Printf(TEXT("현재 시간: %f"), GetWorld()->GetTimeSeconds()));
+	
 	// StateTree에 사이드 이동 완료 이벤트 발생
 	if (OwnerCharacter && OwnerCharacter->GetController())
 	{
@@ -895,6 +1022,7 @@ void UFlyingComponent::OnSideMovementCompleted()
 			FGameplayTag SideMovementCompletedTag = FGameplayTag::RequestGameplayTag("BOSS.Event.Interrupt");
 			StateTreeComp->SendStateTreeEvent(SideMovementCompletedTag);
 			
+			CLog::Log("사이드 이동 완료 - BOSS.Event.Interrupt!");
 		}
 	}
 }
@@ -905,6 +1033,10 @@ void UFlyingComponent::StartSplineSemicircleMovement()
 	{
 		return;
 	}
+	
+	// 로그 출력
+	CLog::Log(">>> StartSplineSemicircleMovement 시작!");
+	CLog::Log(FString::Printf(TEXT("시작 시간: %f"), GetWorld()->GetTimeSeconds()));
 	
 	// 스플라인 컴포넌트 찾기 (아래쪽 스플라인 사용)
 	TArray<USplineComponent*> Splines = SpawnedSplineActor->GetHorizontalSplines();
@@ -935,9 +1067,14 @@ void UFlyingComponent::StartSplineSemicircleMovement()
 	
 	// 시작 인덱스 설정 (가장 가까운 포인트)
 	CurrentSplineSemicircleIndex = ClosestIndex;
+	StartSplineSemicircleIndex = ClosestIndex; // 시작 인덱스 저장
 	
 	// 15개 포인트 이동 (반원 그리기)
 	TargetSplineSemicircleIndex = (ClosestIndex + 15) % NumPoints;
+	
+	// 카운터와 각도 초기화
+	SplineMoveCount = 0;
+	MovedAngle = 0.0f;
 	
 	// 첫 번째 타겟 설정
 	UpdateSplineSemicircleTarget();
@@ -945,6 +1082,7 @@ void UFlyingComponent::StartSplineSemicircleMovement()
 	// 스플라인 반원 이동 시작
 	bIsHovering = true;
 	bIsMovingSplineSemicircle = true;
+	bJustStartedMovement = true; // 첫 프레임 플래그 설정
 }
 
 void UFlyingComponent::UpdateSplineSemicircleTarget()
@@ -970,6 +1108,11 @@ void UFlyingComponent::UpdateSplineSemicircleTarget()
 
 void UFlyingComponent::OnSplineSemicircleMovementCompleted()
 {
+	// 로그 출력
+	CLog::Log("=== OnSplineSemicircleMovementCompleted! ===");
+	CLog::Log(FString::Printf(TEXT("현재 시간: %f"), GetWorld()->GetTimeSeconds()));
+	CLog::Log(FString::Printf(TEXT("이동한 각도: %f도"), MovedAngle));
+	
 	// StateTree에 스플라인 반원 이동 완료 이벤트 발생
 	if (OwnerCharacter && OwnerCharacter->GetController())
 	{
@@ -982,6 +1125,7 @@ void UFlyingComponent::OnSplineSemicircleMovementCompleted()
 			FGameplayTag SplineSemicircleCompletedTag = FGameplayTag::RequestGameplayTag("BOSS.Event.Interrupt");
 			StateTreeComp->SendStateTreeEvent(SplineSemicircleCompletedTag);
 			
+			CLog::Log("스플라인 반원 이동 완료 - BOSS.Event.Interrupt!");
 		}
 	}
 }
@@ -992,12 +1136,20 @@ void UFlyingComponent::ResetSplineSemicircleMovement()
 	bIsMovingSplineSemicircle = false;
 	CurrentSplineSemicircleIndex = 0;
 	TargetSplineSemicircleIndex = 0;
+	StartSplineSemicircleIndex = 0;
 	CurrentSplineSemicircleTarget = FVector::ZeroVector;
+	SplineMoveCount = 0; // 카운터 리셋 추가
+	MovedAngle = 0.0f; // 각도 리셋 추가
 	
 	// 호버링 상태도 초기화
 	bIsHovering = false;
 	bIsMovingToRandomPoint = false;
 	bIsMovingSideways = false;
+	bJustStartedMovement = false; // 첫 프레임 플래그 리셋
+	bWaitingForRandomCompletion = false; // 딜레이 플래그 리셋
+	bWaitingForSideCompletion = false; // 딜레이 플래그 리셋
+	bWaitingForSplineCompletion = false; // 딜레이 플래그 리셋
+	CompletionDelayTimer = 0.0f; // 딜레이 타이머 리셋
 	HoveringProgress = 0.0f;
 	RandomTargetLocation = FVector::ZeroVector;
 	SideTargetLocation = FVector::ZeroVector;
@@ -1009,6 +1161,10 @@ void UFlyingComponent::MoveSideways()
 	{
 		return;
 	}
+	
+	// 로그 출력
+	CLog::Log(">>> MoveSideways 시작!");
+	CLog::Log(FString::Printf(TEXT("시작 시간: %f"), GetWorld()->GetTimeSeconds()));
 	
 	// 좌우 랜덤 선택 (0: 왼쪽, 1: 오른쪽)
 	bool bGoLeft = FMath::RandBool();
@@ -1056,6 +1212,7 @@ void UFlyingComponent::MoveSideways()
 	bIsHovering = true;
 	bIsMovingSideways = true;
 	SideTargetLocation = TargetPos;
+	bJustStartedMovement = true; // 첫 프레임 플래그 설정
 	
 }
 
@@ -1073,4 +1230,121 @@ bool UFlyingComponent::CheckDistanceConditions() const
 bool UFlyingComponent::CheckPeriodicMovementTime() const
 {
 	return PeriodicMovementTimer >= NextPeriodicMovementTime;
+}
+
+void UFlyingComponent::UpdateCooldowns(float DeltaTime)
+{
+	// 이륙 쿨타임 업데이트
+	if (!bCanTakeoff)
+	{
+		TakeoffCooldownTimer -= DeltaTime;
+		if (TakeoffCooldownTimer <= 0.0f)
+		{
+			bCanTakeoff = true;
+			TakeoffCooldownTimer = 0.0f;
+		}
+	}
+	
+	// 착륙 쿨타임 업데이트
+	if (!bCanLanding)
+	{
+		LandingCooldownTimer -= DeltaTime;
+		if (LandingCooldownTimer <= 0.0f)
+		{
+			bCanLanding = true;
+			LandingCooldownTimer = 0.0f;
+		}
+	}
+}
+
+/**
+ * @brief 비행 시스템 완전 초기화 (매니저용)
+ * 
+ * 모든 비행 관련 상태를 초기화하고 착륙 상태로 리셋합니다.
+ * 보스 매니저에서 보스 리셋 시 사용됩니다.
+ */
+void UFlyingComponent::ResetFlyingSystem()
+{
+	// 1. 모든 비행 상태 플래그 초기화
+	bIsFlying = false;
+	bIsTakingOff = false;
+	bIsLanding = false;
+	bIsOrbiting = false;
+	bIsHovering = false;
+	bIsOrbitingWithSpline = false;
+
+	// 2. 이동 관련 상태 초기화
+	bIsMovingToRandomPoint = false;
+	bIsMovingSideways = false;
+	bIsMovingSplineSemicircle = false;
+	bJustStartedMovement = false;
+	bWaitingForRandomCompletion = false;
+	bWaitingForSideCompletion = false;
+	bWaitingForSplineCompletion = false;
+
+	// 3. 위치 및 타겟 초기화
+	if (OwnerCharacter)
+	{
+		StartLocation = OwnerCharacter->GetActorLocation();
+		CurrentAltitude = StartLocation.Z;
+		TargetAltitude = StartLocation.Z; // 지상 고도로 설정
+		
+		// 캐릭터 이동 모드를 걷기로 변경
+		if (CharacterMovement)
+		{
+			CharacterMovement->SetMovementMode(MOVE_Walking);
+		}
+	}
+
+	// 4. 타겟 위치들 초기화
+	LandingLocation = FVector::ZeroVector;
+	HoveringLocation = FVector::ZeroVector;
+	RandomTargetLocation = FVector::ZeroVector;
+	SideTargetLocation = FVector::ZeroVector;
+	CurrentSplineSemicircleTarget = FVector::ZeroVector;
+	CurrentRandomOffset = FVector::ZeroVector;
+
+	// 5. 프로그레스 및 타이머 초기화
+	TakeoffProgress = 0.0f;
+	LandingProgress = 0.0f;
+	HoveringProgress = 0.0f;
+	HoveringFloatTimer = 0.0f;
+	PeriodicMovementTimer = 0.0f;
+	CompletionDelayTimer = 0.0f;
+	AltitudeVariationTimer = 0.0f;
+	AltitudeVariationOffset = 0.0f;
+
+	// 6. 스플라인 관련 초기화
+	CurrentSplineIndex = 0;
+	SplineProgress = 0.0f;
+	CurrentSplineSemicircleIndex = 0;
+	TargetSplineSemicircleIndex = 0;
+	SplineMoveCount = 0;
+	StartSplineSemicircleIndex = 0;
+	MovedAngle = 0.0f;
+
+	// 7. 궤도 이동 관련 초기화
+	OrbitCenter = FVector::ZeroVector;
+	CurrentOrbitAngle = 0.0f;
+
+	// 8. 쿨타임 초기화
+	bCanTakeoff = true;
+	bCanLanding = true;
+	TakeoffCooldownTimer = 0.0f;
+	LandingCooldownTimer = 0.0f;
+
+	// 9. 자동 호버링 로직 비활성화
+	bAutoHoveringLogicEnabled = false;
+
+	// 10. 다음 주기적 이동 시간 재설정
+	NextPeriodicMovementTime = FMath::RandRange(PeriodicMovementMinTime, PeriodicMovementMaxTime);
+
+	// 11. 스폰된 스플라인 액터 정리 (필요시)
+	if (SpawnedSplineActor)
+	{
+		SpawnedSplineActor->Destroy();
+		SpawnedSplineActor = nullptr;
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("비행 시스템 완전 초기화 완료 - 착륙 상태로 리셋"));
 }

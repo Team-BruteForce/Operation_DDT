@@ -203,6 +203,21 @@ public:
 	UFUNCTION(BlueprintPure)  FGameplayTag GetStateTag() const { return CurrentState; }
 
 	/**
+	 * @brief 보스 상태 완전 초기화 (매니저용)
+	 * 
+	 * @details
+	 * 보스의 모든 상태와 태그를 초기 상태로 리셋합니다.
+	 * 보스 매니저에서 보스 리셋 시 사용됩니다.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Boss Reset")
+	void ResetBossState();
+
+	/**
+	 * @brief Tick 함수 추가 (AI 컴포넌트 안전 초기화용)
+	 */
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
+	/**
 	 * @brief 대기 상태 태그
 	 * 
 	 * @details

@@ -154,6 +154,16 @@ public:
 	 */
 	void ChangeType(const FGameplayTag& InTag);
 
+	/**
+	 * @brief 보스 무기 시스템 완전 초기화 (매니저용)
+	 * 
+	 * @details
+	 * 무기 모드를 초기 상태로 리셋하고 모든 액션을 중단합니다.
+	 * 보스 매니저에서 보스 리셋 시 사용됩니다.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Boss Reset")
+	void ResetWeaponSystem();
+
 private:
 	/**
 	 * @brief 소유자 캐릭터 참조

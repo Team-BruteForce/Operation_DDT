@@ -778,3 +778,61 @@ float UCBossMovementComponent::GetDebugCurrentDistance() const
 {
 	return DebugCurrentDistance;
 }
+
+/**
+ * @brief 보스 이동 시스템 완전 초기화 (매니저용)
+ * 
+ * 모든 이동 관련 상태를 초기화하고 기본 이동 상태로 리셋합니다.
+ * 보스 매니저에서 보스 리셋 시 사용됩니다.
+ */
+void UCBossMovementComponent::ResetMovementSystem()
+{
+	// 1. 안전한 위치 초기화
+	SafePosition = FVector::ZeroVector;
+
+	// 2. 비행 상태 초기화 (지상 모드로)
+	IsFlying = false;
+
+	// 3. 디버그 데이터 초기화
+	DebugTargetLocation = FVector::ZeroVector;
+	DebugOwnerLocation = FVector::ZeroVector;
+	DebugClosestPosition = FVector::ZeroVector;
+	DebugCurrentDistance = 0.0f;
+
+	// 4. 이동 상태를 걷기로 설정
+	SetMovementStateWalk();
+
+	// 5. 타겟 상태 태그 초기화 (필요시)
+	// TargetStateTag 초기화는 구조체의 기본값으로 설정됨
+
+	// 6. 소유자 캐릭터가 있다면 위치 관련 초기화
+	if (Owner)
+	{
+		// 캐릭터 이동 컴포넌트를 걷기 모드로 설정
+		if (UCharacterMovementComponent* MovementComp = Owner->GetCharacterMovement())
+		{
+			MovementComp->SetMovementMode(MOVE_Walking);
+		}
+
+		// 현재 위치를 디버그 데이터로 설정
+		DebugOwnerLocation = Owner->GetActorLocation();
+		
+		// 플레이어 찾기 및 디버그 데이터 업데이트
+		if (APawn* Player = FindPlayer())
+		{
+			DebugTargetLocation = Player->GetActorLocation();
+			FVector OwnerLoc, TargetLoc, DirectionToTarget;
+			float CurrentDistance;
+			CalculatePlayerDistance(TargetLoc, OwnerLoc, DirectionToTarget, CurrentDistance);
+			DebugCurrentDistance = CurrentDistance;
+		}
+	}
+
+	// 7. 비행 컴포넌트가 있다면 걷기 상태로 설정
+	if (FlyingComponent)
+	{
+		FlyingComponent->bIsFlying = false;
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("보스 이동 시스템 완전 초기화 완료 - 걷기 모드로 리셋"));
+}

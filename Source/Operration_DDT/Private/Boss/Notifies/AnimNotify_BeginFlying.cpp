@@ -19,5 +19,5 @@ void UAnimNotify_BeginFlying::Notify(USkeletalMeshComponent* MeshComp, UAnimSequ
 	CheckNull(Owner);
 	UFlyingComponent* FlyingComponent = CHelpers::GetComponent<UFlyingComponent>(Owner);
 	CheckNull(FlyingComponent);
-	FlyingComponent->StartTakeoff();
+	FlyingComponent->StartTakeoff(Height,speed);
 }
