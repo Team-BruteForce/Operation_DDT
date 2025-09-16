@@ -374,14 +374,14 @@ void ACSkeletonEnemy::PlayDashAttack()
 		// 돌진 공격 쿨다운 설정 (강력한 단발 공격)
 		AttackCooldown = 0.6f;
 		
-		// 기존 타이머 클리어 후 재설정
-		GetWorldTimerManager().ClearTimer(MeleeAttackTimerHandle);
-		FTimerDelegate ClearDash;
-		ClearDash.BindLambda([this]()
-		{
-			bIsDashAttacking = false;
-		});
-		GetWorldTimerManager().SetTimer(MeleeAttackTimerHandle, ClearDash, 0.6f, false);
+// 		기존 타이머 클리어 후 재설정
+// 				GetWorldTimerManager().ClearTimer(MeleeAttackTimerHandle);
+// 				FTimerDelegate ClearDash;
+// 				ClearDash.BindLambda([this]()
+// 				{
+// 					bIsDashAttacking = false;
+// 				});
+// 				GetWorldTimerManager().SetTimer(MeleeAttackTimerHandle, ClearDash, 0.6f, false);
 		
 		// 디버그 출력
 		if (GEngine)
