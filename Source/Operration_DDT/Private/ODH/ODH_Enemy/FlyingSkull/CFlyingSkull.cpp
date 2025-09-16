@@ -16,6 +16,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "AIController.h"
 #include "BrainComponent.h"
+#include "Player/CPlayerBullet.h"
 
 // Sets default values
 ACFlyingSkull::ACFlyingSkull()
@@ -851,7 +852,7 @@ void ACFlyingSkull::OnDamageCollisionOverlap(UPrimitiveComponent* OverlappedComp
 		return;
 
 	// 플레이어인지 확인
-	if (!OtherActor->IsA<APawn>())
+	if (!OtherActor->IsA<ACPlayerBullet>())
 		return;
 
 	// 이미 사망한 경우 데미지를 받지 않음
@@ -860,8 +861,8 @@ void ACFlyingSkull::OnDamageCollisionOverlap(UPrimitiveComponent* OverlappedComp
 
 	// 플레이어의 공격인지 확인 (예: 플레이어의 무기나 공격 콜리전)
 	// 여기서는 간단히 Pawn으로 확인하지만, 실제로는 플레이어의 공격 콜리전을 확인해야 함
-	APawn* PlayerPawn = Cast<APawn>(OtherActor);
-	if (!PlayerPawn)
+	ACPlayerBullet* PlayerBullet = Cast<ACPlayerBullet>(OtherActor);
+	if (!PlayerBullet)
 		return;
 
 	// 데미지 적용

@@ -31,7 +31,8 @@ void UCSkeletonEnemyAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	// 전투/사망 플래그는 캐릭터에서 가져옴
 	if (CachedOwner)
 	{
-		bIsMeleeAttacking = CachedOwner->GetIsMeleeAttacking();
+		bIsComboAttacking = CachedOwner->GetIsComboAttacking();
+		bIsDashAttacking = CachedOwner->GetIsDashAttacking();
 		bIsDead = CachedOwner->IsDead_Implementation();
 	}
 

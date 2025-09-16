@@ -25,9 +25,6 @@ public:
 
 	// 공격/사망 상태
 	UPROPERTY(BlueprintReadOnly, Category = "State")
-	bool bIsMeleeAttacking = false;
-
-	UPROPERTY(BlueprintReadOnly, Category = "State")
 	bool bIsDead = false;
 
 	// 근접 공격 세부 상태
