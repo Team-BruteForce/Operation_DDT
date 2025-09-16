@@ -819,7 +819,11 @@ void ACFlowerEnemy::DisableDamageCollisions()
 		HandRTakeDamageCollision,
 		ThighRTakeDamageCollision,
 		CalfRTakeDamageCollision,
-		FootRTakeDamageCollision
+		FootRTakeDamageCollision,
+		// 공격 콜리전들
+		HandLAttackCollision,
+		HandRAttackCollision,
+		DashAttackCollision
 	};
 
 	for (UPrimitiveComponent* Collision : DamageCollisions)
@@ -833,7 +837,7 @@ void ACFlowerEnemy::DisableDamageCollisions()
 	// 디버그 출력
 	if (GEngine)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Orange, TEXT("Flower Enemy all damage collisions disabled"));
+		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Orange, TEXT("Flower Enemy all collisions disabled"));
 	}
 }
 
@@ -1021,7 +1025,15 @@ void ACFlowerEnemy::OnDeath()
 			{
 				GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("Flower Enemy removed from game!"));
 			}
-			Destroy();
+			// 비활성화 처리: 보이지 않음, 충돌 비활성화, 틱 중지
+			SetActorHiddenInGame(true);
+			SetActorEnableCollision(false);
+			SetActorTickEnabled(false);
+			if (USkeletalMeshComponent* MeshComp = GetMesh())
+			{
+				MeshComp->SetVisibility(false, true);
+				MeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			}
 		}
 	});
 	GetWorldTimerManager().SetTimer(DeathTimerHandle, DestroySelf, 3.0f, false);

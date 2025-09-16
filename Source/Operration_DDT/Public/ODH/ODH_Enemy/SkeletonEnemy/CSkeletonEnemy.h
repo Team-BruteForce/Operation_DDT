@@ -52,6 +52,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Attack")
 	void DisableComboCollisions();
 
+	UFUNCTION(BlueprintCallable, Category = "Attack")
+	void EnableComboRCollision();
+
+	UFUNCTION(BlueprintCallable, Category = "Attack")
+	void EnableComboLCollision();
+
 	// 모든 콜리전 비활성화 (사망 시 사용)
 	UFUNCTION(BlueprintCallable, Category = "Collision")
 	void DisableAllCollisions();

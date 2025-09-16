@@ -1,6 +1,8 @@
 #include "ODH/ODH_Enemy/SkeletonEnemy/CSkeletonEnemyAnimInstance.h"
 #include "ODH/ODH_Enemy/SkeletonEnemy/CSkeletonEnemy.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "AIController.h"
+#include "BehaviorTree/BlackboardComponent.h"
 
 void UCSkeletonEnemyAnimInstance::NativeInitializeAnimation()
 {
@@ -34,6 +36,25 @@ void UCSkeletonEnemyAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		bIsComboAttacking = CachedOwner->GetIsComboAttacking();
 		bIsDashAttacking = CachedOwner->GetIsDashAttacking();
 		bIsDead = CachedOwner->IsDead_Implementation();
+
+		// Blackboard 의 IsInCombat 값을 읽어서 bIsRun 동기화
+		if (AAIController* AICon = Cast<AAIController>(CachedOwner->GetController()))
+		{
+			if (UBlackboardComponent* BB = AICon->GetBlackboardComponent())
+			{
+				static const FName IsInCombatKey = TEXT("IsInCombat");
+				const bool bInCombat = BB->GetValueAsBool(IsInCombatKey);
+				bIsRun = bInCombat;
+			}
+			else
+			{
+				bIsRun = false;
+			}
+		}
+		else
+		{
+			bIsRun = false;
+		}
 	}
 
 	// bIsComboAttacking / bIsDashAttacking 은 AnimBP나 캐릭터 로직에서 세터로 제어

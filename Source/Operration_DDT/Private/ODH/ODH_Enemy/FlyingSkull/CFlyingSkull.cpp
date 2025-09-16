@@ -455,7 +455,15 @@ void ACFlyingSkull::OnDeath()
 			{
 				GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("Flying Skull removed from game!"));
 			}
-			Destroy();
+			// 비활성화 처리: 보이지 않음, 충돌 비활성화, 틱 중지
+			SetActorHiddenInGame(true);
+			SetActorEnableCollision(false);
+			SetActorTickEnabled(false);
+			if (USkeletalMeshComponent* MeshComp = GetMesh())
+			{
+				MeshComp->SetVisibility(false, true);
+				MeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			}
 		}
 	});
 	GetWorldTimerManager().SetTimer(DeathTimerHandle, DestroySelf, 3.0f, false);
