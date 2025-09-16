@@ -88,6 +88,12 @@ void ADropHPPotionItem::OnPooledDeactivated()
     bCanBePickedUp = false;
     Collision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     
+    // 자동 반환 타이머 정리
+    if (GetWorld())
+    {
+        GetWorld()->GetTimerManager().ClearTimer(AutoReturnTimerHandle);
+    }
+    
     // 활성화된 이펙트 파괴
     if (ActiveEffectComponent)
     {
@@ -107,6 +113,9 @@ void ADropHPPotionItem::EnablePickup()
         FVector EffectLocation = GetActorLocation() + FVector(0, 0, EffectSpawnHeight);
         ActiveEffectComponent = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), PickupEffect, EffectLocation, GetActorRotation());
     }
+
+    // 자동 반환 타이머 시작
+    GetWorld()->GetTimerManager().SetTimer(AutoReturnTimerHandle, this, &ADropHPPotionItem::ReturnToPool, AutoReturnTime, false);
 }
 
 void ADropHPPotionItem::BeginPlay()
@@ -126,6 +135,12 @@ void ADropHPPotionItem::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AAct
 
     if (ADDTPlayer* Player = Cast<ADDTPlayer>(OtherActor))
     {
+        // 자동 반환 타이머 취소
+        if (GetWorld())
+        {
+            GetWorld()->GetTimerManager().ClearTimer(AutoReturnTimerHandle);
+        }
+        
         if (GEngine)
         {
             GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green,

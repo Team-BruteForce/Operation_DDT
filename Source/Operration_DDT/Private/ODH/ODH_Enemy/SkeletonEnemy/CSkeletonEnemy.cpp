@@ -12,6 +12,7 @@
 #include "AIController.h"
 #include "BrainComponent.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "Player/CPlayerBullet.h"
 
 // Sets default values
 ACSkeletonEnemy::ACSkeletonEnemy()
@@ -337,19 +338,20 @@ void ACSkeletonEnemy::PlayComboAttack()
 	if (MeleeAttackComponent)
 	{
 		MeleeAttackComponent->ActivateMeleeAttack();
-		bIsMeleeAttacking = true;
+		bIsComboAttacking = true;
+		bIsDashAttacking = false; // 다른 공격 상태 초기화
 		
 		// 콤보 공격 쿨다운 설정 (빠른 연속 공격)
 		AttackCooldown = 0.3f;
 		
 		// 기존 타이머 클리어 후 재설정
 		GetWorldTimerManager().ClearTimer(MeleeAttackTimerHandle);
-		FTimerDelegate ClearMelee;
-		ClearMelee.BindLambda([this]()
+		FTimerDelegate ClearCombo;
+		ClearCombo.BindLambda([this]()
 		{
-			bIsMeleeAttacking = false;
+			bIsComboAttacking = false;
 		});
-		GetWorldTimerManager().SetTimer(MeleeAttackTimerHandle, ClearMelee, 0.6f, false);
+		GetWorldTimerManager().SetTimer(MeleeAttackTimerHandle, ClearCombo, 0.6f, false);
 		
 		// 디버그 출력
 		if (GEngine)
@@ -366,19 +368,20 @@ void ACSkeletonEnemy::PlayDashAttack()
 	if (MeleeAttackComponent)
 	{
 		MeleeAttackComponent->ActivateMeleeAttack();
-		bIsMeleeAttacking = true;
+		bIsDashAttacking = true;
+		bIsComboAttacking = false; // 다른 공격 상태 초기화
 		
 		// 돌진 공격 쿨다운 설정 (강력한 단발 공격)
 		AttackCooldown = 0.6f;
 		
 		// 기존 타이머 클리어 후 재설정
 		GetWorldTimerManager().ClearTimer(MeleeAttackTimerHandle);
-		FTimerDelegate ClearMelee;
-		ClearMelee.BindLambda([this]()
+		FTimerDelegate ClearDash;
+		ClearDash.BindLambda([this]()
 		{
-			bIsMeleeAttacking = false;
+			bIsDashAttacking = false;
 		});
-		GetWorldTimerManager().SetTimer(MeleeAttackTimerHandle, ClearMelee, 0.6f, false);
+		GetWorldTimerManager().SetTimer(MeleeAttackTimerHandle, ClearDash, 0.6f, false);
 		
 		// 디버그 출력
 		if (GEngine)
@@ -400,6 +403,8 @@ void ACSkeletonEnemy::EnableComboCollisions()
 	{
 		MeleeAttackCollisionL->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	}
+	
+	// 콤보 공격 시 전방 이동 제거 (애니메이션에서 처리)
 	
 	// 디버그 출력
 	if (GEngine)
@@ -521,10 +526,263 @@ void ACSkeletonEnemy::EnableLastComboCollision()
 		ComboAttackLastCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	}
 	
+	// 마지막 콤보 공격 시 전방 이동 제거 (애니메이션에서 처리)
+	
 	// 디버그 출력
 	if (GEngine)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Magenta, TEXT("Last Combo Collision Enabled"));
+	}
+}
+
+void ACSkeletonEnemy::EnableDashCollision()
+{
+	if (ComboAttackLastCollision)
+	{
+		ComboAttackLastCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	}
+	
+	// 돌진 공격은 전방 이동 효과 없음 (애니메이션에서 처리)
+	
+	// 디버그 출력
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Cyan, TEXT("Dash Attack Collision Enabled"));
+	}
+}
+
+void ACSkeletonEnemy::StartDashMovementToPlayer()
+{
+	// AI Controller 이동 중지
+	if (AController* MyController = GetController())
+	{
+		if (AAIController* AIController = Cast<AAIController>(MyController))
+		{
+			AIController->StopMovement();
+		}
+	}
+
+	// 플레이어 위치 가져오기
+	APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+	if (PlayerPawn)
+	{
+		// 플레이어의 위치와 회전 정보 가져오기
+		FVector PlayerLocation = PlayerPawn->GetActorLocation();
+		FRotator PlayerRotation = PlayerPawn->GetActorRotation();
+		
+		// 플레이어가 바라보는 방향 계산 (Yaw 회전만 사용)
+		FVector PlayerForward = FRotationMatrix(FRotator(0.0f, PlayerRotation.Yaw, 0.0f)).GetUnitAxis(EAxis::X);
+		
+		// 플레이어 정면 앞 70cm 지점 계산
+		CachedPlayerLocation = PlayerLocation + (PlayerForward * 70.0f);
+		bIsDashMoving = true;
+		
+		// 디버그 출력
+		if (GEngine)
+		{
+			FString DebugMessage = FString::Printf(TEXT("Target Location (70cm in front of player): %s"), *CachedPlayerLocation.ToString());
+			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Blue, DebugMessage);
+		}
+	}
+	else
+	{
+		// 플레이어를 찾을 수 없는 경우
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("Player not found for dash movement!"));
+		}
+		bIsDashMoving = false;
+	}
+}
+
+void ACSkeletonEnemy::UpdateDashMovementToPlayer(float DeltaTime, float Speed)
+{
+	// 이동 중이 아니면 리턴
+	if (!bIsDashMoving)
+		return;
+
+	// 사망한 경우 이동하지 않음
+	if (StatusComponent && StatusComponent->IsDead())
+	{
+		bIsDashMoving = false;
+		return;
+	}
+
+	// 캐릭터 이동 컴포넌트 가져오기
+	UCharacterMovementComponent* MoveComp = GetCharacterMovement();
+	if (!MoveComp)
+	{
+		bIsDashMoving = false;
+		return;
+	}
+
+	// 현재 위치에서 저장된 플레이어 위치로의 방향 계산
+	FVector CurrentLocation = GetActorLocation();
+	FVector Direction = (CachedPlayerLocation - CurrentLocation).GetSafeNormal();
+	
+	// Yaw 회전만 사용 (Z축 회전은 제외)
+	FRotator TargetRotation = FRotationMatrix::MakeFromX(Direction).Rotator();
+	TargetRotation.Pitch = 0.0f;
+	TargetRotation.Roll = 0.0f;
+	
+	// 캐릭터를 목표 방향으로 회전
+	SetActorRotation(TargetRotation);
+	
+	// 목표 방향으로 이동 (SetActorLocation 사용)
+	FVector Movement = Direction * Speed * DeltaTime;
+	FVector NewLocation = CurrentLocation + Movement;
+	SetActorLocation(NewLocation);
+	
+	// 목표 지점에 도달했는지 확인 (거리 체크)
+	float DistanceToTarget = FVector::Dist(CurrentLocation, CachedPlayerLocation);
+	if (DistanceToTarget < 70.0f) // 70cm 이내에 도달하면 이동 종료
+	{
+		bIsDashMoving = false;
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Green, TEXT("Reached target location (70cm in front of player)"));
+		}
+	}
+}
+
+void ACSkeletonEnemy::EndDashMovementToPlayer()
+{
+	bIsDashMoving = false;
+	
+	// 이동 정지
+	if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
+	{
+		MoveComp->StopMovementImmediately();
+	}
+	
+	// 디버그 출력
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Orange, TEXT("Dash Movement Ended"));
+	}
+}
+
+void ACSkeletonEnemy::StartComboAttackMovement()
+{
+	// 사망한 경우 이동하지 않음
+	if (StatusComponent && StatusComponent->IsDead())
+	{
+		return;
+	}
+
+	// 현재 바라보는 방향 계산 (Yaw 회전만 사용)
+	FRotator CurrentRotation = GetActorRotation();
+	ComboMovementDirection = FRotationMatrix(FRotator(0.0f, CurrentRotation.Yaw, 0.0f)).GetUnitAxis(EAxis::X);
+	
+	// 시작 위치 저장
+	ComboMovementStartLocation = GetActorLocation();
+	
+	// 이동 상태 설정
+	bIsComboMoving = true;
+	ComboMovementProgress = 0.0f;
+	
+	// 디버그 출력
+	if (GEngine)
+	{
+		FString DebugMessage = FString::Printf(TEXT("Combo Movement Started - Direction: %s"), *ComboMovementDirection.ToString());
+		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, DebugMessage);
+	}
+}
+
+void ACSkeletonEnemy::UpdateComboAttackMovement(float DeltaTime, float Speed, float Distance)
+{
+	// 이동 중이 아니면 리턴
+	if (!bIsComboMoving)
+		return;
+
+	// 사망한 경우 이동하지 않음
+	if (StatusComponent && StatusComponent->IsDead())
+	{
+		bIsComboMoving = false;
+		return;
+	}
+
+	// 진행률 업데이트 (0.0 ~ 1.0)
+	float ProgressIncrement = (Speed * DeltaTime) / Distance;
+	ComboMovementProgress = FMath::Clamp(ComboMovementProgress + ProgressIncrement, 0.0f, 1.0f);
+	
+	// 목표 위치 계산
+	FVector TargetLocation = ComboMovementStartLocation + (ComboMovementDirection * Distance);
+	
+	// Lerp를 사용한 부드러운 이동
+	FVector NewLocation = FMath::Lerp(ComboMovementStartLocation, TargetLocation, ComboMovementProgress);
+	SetActorLocation(NewLocation);
+	
+	// 이동 완료 체크
+	if (ComboMovementProgress >= 1.0f)
+	{
+		bIsComboMoving = false;
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Green, TEXT("Combo Movement Completed"));
+		}
+	}
+}
+
+void ACSkeletonEnemy::EndComboAttackMovement()
+{
+	bIsComboMoving = false;
+	ComboMovementProgress = 0.0f;
+	
+	// 디버그 출력
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Orange, TEXT("Combo Movement Ended"));
+	}
+}
+
+void ACSkeletonEnemy::NotifyComboAttackCompleted()
+{
+	// AI 컨트롤러를 통해 블랙보드 업데이트
+	if (AController* MyController = GetController())
+	{
+		if (AAIController* AIController = Cast<AAIController>(MyController))
+		{
+			if (UBlackboardComponent* Blackboard = AIController->GetBlackboardComponent())
+			{
+				// 콤보 공격 완료 신호 설정
+				Blackboard->SetValueAsBool(TEXT("IsComboAttackComplete"), true);
+				
+				// 콤보 공격 상태 초기화
+				bIsComboAttacking = false;
+				
+				// 디버그 출력
+				if (GEngine)
+				{
+					GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, TEXT("Combo Attack Completed - Blackboard Updated"));
+				}
+			}
+		}
+	}
+}
+
+void ACSkeletonEnemy::NotifyDashAttackCompleted()
+{
+	// AI 컨트롤러를 통해 블랙보드 업데이트
+	if (AController* MyController = GetController())
+	{
+		if (AAIController* AIController = Cast<AAIController>(MyController))
+		{
+			if (UBlackboardComponent* Blackboard = AIController->GetBlackboardComponent())
+			{
+				// 대시 공격 완료 신호 설정
+				Blackboard->SetValueAsBool(TEXT("IsDashAttackComplete"), true);
+				
+				// 대시 공격 상태 초기화
+				bIsDashAttacking = false;
+				
+				// 디버그 출력
+				if (GEngine)
+				{
+					GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Cyan, TEXT("Dash Attack Completed - Blackboard Updated"));
+				}
+			}
+		}
 	}
 }
 
@@ -614,7 +872,7 @@ void ACSkeletonEnemy::OnMeleeAttackOverlap(UPrimitiveComponent* OverlappedCompon
 		return;
 
 	// 플레이어인지 확인
-	if (OtherActor->IsA<APawn>())
+	if (OtherActor->IsA<ACPlayerBullet>())
 	{
 		// 공격 이벤트 발생
 		MeleeAttackComponent->OnMeleeAttackHit.Broadcast(OtherActor);
@@ -654,14 +912,31 @@ void ACSkeletonEnemy::OnWeakPointOverlap(UPrimitiveComponent* OverlappedComponen
 	}
 
 	// 플레이어 투사체/무기 등으로부터의 데미지를 2배로 적용
-	// 기존 방식: UGameplayStatics::ApplyDamage 사용
+	// 기존 방식: UGameplayStatics::ApplyDamage 사용 -> ApplyPointDamage로 변경
 	if (StatusComponent && !StatusComponent->IsDead())
 	{
 		float BaseDamage = StatusComponent->GetAttackPower();
 		float DamageToApply = BaseDamage * 2.0f;
-		AController* InstigatorController = GetInstigatorController();
-		UGameplayStatics::ApplyDamage(this, DamageToApply, InstigatorController, OtherActor, nullptr);
+
+		// 가해자 컨트롤러는 상대(OtherActor) 기준으로 설정
+		AController* InstigatorController = OtherActor ? OtherActor->GetInstigatorController() : nullptr;
+
+		// 히트 방향과 히트 정보 계산
+		const FVector HitFromDirection = (GetActorLocation() - OtherActor->GetActorLocation()).GetSafeNormal();
+		const FHitResult& HitInfo = SweepResult;
+
+		UGameplayStatics::ApplyPointDamage(
+			this,
+			DamageToApply,
+			HitFromDirection,
+			HitInfo,
+			InstigatorController,
+			OtherActor,
+			nullptr
+		);
 	}
 }
+
+// PerformForwardMovement 함수 제거됨 - 애니메이션에서 처리
 
 // 이동/낙하 연출 관련 로직은 애니메이션으로 대체
