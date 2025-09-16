@@ -76,6 +76,8 @@ public:
 	FORCEINLINE bool GetIsSprinting() { return bIsSprinting; }
 	FORCEINLINE void SetIsSprinting(bool inBool) { bIsSprinting = inBool; }
 
+	FORCEINLINE bool GetIsShiftPrssing() { return bIsShiftPressing; }
+	
 	// BlendSpace용 방향 계산
 	FORCEINLINE float GetForwardInput() const;
 	FORCEINLINE float GetRightInput() const;
@@ -100,17 +102,23 @@ public:
 
 #pragma endregion InputFunction
 
+public:
+	void SprintStart();
+	void SprintEnd();
+
 private:
 	void SetSpeed(ESpeedType InType);
 
 private:
 	class ADDTPlayer* OwnerCharacter;
 	class UCStateComponent* OwnerState;
+	class UCStaminaComponent* OwnerStamina;
 
 	bool bCanMove = true;	
 	bool bFixedCamera;
 	
 	bool bIsSprinting = false;
+	bool bIsShiftPressing = false;
 
 	FVector Direction;
 	FVector CachedDirection;

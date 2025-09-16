@@ -43,10 +43,14 @@ private:
 	class ADDTPlayer* OwnerCharacter;
 	class ACAttachment* Rifle;
 	class UCMagazineComponent* MagazineComponent;
+	class UCBulletObjectPoolComponent* BulletPool;
 
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Gun")
 	TSubclassOf<ACPlayerBullet> PlayerBulletClass;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Gun")
+	TSubclassOf<ACPlayerBullet> PlayerBulletVFXClass;
 
 	FVector MuzzleVector;
 	FRotator MuzzleRotator;
@@ -55,26 +59,8 @@ private:
 
 private:
 	
-	UPROPERTY(EditDefaultsOnly, Category = "Pool")
-	int32 MaxMagazinePool = 10;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Pool")
-	TArray<class ACPlayerBullet*> MagazinePool;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Pool")
-	int32 CurrentPoolIndex = 0;
-
 	// 라인트레이스 최대 거리
 	UPROPERTY(EditDefaultsOnly, Category = "Fire")
 	float MaxTraceDistance = 10000.0f;
 
-	// 오브젝트 풀 관련 함수들
-	ACPlayerBullet* CreateBulletForPool();
-	ACPlayerBullet* GetInactiveBullet();
-	
-	UFUNCTION()
-	void ReturnBulletToPool(class ACPlayerBullet* bullet);
-	
-
-		
 };

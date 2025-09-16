@@ -41,6 +41,7 @@ void UCCameraActionComponent::SetAimPosition()
 	CheckTrue(State->IsHittedMode());
 	CheckTrue(State->IsDeadMode());
 	
+	OwnerCharacter->WeaponComp->SetRifleMode();
 	OwnerSpringArm->SetRelativeLocation(FVector(locX, 0.f, locZ));
 	OwnerSpringArm->SetRelativeRotation(FRotator(0.f, 90.f, 0.f));
 	OwnerSpringArm->TargetArmLength = ArmLen;
@@ -48,7 +49,6 @@ void UCCameraActionComponent::SetAimPosition()
 	
 	OwnerCharacter->State->SetRifleAimMode(true);
 	//CLog::Log("SetAimPosition: " + OwnerCharacter->State->IsRifleAimMode() ? TEXT("true") : TEXT("false"));
-	OwnerCharacter->WeaponComp->SetRifleMode();
 	Movement->OnWalk();
 
 	CheckNull(GetWorld()->GetAuthGameMode<ADDTGameMode>());

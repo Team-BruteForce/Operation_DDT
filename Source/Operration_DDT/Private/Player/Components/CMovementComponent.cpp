@@ -6,6 +6,7 @@
 #include "Global.h"
 #include "Player/DDTPlayer.h"
 #include "../../../../Plugins/EnhancedInput/Source/EnhancedInput/Public/EnhancedInputComponent.h"
+#include "Player/Components/CStaminaComponent.h"
 
 // Sets default values for this component's properties
 UCMovementComponent::UCMovementComponent()
@@ -25,6 +26,8 @@ void UCMovementComponent::BeginPlay()
 
 	OwnerCharacter = Cast<ADDTPlayer>(GetOwner());
 	OwnerCharacter->InputBindingDelegate.AddUObject(this, &UCMovementComponent::SetupInputBinding);
+	OwnerState = CHelpers::GetComponent<UCStateComponent>(OwnerCharacter);
+	OwnerStamina = CHelpers::GetComponent<UCStaminaComponent>(OwnerCharacter); 
 	
 }
 
@@ -53,6 +56,11 @@ void UCMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 	ControlRot.Pitch = FMath::ClampAngle(ControlRot.Pitch, MinPitch, MaxPitch);
 	OwnerCharacter->GetController()->SetControlRotation(ControlRot);
 
+	if (OwnerStamina->GetNowStamina() <= 0.f && bIsSprinting)
+	{
+		OnRun();
+	}
+
 }
 
 void UCMovementComponent::SetupInputBinding(class UEnhancedInputComponent* input)
@@ -60,14 +68,16 @@ void UCMovementComponent::SetupInputBinding(class UEnhancedInputComponent* input
 	input->BindAction(IA_Move, ETriggerEvent::Triggered, this, &ThisClass::OnMove);
 	input->BindAction(IA_TurnHor, ETriggerEvent::Triggered, this, &ThisClass::OnHorizontalLook);
 	input->BindAction(IA_TurnVer, ETriggerEvent::Triggered, this, &ThisClass::OnVerticalLook);
-	input->BindAction(IA_Sprint, ETriggerEvent::Started, this, &ThisClass::OnSprint);
-	input->BindAction(IA_Sprint, ETriggerEvent::Completed, this, &ThisClass::OnRun);
+	input->BindAction(IA_Sprint, ETriggerEvent::Started, this, &ThisClass::SprintStart);
+	input->BindAction(IA_Sprint, ETriggerEvent::Completed, this, &ThisClass::SprintEnd);
 }
 
 
 void UCMovementComponent::OnSprint()
 {
+	if (OwnerStamina->GetNowStamina() <= 0.f) return;
 	SetSpeed(ESpeedType::Sprint);
+	
 	if (bIsSprinting == false)
 	{
 		bIsSprinting = true;
@@ -81,6 +91,7 @@ void UCMovementComponent::OnRun()
 	{
 		bIsSprinting = false;
 	}
+	
 }
 
 void UCMovementComponent::OnWalk()
@@ -89,6 +100,10 @@ void UCMovementComponent::OnWalk()
 	if (bIsSprinting == true)
 	{
 		bIsSprinting = false;
+	}
+	if (bIsShiftPressing == true)
+	{
+		bIsShiftPressing = false;
 	}
 }
 
@@ -133,6 +148,21 @@ void UCMovementComponent::OnVerticalLook(const struct FInputActionValue& InAxis)
 	float value = InAxis.Get<float>();
 	
 	OwnerCharacter->AddControllerPitchInput (value);
+}
+
+void UCMovementComponent::SprintStart()
+{
+	if (OwnerState->IsRifleAimMode()) return;
+	OnSprint();
+	bIsShiftPressing = true;
+}
+
+void UCMovementComponent::SprintEnd()
+{
+	if (OwnerState->IsRifleAimMode()) return;
+	OnRun();
+	bIsShiftPressing = false;
+	//OwnerStamina->SetRecoverTimer();	
 }
 
 void UCMovementComponent::SetSpeed(ESpeedType InType)

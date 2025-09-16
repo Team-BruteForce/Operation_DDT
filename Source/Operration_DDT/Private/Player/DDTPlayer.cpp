@@ -22,6 +22,8 @@
 #include "Player/Components/CStatusComponent.h"
 #include "Player/Components/CRespawnComponent.h"
 #include "Player/Components/CMagazineComponent.h"
+#include "Player/Components/CStaminaComponent.h"
+#include "Player/Components/CBulletObjectPoolComponent.h"
 
 // Sets default values
 ADDTPlayer::ADDTPlayer()
@@ -54,6 +56,8 @@ ADDTPlayer::ADDTPlayer()
 	CHelpers::CreateActorComponent<UCStatusComponent>(this, &Status, "Status");
 	CHelpers::CreateActorComponent<UCRespawnComponent>(this, &RespawnComp, "RespawnComp");
 	CHelpers::CreateActorComponent<UCMagazineComponent>(this, &MagazineComp, "MagazineComp");
+	CHelpers::CreateActorComponent<UCStaminaComponent>(this, &StaminaComp, "StaminaComp");
+	CHelpers::CreateActorComponent<UCBulletObjectPoolComponent>(this, &BulletPool, "BulletPool");
 	
 #pragma endregion
 	
@@ -206,6 +210,12 @@ void ADDTPlayer::OnAvoid()
 	//CheckTrue(State->IsReloadMode());
 	CheckFalse(Movement->CanMove());
 
+	if (StaminaComp->GetNowStamina() <= 0)
+	{
+		CLog::Log("Not Enough Stamina to roll");
+		return;
+	}
+
 	// 현재 입력 방향 가져오기
 	FVector InputDirection = GetCharacterMovement()->GetLastInputVector();
 	InputDirection.Z = 0.f;
@@ -222,6 +232,7 @@ void ADDTPlayer::OnAvoid()
 		CLog::Log("Just Forward Roll");
 		Montages->PlayRollingMode(); // 기존 방식
 	}
+	StaminaComp->ConsumeStamina(StaminaComp->RollingStamina);
 
 	State->SetRollingMode();
 }

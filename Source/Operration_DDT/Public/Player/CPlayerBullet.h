@@ -55,6 +55,10 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Default")
 	float BulletDamage;
 
+	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "Default")
+	bool CanApplyDamage = true;
+	
+
 	void SetVelocity(FVector value);
 	
 	// 랜덤 데미지 설정 함수
@@ -80,7 +84,6 @@ public:
 		const FHitResult& Hit
 	);
 	
-
 	void SetActive(bool bValue);
 	bool IsActive() const;
 
@@ -98,18 +101,20 @@ public:
 	
 	// 총알 상태 초기화 함수
 	void ResetBulletState();
-
-	// 오브젝트 풀 델리게이트
-	UPROPERTY(BlueprintAssignable)
-	FOnReturnToPool OnReturnToPool;
+	
 
 	FORCEINLINE bool GetIsInUse() { return bIsInUse; }
 	FORCEINLINE void SetIsInUse(bool bValue) { bIsInUse = bValue; }
+
+	FORCEINLINE void SetTargetPoint(FVector value) { TargetPoint = value; }
 
 private:
 	bool bIsActive = false;
 	bool bIsInUse = false;  // 사용 중 플래그 추가
 	FTimerHandle LifeTimerHandle;
+
+	bool bCanMove = false;
+	FVector TargetPoint;
 
 	
 
