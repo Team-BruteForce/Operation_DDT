@@ -13,6 +13,7 @@
 #include "BrainComponent.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Player/CPlayerBullet.h"
+#include "Player/DDTPlayer.h"
 
 // Sets default values
 ACSkeletonEnemy::ACSkeletonEnemy()
@@ -225,6 +226,10 @@ void ACSkeletonEnemy::BeginPlay()
 	{
 		MeleeAttackCollisionL->OnComponentBeginOverlap.AddDynamic(this, &ACSkeletonEnemy::OnMeleeAttackOverlap);
 	}
+	if (ComboAttackLastCollision)
+	{
+		ComboAttackLastCollision->OnComponentBeginOverlap.AddDynamic(this, &ACSkeletonEnemy::OnMeleeAttackOverlap);
+	}
 
 	// 낙하/회전 연출은 사용하지 않음
 }
@@ -344,14 +349,14 @@ void ACSkeletonEnemy::PlayComboAttack()
 		// 콤보 공격 쿨다운 설정 (빠른 연속 공격)
 		AttackCooldown = 0.3f;
 		
-		// 기존 타이머 클리어 후 재설정
-		GetWorldTimerManager().ClearTimer(MeleeAttackTimerHandle);
-		FTimerDelegate ClearCombo;
-		ClearCombo.BindLambda([this]()
-		{
-			bIsComboAttacking = false;
-		});
-		GetWorldTimerManager().SetTimer(MeleeAttackTimerHandle, ClearCombo, 0.6f, false);
+// 		// 기존 타이머 클리어 후 재설정
+// 		GetWorldTimerManager().ClearTimer(MeleeAttackTimerHandle);
+// 		FTimerDelegate ClearCombo;
+// 		ClearCombo.BindLambda([this]()
+// 		{
+// 			bIsComboAttacking = false;
+// 		});
+// 		GetWorldTimerManager().SetTimer(MeleeAttackTimerHandle, ClearCombo, 0.6f, false);
 		
 		// 디버그 출력
 		if (GEngine)
@@ -435,6 +440,22 @@ void ACSkeletonEnemy::DisableComboCollisions()
 	if (GEngine)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Red, TEXT("Combo Collisions Disabled - Cooldown Reset"));
+	}
+}
+
+void ACSkeletonEnemy::EnableComboRCollision()
+{
+	if (MeleeAttackCollisionR)
+	{
+		MeleeAttackCollisionR->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	}
+}
+
+void ACSkeletonEnemy::EnableComboLCollision()
+{
+	if (MeleeAttackCollisionL)
+	{
+		MeleeAttackCollisionL->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	}
 }
 
@@ -829,7 +850,15 @@ void ACSkeletonEnemy::OnDeath()
 			{
 				GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("Skeleton Enemy removed from game!"));
 			}
-			Destroy();
+			// 비활성화 처리: 보이지 않음, 충돌 비활성화, 틱 중지
+			SetActorHiddenInGame(true);
+			SetActorEnableCollision(false);
+			SetActorTickEnabled(false);
+			if (USkeletalMeshComponent* MeshComp = GetMesh())
+			{
+				MeshComp->SetVisibility(false, true);
+				MeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			}
 		}
 	});
 	GetWorldTimerManager().SetTimer(DeathTimerHandle, DestroySelf, 3.0f, false);
@@ -872,7 +901,7 @@ void ACSkeletonEnemy::OnMeleeAttackOverlap(UPrimitiveComponent* OverlappedCompon
 		return;
 
 	// 플레이어인지 확인
-	if (OtherActor->IsA<ACPlayerBullet>())
+	if (OtherActor->IsA<ADDTPlayer>())
 	{
 		// 공격 이벤트 발생
 		MeleeAttackComponent->OnMeleeAttackHit.Broadcast(OtherActor);

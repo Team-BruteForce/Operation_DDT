@@ -23,6 +23,10 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "State")
 	bool bIsMoving = false;
 
+	// 전투 진입 여부에 따른 달리기 상태 (Blackboard: IsInCombat)
+	UPROPERTY(BlueprintReadOnly, Category = "State")
+	bool bIsRun = false;
+
 	// 공격/사망 상태
 	UPROPERTY(BlueprintReadOnly, Category = "State")
 	bool bIsDead = false;
