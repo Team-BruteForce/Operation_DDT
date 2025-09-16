@@ -10,7 +10,10 @@
 #include "Player/Components/CMovementComponent.h"
 #include "Engine/World.h"
 #include "TimerManager.h"
+#include "Boss/BossManager.h"
 #include "Components/CapsuleComponent.h"
+// BossManager BP 자동 탐색용
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values for this component's properties
 UCRespawnComponent::UCRespawnComponent()
@@ -45,6 +48,26 @@ void UCRespawnComponent::BeginPlay()
 	{
 		CLog::Log("RespawnComponent: Failed to subscribe to DieDelegate");
 	}
+
+	// 클래스 기반 탐색 (레벨에 하나만 배치되어 있다는 가정)
+	if (!BossManager)
+	{
+		TArray<AActor*> FoundManagers;
+		UGameplayStatics::GetAllActorsOfClass(GetWorld(), ABossManager::StaticClass(), FoundManagers);
+		if (FoundManagers.Num() > 0)
+		{
+			BossManager = Cast<ABossManager>(FoundManagers[0]);
+		}
+	}
+
+	if (BossManager)
+	{
+		CLog::Log("RespawnComponent: BossManager found in level: " + BossManager->GetName());
+	}
+	else
+	{
+		CLog::Log("RespawnComponent: Cannot find BossManager in level");
+	}
 }
 
 
@@ -64,6 +87,14 @@ void UCRespawnComponent::OnPlayerDied()
 	
 	Capsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	Movement->Stop();
+	if (BossManager)
+	{
+		BossManager->ResetBossCompletely();
+	}
+	else
+	{
+		CLog::Log("RespawnComponent: BossManager is null, cannot reset boss");
+	}
 	
 	// 기존 타이머가 있다면 클리어
 	if (GetWorld())

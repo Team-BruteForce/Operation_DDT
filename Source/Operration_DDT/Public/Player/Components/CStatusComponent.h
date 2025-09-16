@@ -29,6 +29,7 @@ public:
 	FORCEINLINE float GetMaxHP() { return MaxHp; }
 	FORCEINLINE void GetDamage(float value) { NowHp = FMath::Clamp(NowHp - value, 0.0f, MaxHp); }
 	FORCEINLINE void GetHeal(float value) { NowHp = FMath::Clamp(NowHp + value, 0.0f, MaxHp); }
+	FORCEINLINE int32 GetHealItemCount () { return HealItemCount; }
 	
 	// HP를 최대치로 복구하는 함수
 	UFUNCTION(BlueprintCallable, Category = "Health")
@@ -36,6 +37,10 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Health")
 	float MaxHp = 100.f;
+
+	UPROPERTY(EditAnywhere, Category = "Health")
+	int32 HealItemCount = 3;
+	
 private:
 	UPROPERTY(VisibleAnywhere, Category = "Health")
 	float NowHp = MaxHp;

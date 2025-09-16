@@ -52,12 +52,17 @@ public:
 	// 부활 델리게이트
 	UPROPERTY(BlueprintAssignable, Category = "Respawn")
 	FOnPlayerRespawned OnPlayerRespawned;
+	
+	// 레벨에 배치된 BossManager BP 인스턴스를 드래그로 연결하거나, BeginPlay에서 자동 탐색합니다.
+	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "Ref", meta = (AllowPrivateAccess = "true"))
+	class ABossManager* BossManager;
 
 private:
 	class ADDTPlayer* OwnerCharacter;
 	class UCStateComponent* State;
 	class UCapsuleComponent* Capsule;
 	class UCMovementComponent* Movement;
+	
 
 	FVector RespawnLocation;
 	

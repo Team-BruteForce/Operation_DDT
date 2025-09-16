@@ -255,14 +255,19 @@ void ADDTPlayer::Dead()
 
 void ADDTPlayer::Reload()
 {
+	CheckTrue(State->IsRollingMode());
 	MagazineComp->Reloading();
 }
 
 
 void ADDTPlayer::Heal()
 {
-	Montages->PlayHealingMode();
-	Status->GetHeal(70.f);
+	CheckTrue(State->IsRollingMode());
+	if (Status->GetHealItemCount() > 0)
+	{
+		Montages->PlayHealingMode();
+		Status->GetHeal(70.f);
+	}
 }
 
 void ADDTPlayer::End_Rolling()

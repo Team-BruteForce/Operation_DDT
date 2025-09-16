@@ -162,7 +162,8 @@ void UCMovementComponent::SprintEnd()
 	if (OwnerState->IsRifleAimMode()) return;
 	OnRun();
 	bIsShiftPressing = false;
-	//OwnerStamina->SetRecoverTimer();	
+	//OwnerStamina->SetRecoverTimer();
+	OwnerStamina->RecoverStamina();
 }
 
 void UCMovementComponent::SetSpeed(ESpeedType InType)
