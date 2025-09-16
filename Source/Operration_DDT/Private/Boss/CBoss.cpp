@@ -21,7 +21,6 @@
 #include "Components/CapsuleComponent.h"
 #include "Components/StateTreeComponent.h"
 #include "Engine/DamageEvents.h"
-#include "AIController.h"
 
 /**
  * @brief 보스 캐릭터 생성자
@@ -56,7 +55,7 @@ ACBoss::ACBoss()
 	CHelpers::CreateActorComponent<UMotionWarpingComponent>(this,&BossMotionWarping,"MotionWarpComp");
 	CHelpers::CreateActorComponent<UBossProjectileComponent>(this,&ProjectileComp,"ProjectileComp");
 	CHelpers::CreateActorComponent<UCBossTargetingComponent>(this,&TargetingComp,"TargetingComp");
-	CHelpers::CreateActorComponent<UBossDebugComponent>(this,&DebugComp,"DebugComp");
+	// CHelpers::CreateActorComponent<UBossDebugComponent>(this,&DebugComp,"DebugComp");
 	CHelpers::CreateActorComponent<UBossEffectComponent>(this,&EffectComponent,"EffectComp");
 	CHelpers::CreateActorComponent<UFlyingComponent>(this,&FlyingComponent,"FlyingComponent");
 
