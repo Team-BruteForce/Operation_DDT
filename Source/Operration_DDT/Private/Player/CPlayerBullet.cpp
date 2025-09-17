@@ -18,7 +18,7 @@ ACPlayerBullet::ACPlayerBullet()
 
 	CapsuleComp = CreateDefaultSubobject<UCapsuleComponent>(TEXT("CapsuleComp"));
 	RootComponent = CapsuleComp;
-
+		
 	
 	// 충돌 설정
 	CapsuleComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
@@ -182,6 +182,7 @@ void ACPlayerBullet::SetActive(bool bValue)
 	bCanMove = bValue;
 	MeshComp->SetVisibility(bValue);
 
+
 	if (bValue)
 	{
 		CapsuleComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
@@ -278,9 +279,9 @@ void ACPlayerBullet::ResetBulletState()
 		//Movement->ResetMovementMode();
 	}
 	
-	// 위치 초기화
-	SetActorLocation(FVector::ZeroVector);
-	SetActorRotation(FRotator::ZeroRotator);
+	//// 위치 초기화
+	//SetActorLocation(FVector::ZeroVector);
+	//SetActorRotation(FRotator::ZeroRotator);
 }
 
 void ACPlayerBullet::ReturnToPool()

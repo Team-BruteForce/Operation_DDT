@@ -16,6 +16,7 @@
 #include "Global.h"
 #include "StateTree.h"
 #include "Components/StateTreeAIComponent.h"
+#include <Boss/CBoss.h>
 
 /**
  * @brief 보스 AI 컨트롤러 생성자

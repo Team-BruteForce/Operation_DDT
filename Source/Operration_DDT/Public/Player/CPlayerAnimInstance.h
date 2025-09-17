@@ -56,6 +56,8 @@ public:
 	void NativeUpdateAnimation(float DeltaSeconds) override;
 
 private:
+
+	class UCStateComponent* State;
 	
 	class UCWeaponComponent* Weapon;
 

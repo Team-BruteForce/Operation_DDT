@@ -465,22 +465,14 @@ void UBossProjectileComponent::ToggleRectangleRange()
 
 void UBossProjectileComponent::TestRectangleRange()
 {
-	UE_LOG(LogTemp, Warning, TEXT("=== RECTANGLE RANGE TEST START ==="));
-	UE_LOG(LogTemp, Warning, TEXT("bShowRectangleRange: %s"), bShowRectangleRange ? TEXT("true") : TEXT("false"));
-	UE_LOG(LogTemp, Warning, TEXT("RectangleWidth: %.1f"), RectangleWidth);
-	UE_LOG(LogTemp, Warning, TEXT("RectangleHeight: %.1f"), RectangleHeight);
-	UE_LOG(LogTemp, Warning, TEXT("Owner: %s"), GetOwner() ? TEXT("VALID") : TEXT("NULL"));
-	
 	if (GetOwner())
 	{
 		FVector OwnerLocation = GetOwner()->GetActorLocation();
-		UE_LOG(LogTemp, Warning, TEXT("Owner Location: %s"), *OwnerLocation.ToString());
 	}
 	
 	// 강제로 사각형 그리기
 	DrawRectangleRangeDebug();
 	
-	UE_LOG(LogTemp, Warning, TEXT("=== RECTANGLE RANGE TEST END ==="));
 }
 
 void UBossProjectileComponent::DrawRectangleRangeDebug()
@@ -599,7 +591,6 @@ void UBossProjectileComponent::SpawnMagicCirclesAtCirclePositions()
 	{
 		return;
 	}
-	CLog::Log("SpawnMagicCirclesAtCirclePositions2");
 	
 	// 랜덤 위치 배열 생성
 	TArray<FVector> CirclePositions;
@@ -613,14 +604,12 @@ void UBossProjectileComponent::SpawnMagicCirclesAtCirclePositions()
 	{
 		FVector PlayerLocation = TargetingComp->FindPlayer()->GetActorLocation();
 		ForwardDirection = (PlayerLocation - OwnerLocation).GetSafeNormal();
-		CLog::Log("게이트 오브 바빌론 - 플레이어 방향으로 스폰!");
 	}
 	else
 	{
 		// 플레이어를 찾지 못했을 때는 기존 방식 사용
 		FRotator OwnerRotation = GetOwner()->GetActorRotation();
 		ForwardDirection = OwnerRotation.Vector();
-		CLog::Log("게이트 오브 바빌론 - 보스 방향으로 스폰 (플레이어 없음)");
 	}
 	
 	// 플레이어 방향을 기준으로 오른쪽과 위쪽 방향 계산
@@ -837,13 +826,10 @@ void UBossProjectileComponent::InitializeObjectPool()
 		}
 		else
 		{
-			UE_LOG(LogTemp, Error, TEXT("BossProjectileActor 풀 생성 실패: %d번째"), i + 1);
 		}
 	}
 	
 	bObjectPoolInitialized = true;
-	UE_LOG(LogTemp, Warning, TEXT("오브젝트 풀 초기화 완료 - 게이트: %d, 오브: %d, 창: %d, 성검: %d, 보스투사체: %d"), 
-		GatePool.Num(), OrbPool.Num(), ProjectilePool.Num(), HolySwordMagicPool.Num(), BossProjectilePool.Num());
 }
 
 AGateOfBabylon* UBossProjectileComponent::GetGateFromPool()
@@ -922,7 +908,6 @@ void UBossProjectileComponent::ReturnProjectileToPool(AProjectile_LightSpear* Pr
 		// 타이머 클리어 (안전 장치)
 		if (Projectile->LifeTimeTimerHandle.IsValid())
 		{
-			UE_LOG(LogTemp, Warning, TEXT("ReturnProjectileToPool - 3초 타이머 클리어"));
 			GetWorld()->GetTimerManager().ClearTimer(Projectile->LifeTimeTimerHandle);
 			Projectile->LifeTimeTimerHandle.Invalidate();
 		}
@@ -931,7 +916,6 @@ void UBossProjectileComponent::ReturnProjectileToPool(AProjectile_LightSpear* Pr
 		Projectile->SetActorEnableCollision(false);
 		Projectile->SetActorTickEnabled(false);
 		
-		UE_LOG(LogTemp, Warning, TEXT("ReturnProjectileToPool - 창 투사체 풀로 반환 완료"));
 	}
 }
 
@@ -1052,5 +1036,4 @@ void UBossProjectileComponent::ResetProjectileSystem()
 		}
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("보스 투사체 시스템 완전 초기화 완료"));
 }

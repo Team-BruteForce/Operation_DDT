@@ -5,7 +5,6 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Global.h"
-#include "MaterialStatsCommon.h"
 #include "Camera/CameraComponent.h"
 #include "Player/Components/CMovementComponent.h"
 #include "Player/Components/CStateComponent.h"
@@ -94,11 +93,23 @@ void ADDTPlayer::BeginPlay()
 {
 	Super::BeginPlay();
 
-	Movement->OnRun();
-	Movement->EnableControlRotation ();
+	if(Movement)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Movement is %s"), *Movement->GetName());
+		Movement->OnRun();
+		Movement->EnableControlRotation ();
 
-	State->OnStateTypeChanged.AddDynamic(this, &ADDTPlayer::OnStateTypeChanged);
-	CameraActionComp->SetIdlePosition();
+	}
+	if (State)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("State is %s"), *State->GetName());
+		State->OnStateTypeChanged.AddDynamic(this, &ADDTPlayer::OnStateTypeChanged);
+	}
+	if (CameraActionComp)
+	{
+		CameraActionComp->SetIdlePosition();
+
+	}
 
 	// BossWeapon과의 충돌 감지를 위한 콜리전 이벤트 바인딩
 	//GetMesh()->OnComponentBeginOverlap.AddDynamic(this, &ADDTPlayer::OnPlayerOverlap);
@@ -106,10 +117,10 @@ void ADDTPlayer::BeginPlay()
 	APlayerController* pc = Cast<APlayerController>(GetController());
 	if (pc)
 	{
-		auto* subsys = ULocalPlayer::GetSubsystem <UEnhancedInputLocalPlayerSubsystem>(pc->GetLocalPlayer());
+		UEnhancedInputLocalPlayerSubsystem* subsys = ULocalPlayer::GetSubsystem <UEnhancedInputLocalPlayerSubsystem>(pc->GetLocalPlayer());
 		if (subsys)
 		{
-			subsys->AddMappingContext(IMC_Player, 1);
+			subsys->AddMappingContext(IMC_Player, 0);
 		}
 	}
 	
@@ -127,11 +138,11 @@ void ADDTPlayer::SetupPlayerInputComponent(class UInputComponent* PlayerInputCom
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-	auto input = Cast<UEnhancedInputComponent>(PlayerInputComponent);
+	UEnhancedInputComponent* input = Cast<UEnhancedInputComponent>(PlayerInputComponent);
 
 	if (input)
 	{
-		Movement->SetupInputBinding (input);
+		//Movement->SetupInputBinding (input);
 		input->BindAction(IA_Sword, ETriggerEvent::Started, WeaponComp, &UCWeaponComponent::SetSwordMode);
 		input->BindAction(IA_Rifle, ETriggerEvent::Started, WeaponComp, &UCWeaponComponent::SetRifleMode);
 		input->BindAction(IA_Attack, ETriggerEvent::Started, WeaponComp, &UCWeaponComponent::DoAction);
@@ -141,6 +152,12 @@ void ADDTPlayer::SetupPlayerInputComponent(class UInputComponent* PlayerInputCom
 		input->BindAction(IA_Heal, ETriggerEvent::Started, State, &UCStateComponent::SetHealingMode);
 		//input->BindAction(IA_Reload, ETriggerEvent::Started, MagazineComp, &UCMagazineComponent::StartReloadSequence);
 		input->BindAction(IA_Reload, ETriggerEvent::Started, State, &UCStateComponent::SetReloadMode);
+
+		input->BindAction(IA_Move, ETriggerEvent::Triggered, Movement, &UCMovementComponent::OnMove);
+		input->BindAction(IA_TurnHor, ETriggerEvent::Triggered, Movement, &UCMovementComponent::OnHorizontalLook);
+		input->BindAction(IA_TurnVer, ETriggerEvent::Triggered, Movement, &UCMovementComponent::OnVerticalLook);
+		input->BindAction(IA_Sprint, ETriggerEvent::Started, Movement, &UCMovementComponent::SprintStart);
+		input->BindAction(IA_Sprint, ETriggerEvent::Completed, Movement, &UCMovementComponent::SprintEnd);
 	}
 
 }

@@ -53,7 +53,7 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	class UInputAction* IA_TurnVer;
 
-	UPROPERTY(editAnywhere, Category = "Input")
+	UPROPERTY(EditAnywhere, Category = "Input")
 	class UInputAction* IA_Sprint;
 
 
@@ -110,9 +110,14 @@ private:
 	void SetSpeed(ESpeedType InType);
 
 private:
+	UPROPERTY()
 	class ADDTPlayer* OwnerCharacter;
+	UPROPERTY()
 	class UCStateComponent* OwnerState;
+	UPROPERTY()
 	class UCStaminaComponent* OwnerStamina;
+	UPROPERTY()
+	class UCharacterMovementComponent* CharMove;
 
 	bool bCanMove = true;	
 	bool bFixedCamera;
