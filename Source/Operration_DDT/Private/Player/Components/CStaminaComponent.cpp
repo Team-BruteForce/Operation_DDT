@@ -27,6 +27,8 @@ void UCStaminaComponent::BeginPlay()
 	state = CHelpers::GetComponent<UCStateComponent>(OwnerCharacter);
 	movement = CHelpers::GetComponent<UCMovementComponent>(OwnerCharacter);
 	NowStamina = MaxStamina;
+
+	OnStaminaChanged.Broadcast(NowStamina,MaxStamina);
 }
 
 
@@ -48,6 +50,8 @@ void UCStaminaComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAc
 			float RecoverRate = RecoveryAmount * DeltaTime;
 			NowStamina = FMath::Clamp (NowStamina + RecoverRate, 0.f, MaxStamina);
 
+			OnStaminaChanged.Broadcast(NowStamina,MaxStamina);
+			
 			if (NowStamina >= MaxStamina)
 			{
 				bIsRecovering = false;
@@ -61,12 +65,14 @@ void UCStaminaComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAc
 void UCStaminaComponent::ConsumeStamina(float value)
 {
 	NowStamina = FMath::Clamp(NowStamina - value, 0.f, MaxStamina);
+	OnStaminaChanged.Broadcast(NowStamina,MaxStamina);
 	SetRecoverTimer();
 }
 
 void UCStaminaComponent::DrowningStamina(float value)
 {
 	NowStamina = FMath::Clamp(NowStamina - value, 0.f, MaxStamina);
+	OnStaminaChanged.Broadcast(NowStamina,MaxStamina);
 }
 
 void UCStaminaComponent::RecoverStamina()
@@ -95,6 +101,7 @@ void UCStaminaComponent::SetRecoverTimer()
 		RollingRecoveryDelay,
 		false
 		);
+	
 }
 
 

@@ -57,6 +57,9 @@ public:
 	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "Ref", meta = (AllowPrivateAccess = "true"))
 	class ABossManager* BossManager;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "RespawnPoint")
+	FVector BossDoorLocation = FVector(-59584.154248,-50296.910881,4538.023350);
+	
 private:
 	class ADDTPlayer* OwnerCharacter;
 	class UCStateComponent* State;
@@ -65,6 +68,7 @@ private:
 	
 
 	FVector RespawnLocation;
+	
 	
 	// 부활 관련 변수들
 	UPROPERTY(EditAnywhere, Category = "Respawn", meta = (AllowPrivateAccess = "true"))

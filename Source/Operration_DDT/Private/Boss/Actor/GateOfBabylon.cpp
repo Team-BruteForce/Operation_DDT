@@ -209,23 +209,17 @@ void AGateOfBabylon::SpawnProjectile()
 	
 	// 자체 오브젝트 풀에서 프로젝타일 가져오기
 	AGateOfBabyonProjectile* Projectile = GetProjectileFromPool();
-	UE_LOG(LogTemp, Error, TEXT("=== GATE OF BABYLON SPAWN PROJECTILE ==="));
-	UE_LOG(LogTemp, Warning, TEXT("Projectile from pool: %s"), Projectile ? TEXT("FOUND") : TEXT("NULL"));
 	
 	if (Projectile)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Setting projectile location to: %s"), *GetActorLocation().ToString());
 		// 위치 설정 후 활성화
 		Projectile->SetActorLocation(GetActorLocation());
 		Projectile->SetActorRotation(GetActorRotation());
-		UE_LOG(LogTemp, Error, TEXT("=== CALLING ACTIVATE PROJECTILE ==="));
 		Projectile->ActivateProjectile();
-		UE_LOG(LogTemp, Error, TEXT("=== ACTIVATE PROJECTILE CALLED ==="));
 	}
 	else
 	{
 		// 풀이 비어있으면 경고 로그 (이론적으로는 발생하지 않아야 함)
-		UE_LOG(LogTemp, Warning, TEXT("GateOfBabylon: Projectile pool is empty! This should not happen."));
 		
 		// 비상용: 새로 스폰
 		FVector SpawnLocation = GetActorLocation();

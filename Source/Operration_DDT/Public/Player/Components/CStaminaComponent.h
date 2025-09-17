@@ -6,7 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "CStaminaComponent.generated.h"
 
-
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnStaminaChanged, float, NewStamina, float, MaxStamina);
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class OPERRATION_DDT_API UCStaminaComponent : public UActorComponent
 {
@@ -26,6 +26,7 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	FORCEINLINE float GetNowStamina() { return NowStamina; }
+	FORCEINLINE float GetMaxStamina() { return MaxStamina; }
 
 	void ConsumeStamina(float value);
 	void DrowningStamina(float value);
@@ -35,9 +36,12 @@ public:
 	void SetRecoverTimer();
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Stamina")
-	float RollingStamina;
+	float RollingStamina = 30.f;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Stamina")
-	float SprintStamina;
+	float SprintStamina = 20.f;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnStaminaChanged OnStaminaChanged;
 
 
 private:

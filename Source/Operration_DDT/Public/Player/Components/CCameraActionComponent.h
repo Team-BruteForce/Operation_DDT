@@ -27,6 +27,7 @@ private:
 	class USpringArmComponent* OwnerSpringArm;
 	class UCMovementComponent* Movement;
 	class UCStateComponent* State;
+	class UCUIComponent* UIComp;
 
 public:
 	void SetAimPosition();

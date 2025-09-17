@@ -44,20 +44,6 @@ public:
 	void SetupInputBinding(class UEnhancedInputComponent* input);
 
 
-	UPROPERTY(EditDefaultsOnly, Category = "Input")
-	class UInputAction* IA_Move;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Input")
-	class UInputAction* IA_TurnHor;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Input")
-	class UInputAction* IA_TurnVer;
-
-	UPROPERTY(editAnywhere, Category = "Input")
-	class UInputAction* IA_Sprint;
-
-
-
 #pragma region Getter/Setter
 	FORCEINLINE bool CanMove() { return bCanMove; }
 	FORCEINLINE void Move() { bCanMove = true; }
@@ -110,9 +96,14 @@ private:
 	void SetSpeed(ESpeedType InType);
 
 private:
+	UPROPERTY()
 	class ADDTPlayer* OwnerCharacter;
+	UPROPERTY()
 	class UCStateComponent* OwnerState;
+	UPROPERTY()
 	class UCStaminaComponent* OwnerStamina;
+	UPROPERTY()
+	class UCharacterMovementComponent* CharMove;
 
 	bool bCanMove = true;	
 	bool bFixedCamera;

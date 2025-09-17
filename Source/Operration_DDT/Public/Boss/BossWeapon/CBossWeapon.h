@@ -86,7 +86,4 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Collision")
 	void EndCollisionToOwner(bool IsEndMove);
 
-public:
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	TArray<USoundCue*> HitSoundCues;
 };

@@ -5,17 +5,15 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Global.h"
-#include "MaterialStatsCommon.h"
 #include "Camera/CameraComponent.h"
 #include "Player/Components/CMovementComponent.h"
 #include "Player/Components/CStateComponent.h"
 #include "Player/Components/CMontageComponent.h"
 #include "../../../../Plugins/EnhancedInput/Source/EnhancedInput/Public/EnhancedInputSubsystems.h"
 #include "../../../../Plugins/EnhancedInput/Source/EnhancedInput/Public/EnhancedInputComponent.h"
-#include "Boss/BossWeapon/CBossWeapon.h"
-#include "Boss/Component/CBossWeaponComponent.h"
+#include "Boss/BossManager.h"
+#include "Components/CapsuleComponent.h"
 #include "Components/StaticMeshComponent.h"
-#include "DataWrappers/ChaosVDParticleDataWrapper.h"
 #include "Player/Components/CCameraActionComponent.h"
 #include "Player/Components/CWeaponComponent.h"
 #include "Player/Components/CFireComponent.h"
@@ -24,6 +22,7 @@
 #include "Player/Components/CMagazineComponent.h"
 #include "Player/Components/CStaminaComponent.h"
 #include "Player/Components/CBulletObjectPoolComponent.h"
+#include "Player/Components/CUIComponent.h"
 
 // Sets default values
 ADDTPlayer::ADDTPlayer()
@@ -58,8 +57,10 @@ ADDTPlayer::ADDTPlayer()
 	CHelpers::CreateActorComponent<UCMagazineComponent>(this, &MagazineComp, "MagazineComp");
 	CHelpers::CreateActorComponent<UCStaminaComponent>(this, &StaminaComp, "StaminaComp");
 	CHelpers::CreateActorComponent<UCBulletObjectPoolComponent>(this, &BulletPool, "BulletPool");
+	CHelpers::CreateActorComponent<UCUIComponent>(this, &UIComp, "UIComp");
 	
 #pragma endregion
+	
 	
 	SpringArm->SetRelativeLocation(FVector(-60.f, 0.f, 180.f));
 	SpringArm->SetRelativeRotation(FRotator(0.f, 90.f, 0.f));
@@ -94,22 +95,40 @@ void ADDTPlayer::BeginPlay()
 {
 	Super::BeginPlay();
 
-	Movement->OnRun();
-	Movement->EnableControlRotation ();
+	if(Movement)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Movement is %s"), *Movement->GetName());
+		Movement->OnRun();
+		Movement->EnableControlRotation ();
 
-	State->OnStateTypeChanged.AddDynamic(this, &ADDTPlayer::OnStateTypeChanged);
-	CameraActionComp->SetIdlePosition();
+	}
+	if (State)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("State is %s"), *State->GetName());
+		State->OnStateTypeChanged.AddDynamic(this, &ADDTPlayer::OnStateTypeChanged);
+	}
+	if (CameraActionComp && UIComp)
+	{
+		CameraActionComp->SetIdlePosition();
 
-	// BossWeapon과의 충돌 감지를 위한 콜리전 이벤트 바인딩
-	//GetMesh()->OnComponentBeginOverlap.AddDynamic(this, &ADDTPlayer::OnPlayerOverlap);
+	}
+
+	/*if (StaminaComp)
+	{
+		StaminaComp->OnStaminaChanged.AddDynamic(this, &ADDTPlayer::OnStaminaChanged);
+		OnStaminaChanged(StaminaComp->GetNowStamina(), StaminaComp->GetMaxStamina());
+			
+	}*/
+	
+	GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &ADDTPlayer::OnPlayerOverlap);
 	
 	APlayerController* pc = Cast<APlayerController>(GetController());
 	if (pc)
 	{
-		auto* subsys = ULocalPlayer::GetSubsystem <UEnhancedInputLocalPlayerSubsystem>(pc->GetLocalPlayer());
+		UEnhancedInputLocalPlayerSubsystem* subsys = ULocalPlayer::GetSubsystem <UEnhancedInputLocalPlayerSubsystem>(pc->GetLocalPlayer());
 		if (subsys)
 		{
-			subsys->AddMappingContext(IMC_Player, 1);
+			subsys->AddMappingContext(IMC_Player, 0);
 		}
 	}
 	
@@ -127,27 +146,43 @@ void ADDTPlayer::SetupPlayerInputComponent(class UInputComponent* PlayerInputCom
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-	auto input = Cast<UEnhancedInputComponent>(PlayerInputComponent);
+	UEnhancedInputComponent* input = Cast<UEnhancedInputComponent>(PlayerInputComponent);
 
 	if (input)
 	{
-		Movement->SetupInputBinding (input);
+		//Movement->SetupInputBinding (input);
 		input->BindAction(IA_Sword, ETriggerEvent::Started, WeaponComp, &UCWeaponComponent::SetSwordMode);
 		input->BindAction(IA_Rifle, ETriggerEvent::Started, WeaponComp, &UCWeaponComponent::SetRifleMode);
 		input->BindAction(IA_Attack, ETriggerEvent::Started, WeaponComp, &UCWeaponComponent::DoAction);
 		input->BindAction(IA_AimRifle, ETriggerEvent::Started,CameraActionComp, &UCCameraActionComponent::SetAimPosition );
 		input->BindAction(IA_AimRifle, ETriggerEvent::Completed, CameraActionComp, &UCCameraActionComponent::SetIdlePosition );
 		input->BindAction(IA_Roll, ETriggerEvent::Started, this, &ADDTPlayer::OnAvoid);
-		input->BindAction(IA_Heal, ETriggerEvent::Started, State, &UCStateComponent::SetHealingMode);
+		input->BindAction(IA_Heal, ETriggerEvent::Started, Status, &UCStatusComponent::CalculateHealing);
 		//input->BindAction(IA_Reload, ETriggerEvent::Started, MagazineComp, &UCMagazineComponent::StartReloadSequence);
 		input->BindAction(IA_Reload, ETriggerEvent::Started, State, &UCStateComponent::SetReloadMode);
+
+		input->BindAction(IA_Move, ETriggerEvent::Triggered, Movement, &UCMovementComponent::OnMove);
+		input->BindAction(IA_TurnHor, ETriggerEvent::Triggered, Movement, &UCMovementComponent::OnHorizontalLook);
+		input->BindAction(IA_TurnVer, ETriggerEvent::Triggered, Movement, &UCMovementComponent::OnVerticalLook);
+		input->BindAction(IA_Sprint, ETriggerEvent::Started, Movement, &UCMovementComponent::SprintStart);
+		input->BindAction(IA_Sprint, ETriggerEvent::Completed, Movement, &UCMovementComponent::SprintEnd);
 	}
 
 }
 
+void ADDTPlayer::OnPlayerOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (Cast<ABossManager>(OtherActor))
+	{
+		RespawnComp->SetRespawnLocation(RespawnComp->BossDoorLocation);
+		CLog::Log("ADDTPlayer) 리스폰 지역 변경");
+	}
+}
+
 
 float ADDTPlayer::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
-	class AController* EventInstigator, AActor* DamageCauser)
+                             class AController* EventInstigator, AActor* DamageCauser)
 {
 	if (State->IsCanDodge())
 	{
@@ -266,7 +301,7 @@ void ADDTPlayer::Heal()
 	if (Status->GetHealItemCount() > 0)
 	{
 		Montages->PlayHealingMode();
-		Status->GetHeal(70.f);
+		//Status->GetHeal(70.f);
 	}
 }
 

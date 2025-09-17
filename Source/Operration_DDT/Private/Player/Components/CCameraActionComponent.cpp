@@ -9,6 +9,7 @@
 #include "Player/DDTGameMode.h"
 #include "Player/DDTPlayer.h"
 #include "Player/Components/CMovementComponent.h"
+#include "Player/Components/CUIComponent.h"
 #include "Player/Components/CWeaponComponent.h"
 
 // Sets default values for this component's properties
@@ -32,6 +33,7 @@ void UCCameraActionComponent::BeginPlay()
 	OwnerSpringArm = OwnerCharacter->GetSpringArm();
 	Movement = CHelpers::GetComponent<UCMovementComponent>(OwnerCharacter);
 	State = CHelpers::GetComponent<UCStateComponent>(OwnerCharacter);
+	UIComp = CHelpers::GetComponent<UCUIComponent>(OwnerCharacter);
 	
 }
 
@@ -51,8 +53,10 @@ void UCCameraActionComponent::SetAimPosition()
 	//CLog::Log("SetAimPosition: " + OwnerCharacter->State->IsRifleAimMode() ? TEXT("true") : TEXT("false"));
 	Movement->OnWalk();
 
-	CheckNull(GetWorld()->GetAuthGameMode<ADDTGameMode>());
+	/*CheckNull(GetWorld()->GetAuthGameMode<ADDTGameMode>());
 	GetWorld()->GetAuthGameMode<ADDTGameMode>()->playerUI->ShowCrosshair(true);
+	*/
+	UIComp->playerUI->ShowCrosshair(true);
 	
 }
 
@@ -70,7 +74,9 @@ void UCCameraActionComponent::SetIdlePosition()
 	OwnerCharacter->WeaponComp->SetUnarmedMode();
 	Movement->OnRun();
 
-	CheckNull(GetWorld()->GetAuthGameMode<ADDTGameMode>());
-	GetWorld()->GetAuthGameMode<ADDTGameMode>()->playerUI->ShowCrosshair(false);
+	/*CheckNull(GetWorld()->GetAuthGameMode<ADDTGameMode>());
+	GetWorld()->GetAuthGameMode<ADDTGameMode>()->playerUI->ShowCrosshair(false);*/
+
+	UIComp->playerUI->ShowCrosshair(false);
 }
 

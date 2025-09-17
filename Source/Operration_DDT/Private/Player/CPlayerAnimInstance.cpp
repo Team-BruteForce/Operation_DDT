@@ -7,6 +7,8 @@
 #include "Player/DDTPlayer.h"
 #include "Player/Components/CMagazineComponent.h"
 #include "Player/Components/CMovementComponent.h"
+#include "Player/Components/CStatusComponent.h"
+#include "Player/Components/CStateComponent.h"
 
 void UCPlayerAnimInstance::NativeBeginPlay()
 {
@@ -14,11 +16,14 @@ void UCPlayerAnimInstance::NativeBeginPlay()
 	OwnerCharacter = Cast<ADDTPlayer>(TryGetPawnOwner());
 	CheckNull(OwnerCharacter);
 
+	State = CHelpers::GetComponent<UCStateComponent>(OwnerCharacter);
 	Weapon = CHelpers::GetComponent<UCWeaponComponent>(OwnerCharacter);
 	if (!!Weapon)
 	{
 		Weapon->OnWeaponTypeChanged.AddDynamic(this, &UCPlayerAnimInstance::OnWeaponTypeChanged);
 	}
+
+	Status = CHelpers::GetComponent<UCStatusComponent>(OwnerCharacter);
 }
 
 void UCPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
@@ -39,7 +44,7 @@ void UCPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	//Direction = PrevRotation.Yaw;
 	Direction = FVector::DotProduct(OwnerCharacter->GetVelocity(),OwnerCharacter->GetActorRightVector());
 
-	bAimMode = OwnerCharacter->State->IsRifleAimMode();
+	bAimMode = State->IsRifleAimMode();
 	//CLog::Log("bAimMode: " + bAimMode ? TEXT("true") : TEXT("false"));
 	if (bAimMode)
 	{
@@ -54,9 +59,9 @@ void UCPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	
 	bIsSprinting = Movement->GetIsSprinting();
 
-	UCStateComponent* State = CHelpers::GetComponent<UCStateComponent>(OwnerCharacter);
 	bReloading = State->IsReloadMode();
 	
+	bIsHealing = Status->GetIsHealing();
 }
 
 void UCPlayerAnimInstance::OnWeaponTypeChanged(EWeaponType InPrevType, EWeaponType InNewType)
