@@ -15,6 +15,7 @@
 
 #include "Global.h"
 #include "StateTree.h"
+#include "Boss/CBoss.h"
 #include "Components/StateTreeAIComponent.h"
 
 /**

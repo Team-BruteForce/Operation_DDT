@@ -52,6 +52,7 @@ public:
 	FORCEINLINE bool IsDeadMode() { return Type == EStateType::Dead; }
 	FORCEINLINE bool IsActionMode() { return Type == EStateType::Action; }
 	FORCEINLINE bool IsReloadMode() { return Type == EStateType::RifleReload; }
+	FORCEINLINE bool IsHealingMode() { return Type == EStateType::Healing; }
 	
 	FORCEINLINE bool IsRifleAimMode() { return bRifleAimMode; }
 	UFUNCTION(BlueprintCallable)

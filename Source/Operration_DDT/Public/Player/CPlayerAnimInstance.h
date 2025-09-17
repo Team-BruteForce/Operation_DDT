@@ -40,6 +40,9 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, Category="Animation")
 	bool bReloading;
+
+	UPROPERTY(BlueprintReadOnly, Category="Animation")
+	bool bIsHealing;
 	
 protected:
 		UPROPERTY(BlueprintReadOnly, EditAnywhere, Category="Animation")
@@ -58,6 +61,8 @@ public:
 private:
 	
 	class UCWeaponComponent* Weapon;
+
+	class UCStatusComponent* Status;
 
 	FRotator PrevRotation;
 

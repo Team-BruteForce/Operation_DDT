@@ -7,6 +7,7 @@
 #include "Player/DDTPlayer.h"
 #include "Player/Components/CMagazineComponent.h"
 #include "Player/Components/CMovementComponent.h"
+#include "Player/Components/CStatusComponent.h"
 
 void UCPlayerAnimInstance::NativeBeginPlay()
 {
@@ -19,6 +20,8 @@ void UCPlayerAnimInstance::NativeBeginPlay()
 	{
 		Weapon->OnWeaponTypeChanged.AddDynamic(this, &UCPlayerAnimInstance::OnWeaponTypeChanged);
 	}
+
+	Status = CHelpers::GetComponent<UCStatusComponent>(OwnerCharacter);
 }
 
 void UCPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
@@ -57,6 +60,7 @@ void UCPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	UCStateComponent* State = CHelpers::GetComponent<UCStateComponent>(OwnerCharacter);
 	bReloading = State->IsReloadMode();
 	
+	bIsHealing = Status->GetIsHealing();
 }
 
 void UCPlayerAnimInstance::OnWeaponTypeChanged(EWeaponType InPrevType, EWeaponType InNewType)

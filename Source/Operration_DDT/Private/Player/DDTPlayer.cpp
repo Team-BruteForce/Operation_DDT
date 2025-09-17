@@ -138,7 +138,7 @@ void ADDTPlayer::SetupPlayerInputComponent(class UInputComponent* PlayerInputCom
 		input->BindAction(IA_AimRifle, ETriggerEvent::Started,CameraActionComp, &UCCameraActionComponent::SetAimPosition );
 		input->BindAction(IA_AimRifle, ETriggerEvent::Completed, CameraActionComp, &UCCameraActionComponent::SetIdlePosition );
 		input->BindAction(IA_Roll, ETriggerEvent::Started, this, &ADDTPlayer::OnAvoid);
-		input->BindAction(IA_Heal, ETriggerEvent::Started, State, &UCStateComponent::SetHealingMode);
+		input->BindAction(IA_Heal, ETriggerEvent::Started, Status, &UCStatusComponent::CalculateHealing);
 		//input->BindAction(IA_Reload, ETriggerEvent::Started, MagazineComp, &UCMagazineComponent::StartReloadSequence);
 		input->BindAction(IA_Reload, ETriggerEvent::Started, State, &UCStateComponent::SetReloadMode);
 	}
@@ -266,7 +266,7 @@ void ADDTPlayer::Heal()
 	if (Status->GetHealItemCount() > 0)
 	{
 		Montages->PlayHealingMode();
-		Status->GetHeal(70.f);
+		//Status->GetHeal(70.f);
 	}
 }
 
