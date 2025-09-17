@@ -22,7 +22,6 @@ public:
 	
 	class ADDTPlayer* OwnerCharater;
 
-
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<class UUserWidget> UCPlayerUIWidget;
 

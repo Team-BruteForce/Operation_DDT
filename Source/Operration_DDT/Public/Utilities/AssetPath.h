@@ -16,6 +16,21 @@ namespace AssetPaths
 
      constexpr const TCHAR* PlayerUI = TEXT("/Script/UMGEditor.WidgetBlueprint'/Game/MW/UI/WBP/WBP_PlayerUI.WBP_PlayerUI_C'");
 #pragma endregion PlayerAsset
+    constexpr const TCHAR* IMC_Player = TEXT("/Script/EnhancedInput.InputMappingContext'/Game/MW/Input/IMC_Player.IMC_Player'");
+    constexpr const TCHAR* IA_Move = TEXT("/Script/EnhancedInput.InputAction'/Game/MW/Input/IA_Move2D.IA_Move2D'");
+    constexpr const TCHAR* IA_TurnVer = TEXT("/Script/EnhancedInput.InputAction'/Game/MW/Input/IA_TurnVer.IA_TurnVer'");
+    constexpr const TCHAR* IA_TurnHor = TEXT("/Script/EnhancedInput.InputAction'/Game/MW/Input/IA_TurnHor.IA_TurnHor'");
+    constexpr const TCHAR* IA_Sprint = TEXT("/Script/EnhancedInput.InputAction'/Game/MW/Input/IA_Sprint.IA_Sprint'");
+    
+    constexpr const TCHAR* IA_Reload = TEXT("/Script/EnhancedInput.InputAction'/Game/MW/Input/IA_Reload.IA_Reload'");
+    constexpr const TCHAR* IA_Attack = TEXT("/Script/EnhancedInput.InputAction'/Game/MW/Input/IA_Attack.IA_Attack'");
+    constexpr const TCHAR* IA_AimRifle = TEXT("/Script/EnhancedInput.InputAction'/Game/MW/Input/IA_AimRifle.IA_AimRifle'");
+    constexpr const TCHAR* IA_Heal = TEXT("/Script/EnhancedInput.InputAction'/Game/MW/Input/IA_Heal.IA_Heal'");
+    constexpr const TCHAR* IA_Rifle = TEXT("/Script/EnhancedInput.InputAction'/Game/MW/Input/IA_Rifle.IA_Rifle'");
+    constexpr const TCHAR* IA_Sword = TEXT("/Script/EnhancedInput.InputAction'/Game/MW/Input/IA_Sword.IA_Sword'");
+    constexpr const TCHAR* IA_Revolver = TEXT("/Script/EnhancedInput.InputAction'/Game/MW/Input/IA_Revolver.IA_Revolver'");
+    constexpr const TCHAR* IA_Roll = TEXT("/Script/EnhancedInput.InputAction'/Game/MW/Input/IA_Roll.IA_Roll'");
+#pragma endregion
     
 
 #pragma region BossAsset

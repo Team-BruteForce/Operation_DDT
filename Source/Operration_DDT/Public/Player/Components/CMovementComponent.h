@@ -44,20 +44,6 @@ public:
 	void SetupInputBinding(class UEnhancedInputComponent* input);
 
 
-	UPROPERTY(EditDefaultsOnly, Category = "Input")
-	class UInputAction* IA_Move;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Input")
-	class UInputAction* IA_TurnHor;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Input")
-	class UInputAction* IA_TurnVer;
-
-	UPROPERTY(EditAnywhere, Category = "Input")
-	class UInputAction* IA_Sprint;
-
-
-
 #pragma region Getter/Setter
 	FORCEINLINE bool CanMove() { return bCanMove; }
 	FORCEINLINE void Move() { bCanMove = true; }

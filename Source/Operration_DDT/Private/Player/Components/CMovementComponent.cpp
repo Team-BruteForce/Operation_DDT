@@ -66,11 +66,11 @@ void UCMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 
 void UCMovementComponent::SetupInputBinding(class UEnhancedInputComponent* input)
 {
-	input->BindAction(IA_Move, ETriggerEvent::Triggered, this, &ThisClass::OnMove);
+	/*input->BindAction(IA_Move, ETriggerEvent::Triggered, this, &ThisClass::OnMove);
 	input->BindAction(IA_TurnHor, ETriggerEvent::Triggered, this, &ThisClass::OnHorizontalLook);
 	input->BindAction(IA_TurnVer, ETriggerEvent::Triggered, this, &ThisClass::OnVerticalLook);
 	input->BindAction(IA_Sprint, ETriggerEvent::Started, this, &ThisClass::SprintStart);
-	input->BindAction(IA_Sprint, ETriggerEvent::Completed, this, &ThisClass::SprintEnd);
+	input->BindAction(IA_Sprint, ETriggerEvent::Completed, this, &ThisClass::SprintEnd);*/
 }
 
 

@@ -25,8 +25,27 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<class UUserWidget> UCPlayerUIWidget;
+
+	UPROPERTY()
+	class UCPlayerUI* playerUI;
+
+	void InitUIWidget();
+
+	//델리게이트 핸들러
+	UFUNCTION()
+	void OnStaminaChanged(float nowStamina, float maxStamina);
+
+	UFUNCTION()
+	void OnHealthChanged(float nowHp, float maxHp);
+
+
 private:
-	
+	class ADDTPlayer* OwnerCharater;
+	class UCStaminaComponent* StaminaComp;
+	class UCStatusComponent* StatusComp;
+
 
 		
 };

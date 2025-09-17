@@ -2,7 +2,7 @@
 
 
 #include "Player/DDTGameMode.h"
-
+#include "Player/DDTPlayer.h"
 #include "GameFramework/Character.h"
 #include "Player/Components/CStateComponent.h"
 #include "Global.h"
@@ -19,8 +19,10 @@ void ADDTGameMode::BeginPlay()
 	Super::BeginPlay();
 	playerUI = CreateWidget<UCPlayerUI>(GetWorld(),UCPlayerUIWidget);
 
-	playerUI->AddToViewport();
-	playerUI->ShowCrosshair(false);
+	OwnerCharater = Cast<ADDTPlayer>(GetWorld()->GetFirstPlayerController()->GetOwner());
+
+	//playerUI->AddToViewport();
+	//playerUI->ShowCrosshair(false);
 }
 
 void ADDTGameMode::test()

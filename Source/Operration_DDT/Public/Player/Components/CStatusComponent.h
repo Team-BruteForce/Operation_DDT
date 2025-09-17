@@ -6,7 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "CStatusComponent.generated.h"
 
-
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPlayerHealthChanged, float, NewHP, float, MaxHP);
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class OPERRATION_DDT_API UCStatusComponent : public UActorComponent
 {
@@ -27,12 +27,14 @@ public:
 	UFUNCTION(BlueprintCallable)
 	FORCEINLINE float GetNowHp() { return NowHp; }
 	FORCEINLINE float GetMaxHP() { return MaxHp; }
-	FORCEINLINE void GetDamage(float value) { NowHp = FMath::Clamp(NowHp - value, 0.0f, MaxHp); }
-	FORCEINLINE void GetHeal(float value) { NowHp = FMath::Clamp(NowHp + value, 0.0f, MaxHp); }
+
 	FORCEINLINE int32 GetHealItemCount () { return HealItemCount; }
 	FORCEINLINE bool GetIsHealing () { return bIsHealing; }
 
 	FORCEINLINE void GainHealItem() { HealItemCount++; }
+
+	void GetDamage(float value);
+	void GetHeal(float value);
 	
 	// HP를 최대치로 복구하는 함수
 	UFUNCTION(BlueprintCallable, Category = "Health")
@@ -65,10 +67,13 @@ public:
 
 	// 회복 관련 설정
 	UPROPERTY(EditAnywhere, Category = "Healing", meta = (AllowPrivateAccess = "true"))
-	float HealDuration = 0.5f; // 회복 시간 (초)
+	float HealDuration = 0.2f; // 회복 시간 (초)
 
 	UPROPERTY(EditAnywhere, Category = "Healing", meta = (AllowPrivateAccess = "true"))
 	float HealPercentage = 0.7f; // 최대 체력 대비 회복 비율
+
+	UPROPERTY(BlueprintAssignable, Category = "Health")
+	FOnPlayerHealthChanged OnPlayerHealthChanged;
 	
 private:
 	UPROPERTY(VisibleAnywhere, Category = "Health")

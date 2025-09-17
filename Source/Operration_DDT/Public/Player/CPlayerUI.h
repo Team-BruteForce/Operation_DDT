@@ -19,5 +19,15 @@ public:
 	class UImage* img_Crosshair;
 
 	void ShowCrosshair(bool bValue);
+
+	UPROPERTY(blueprintReadWrite, Category = "UI", meta = (BindWidget))
+	class UProgressBar* pb_HP;
+
+	UPROPERTY(blueprintReadWrite, Category = "UI", meta = (BindWidget))
+	class UProgressBar* pb_Stamina;
+
+	void SetHPBar(float value, float maxHP);
+	void SetStaminaBar(float value, float maxStamina);
+	
 	
 };

@@ -33,9 +33,10 @@ public:
 	FORCEINLINE USpringArmComponent* GetSpringArm() const { return this->SpringArm; }
 
 #pragma region InputActions
-private:
+public:
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	class UInputMappingContext* IMC_Player;
+	//TObjectPtr<class UInputMappingContext> IMC_Player;
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	class UInputAction* IA_Rifle;
@@ -76,6 +77,7 @@ private:
 #pragma endregion 
  
 public:
+#pragma region Components
 	UPROPERTY(VisibleAnywhere)
 		class UCMontageComponent* Montages;
  
@@ -109,7 +111,11 @@ public:
 	UPROPERTY(visibleAnywhere)
 	class UCBulletObjectPoolComponent* BulletPool;
 
-  
+	UPROPERTY(visibleAnywhere)
+	class UCUIComponent* UIComp;
+
+#pragma endregion
+	
 protected:
 	virtual void BeginPlay() override;
 
@@ -118,7 +124,7 @@ public:
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	
-	/*UFUNCTION()
+	UFUNCTION()
 	void OnPlayerOverlap(
 		UPrimitiveComponent* OverlappedComponent,
 		AActor* OtherActor,
@@ -126,7 +132,7 @@ public:
 		int32 OtherBodyIndex,
 		bool bFromSweep,
 		const FHitResult& SweepResult
-	);*/
+	);
 	float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 
 	

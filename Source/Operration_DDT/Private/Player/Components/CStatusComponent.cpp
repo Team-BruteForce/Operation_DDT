@@ -21,11 +21,13 @@ void UCStatusComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// 초기 체력 설정
-	NowHp = MaxHp;
-
+	
 	OwnerCharater = Cast<ADDTPlayer>(GetOwner());
 	StateComp = CHelpers::GetComponent<UCStateComponent>(OwnerCharater);
+
+	// 초기 체력 설정
+	NowHp = MaxHp;
+	OnPlayerHealthChanged.Broadcast(NowHp, MaxHp);
 	
 }
 
@@ -48,6 +50,7 @@ void UCStatusComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAct
 		
 		// 현재 체력 = 시작 체력 + (목표 회복량 * 진행률)
 		NowHp = HealStartAmount + (HealTargetAmount * EasedProgress);
+		OnPlayerHealthChanged.Broadcast(NowHp, MaxHp);
 		
 		// 회복 완료 체크
 		if (HealElapsedTime >= HealDuration)
@@ -60,6 +63,18 @@ void UCStatusComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAct
 			CLog::Log("회복 완료! 현재 체력: " + FString::SanitizeFloat(NowHp));
 		}
 	}
+}
+
+void UCStatusComponent::GetDamage(float value)
+{
+	NowHp = FMath::Clamp(NowHp - value, 0.0f, MaxHp);
+	OnPlayerHealthChanged.Broadcast(NowHp, MaxHp);
+}
+
+void UCStatusComponent::GetHeal(float value)
+{
+	NowHp = FMath::Clamp(NowHp + value, 0.0f, MaxHp);
+	OnPlayerHealthChanged.Broadcast(NowHp, MaxHp);
 }
 
 void UCStatusComponent::CalculateHealing()
