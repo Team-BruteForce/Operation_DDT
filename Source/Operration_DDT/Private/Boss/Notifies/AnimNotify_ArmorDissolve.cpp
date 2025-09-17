@@ -16,5 +16,5 @@ void UAnimNotify_ArmorDissolve::Notify(USkeletalMeshComponent* MeshComp, UAnimSe
 	Super::Notify(MeshComp, Animation);
 	ACBoss* Boss=Cast<ACBoss>(MeshComp->GetOwner());
 	CheckNull(Boss);
-	Boss->StartDualLayerDissolve();
+	Boss->BossDissolve->TriggerDissolveEffect();
 }

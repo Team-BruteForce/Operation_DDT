@@ -13,8 +13,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Actor/BossDissolve.h"
 #include "GameFramework/Character.h"
-#include "GameplayTagContainer.h"
 #include "CBoss.generated.h"
 
 /**
@@ -42,14 +42,18 @@ public:
 	UFUNCTION()
 	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent,
 							 AController* EventInstigator, AActor* DamageCauser) override;
-	// UPROPERTY(EditAnywhere, BlueprintReadWrite,Category="Wings")
-	// class USkeletalMeshComponent* WingMeshComp; 
-
 	/**
 	 * @brief 보스 초기 위치 (BeginPlay에서 저장)
 	 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Boss Location")
 	FVector InitialLocation;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	TSubclassOf<ABossDissolve>BossDissolveClass;
+
+public:
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	class ABossDissolve* BossDissolve; 
 
 	/**
 	 * @brief 듀얼 레이어 디졸브 시스템
@@ -77,18 +81,6 @@ public:
 
 	UPROPERTY()
 	TArray<bool> bGoldenApplied = {false, false, false, false};
-
-	UFUNCTION(BlueprintCallable, Category = "Dissolve")
-	void StartDualLayerDissolve();
-
-	UFUNCTION()
-	void UpdateDualDissolve(float Progress);
-
-	/**
-	 * @brief 기존 메테리얼로 복구
-	 */
-	UFUNCTION()
-	void RestoreToOriginalMaterials();
 
 	/**
 	 * @brief 보스 상태 컴포넌트
