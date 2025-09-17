@@ -53,11 +53,5 @@ void ACBossAIC::OnPossess(APawn* InPawn)
 	UE_LOG(LogTemp, Warning, TEXT("CBoss: 초기 위치 저장 완료 - %s"), 
 		*Boss->InitialLocation.ToString());
 	if (!StateTreeComp) return;
-	
-	// 보스 초기 위치 저장 (레벨에 배치된 위치)
-        ACBoss* Boss=Cast<ACBoss>(InPawn);
-        CheckNull(Boss);
-        Boss->InitialLocation = Boss->GetActorLocation();
-        UE_LOG(LogTemp, Warning, TEXT("CBoss: 초기 위치 저장 완료 - %s"), 
-            *Boss->InitialLocation.ToString());
+		
 }

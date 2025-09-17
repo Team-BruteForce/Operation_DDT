@@ -58,7 +58,7 @@ private:
 	float RollingRecoveryDelay = 2.f;
 
 	UPROPERTY(EditDefaultsOnly)
-	float RecoveryAmount = 5.f;
+	float RecoveryAmount = 25.f;
 	
 	
 	//bool bIsConsumingStamina = false;

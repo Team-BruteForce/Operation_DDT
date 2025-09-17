@@ -67,7 +67,7 @@ public:
 
 	// 회복 관련 설정
 	UPROPERTY(EditAnywhere, Category = "Healing", meta = (AllowPrivateAccess = "true"))
-	float HealDuration = 0.2f; // 회복 시간 (초)
+	float HealDuration = 0.5f; // 회복 시간 (초)
 
 	UPROPERTY(EditAnywhere, Category = "Healing", meta = (AllowPrivateAccess = "true"))
 	float HealPercentage = 0.7f; // 최대 체력 대비 회복 비율
