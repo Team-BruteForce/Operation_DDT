@@ -28,6 +28,7 @@ namespace AssetPaths
     constexpr const TCHAR* Boss_StatsDataTable = TEXT ("/Script/Engine.DataTable'/Game/LHW/BossData/DT_BossStats.DT_BossStats'");
     constexpr const TCHAR* Boss_Projectile = TEXT ("/Script/Engine.Blueprint'/Game/LHW/Blueprint/Actor/BP_Projectile.BP_Projectile_C'");
     constexpr const TCHAR* Boss_Orb = TEXT ("/Script/Engine.Blueprint'/Game/LHW/Blueprint/Actor/BP_Orb.BP_Orb_C'");
-    constexpr const TCHAR* Boss_FlySpline = TEXT ("/Script/Engine.Blueprint'/Game/LHW/Blueprint/Actor/BP_FlySpline.BP_FlySpline_C''");
+    constexpr const TCHAR* Boss_FlySpline = TEXT ("/Script/Engine.Blueprint'/Game/LHW/Blueprint/Actor/BP_FlySpline.BP_FlySpline_C'");
+    constexpr const TCHAR* Boss_Dissolve = TEXT ("/Script/Engine.Blueprint'/Game/LHW/Asset/AbsorbVFX/ExampleBlueprints/BP_Absorb_SK_7.BP_Absorb_SK_7_C'");
 #pragma endregion BossAsset
 }
