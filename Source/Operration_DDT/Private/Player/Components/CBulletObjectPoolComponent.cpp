@@ -30,10 +30,12 @@ void UCBulletObjectPoolComponent::BeginPlay()
 	for (int32 i = 0; i < MaxMagazinePool; i++)
 	{
 		ACPlayerBullet* bullet = CreateBulletForPool();
-		MagazinePool.Add(bullet);
+		if(bullet)
+			MagazinePool.Add(bullet);
 		
 		ACPlayerBullet* vfx = CreateBulletVFXForPool();
-		VFXPool.Add(vfx);
+		if(vfx)
+			VFXPool.Add(vfx);
 	}
 	CurrentPoolIndex = 0;
 	
@@ -50,14 +52,21 @@ void UCBulletObjectPoolComponent::TickComponent(float DeltaTime, ELevelTick Tick
 
 ACPlayerBullet* UCBulletObjectPoolComponent::CreateBulletForPool()
 {
-	// 총알 생성 (기존과 동일한 방식)
+	// 총알 생성 (기존과 동일한 방식)	
 	FActorSpawnParameters params;
 	params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	params.bNoFail = true;
 	params.Owner = OwnerCharacter;
 	
+	if(!GetWorld())
+	{
+		return nullptr;
+	}
+
 	ACPlayerBullet* bullet = GetWorld()->SpawnActor<ACPlayerBullet>(PlayerBulletClass, params);
-	
+
+	if(!bullet) return nullptr;
+
 	// 생성 즉시 상태 완전 초기화
 	bullet->ResetBulletState();
 	bullet->SetActive(false);
@@ -72,9 +81,18 @@ ACPlayerBullet* UCBulletObjectPoolComponent::CreateBulletVFXForPool()
 	params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	params.bNoFail = true;
 	params.Owner = OwnerCharacter;
+
+	if (!GetWorld())
+	{
+		return nullptr;
+	}
 	
+	if (!PlayerBulletVFXClass) return nullptr;
+
 	ACPlayerBullet* bullet = GetWorld()->SpawnActor<ACPlayerBullet>(PlayerBulletVFXClass, params);
 	
+	if (!bullet) return nullptr;
+
 	// 생성 즉시 상태 완전 초기화
 	bullet->ResetBulletState();
 	bullet->SetActive(false);

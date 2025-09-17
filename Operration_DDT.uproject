@@ -15,7 +15,6 @@
 				"GameplayStateTreeModule",
 				"StateTreeModule",
 				"CoreUObject",
-				"Blutility",
 			]
 		}
 	],

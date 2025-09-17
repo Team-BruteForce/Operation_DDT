@@ -60,6 +60,18 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	class UInputAction* IA_Heal;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	class UInputAction* IA_Move;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	class UInputAction* IA_TurnHor;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	class UInputAction* IA_TurnVer;
+
+	UPROPERTY(EditAnywhere, Category = "Input")
+	class UInputAction* IA_Sprint;
 	
 #pragma endregion 
  
@@ -73,7 +85,7 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 		class UCStateComponent* State;
 	
-	UPROPERTY(visibleAnywhere)
+	UPROPERTY(VisibleAnywhere)
 		class UCWeaponComponent* WeaponComp;
 	
 	UPROPERTY(VisibleAnywhere)

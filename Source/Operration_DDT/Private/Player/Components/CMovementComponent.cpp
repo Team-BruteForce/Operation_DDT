@@ -26,6 +26,7 @@ void UCMovementComponent::BeginPlay()
 
 	OwnerCharacter = Cast<ADDTPlayer>(GetOwner());
 	OwnerCharacter->InputBindingDelegate.AddUObject(this, &UCMovementComponent::SetupInputBinding);
+	CharMove = CHelpers::GetComponent<UCharacterMovementComponent>(OwnerCharacter);
 	OwnerState = CHelpers::GetComponent<UCStateComponent>(OwnerCharacter);
 	OwnerStamina = CHelpers::GetComponent<UCStaminaComponent>(OwnerCharacter); 
 	
@@ -90,7 +91,7 @@ void UCMovementComponent::OnRun()
 	if (bIsSprinting == true)
 	{
 		bIsSprinting = false;
-	}
+	}	
 	
 }
 
@@ -110,13 +111,15 @@ void UCMovementComponent::OnWalk()
 void UCMovementComponent::EnableControlRotation()
 {
 	OwnerCharacter->bUseControllerRotationYaw = true;
-	OwnerCharacter->GetCharacterMovement ()->bOrientRotationToMovement = false;
+	//OwnerCharacter->GetCharacterMovement ()->bOrientRotationToMovement = false;
+	CharMove->bOrientRotationToMovement = false;
 }
 
 void UCMovementComponent::DisableControlRotation()
 {
 	OwnerCharacter->bUseControllerRotationYaw = false;
-	OwnerCharacter->GetCharacterMovement()->bOrientRotationToMovement = true;
+	//OwnerCharacter->GetCharacterMovement()->bOrientRotationToMovement = true;
+	CharMove->bOrientRotationToMovement = true;
 }
 
 void UCMovementComponent::OnMove(const struct FInputActionValue& InAxis)
@@ -168,7 +171,8 @@ void UCMovementComponent::SprintEnd()
 
 void UCMovementComponent::SetSpeed(ESpeedType InType)
 {
-	OwnerCharacter->GetCharacterMovement ()->MaxWalkSpeed = Speed[(int32)InType];
+	//OwnerCharacter->GetCharacterMovement ()->MaxWalkSpeed = Speed[(int32)InType];
+	CharMove->MaxWalkSpeed = Speed[(int32)InType];
 }
 
 float UCMovementComponent::GetForwardInput() const

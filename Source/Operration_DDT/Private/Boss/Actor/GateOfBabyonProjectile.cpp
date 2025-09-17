@@ -41,21 +41,6 @@ void AGateOfBabyonProjectile::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	UE_LOG(LogTemp, Warning, TEXT("GateOfBabyonProjectile BeginPlay called"));
-	
-	// 충돌 컴포넌트 바인딩 확인
-	if (CollisionComponent)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("CollisionComponent found"));
-		
-		// 충돌 설정 확인
-		UE_LOG(LogTemp, Warning, TEXT("Collision Enabled: %d"), (int32)CollisionComponent->GetCollisionEnabled());
-		UE_LOG(LogTemp, Warning, TEXT("Collision Object Type: %d"), (int32)CollisionComponent->GetCollisionObjectType());
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("CollisionComponent is null in BeginPlay!"));
-	}
 	
 	// 오브젝트 풀 사용 시 초기에는 비활성화 상태로 시작
 	if (bUseObjectPool)
