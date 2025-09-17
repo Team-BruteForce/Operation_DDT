@@ -102,25 +102,7 @@ void ACEnemyAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus S
 			// 감지 실패 - 목록에서 제거
 			RemoveFromEnemyList(Actor);
 			RemoveFromAllyList(Actor);
-			
-			// 타겟을 잃었을 때 블랙보드 업데이트
-			UBlackboardComponent* BlackboardComp = GetBlackboardComponent();
-			if (BlackboardComp)
-			{
-				// 현재 타겟이 사라진 경우에만 타이머 시작
-				AActor* CurrentTarget = Cast<AActor>(BlackboardComp->GetValueAsObject("TargetPlayer"));
-				if (CurrentTarget == Actor)
-				{
-					// 기존 타이머가 있다면 취소하고 새로 시작
-					if (TargetLostTimerHandle.IsValid())
-					{
-						GetWorldTimerManager().ClearTimer(TargetLostTimerHandle);
-					}
-					
-					// 3초 후에 타겟을 포기하도록 타이머 설정
-					GetWorldTimerManager().SetTimer(TargetLostTimerHandle, this, &ACEnemyAIController::OnTargetLost, 3.0f, false);
-				}
-			}
+			// 시야 상실 시에도 전투 이탈을 처리하지 않음 (TargetPlayer/IsInCombat 유지)
 		}
 	}
 }
@@ -258,14 +240,10 @@ void ACEnemyAIController::RemoveFromAllyList(AActor* Actor)
 
 void ACEnemyAIController::OnTargetLost()
 {
-	// 3초가 지나서 타겟을 포기
-	UBlackboardComponent* BlackboardComp = GetBlackboardComponent();
-	if (BlackboardComp)
+	// 전투 지속 정책: 타겟을 포기하지 않음. 아무 것도 하지 않음.
+	// 타이머 핸들만 정리
+	if (TargetLostTimerHandle.IsValid())
 	{
-		BlackboardComp->SetValueAsObject("TargetPlayer", nullptr);
-		BlackboardComp->SetValueAsBool("IsInCombat", false);
+		TargetLostTimerHandle.Invalidate();
 	}
-	
-	// 타이머 핸들 무효화
-	TargetLostTimerHandle.Invalidate();
 }

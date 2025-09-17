@@ -5,6 +5,7 @@
 #include "ODH/ODH_Enemy/Component/CEnemyMeleeAttackComponent.h"
 #include "ODH/Component/CEnemyProjectileComp.h"
 #include "ODH/ODH_Enemy/FlowerEnemy/CFlowerEnemyRangedATKManager.h"
+#include "ODH/ODH_Enemy/FlowerEnemy/CFlowerHitEffectPoolManager.h"
 #include "ODH/ODH_Enemy/Projectile/CFlowerProjectile.h"
 #include "ODH/ODH_AIController/CFlowerEnemyAIController.h"
 #include "Kismet/GameplayStatics.h"
@@ -18,6 +19,7 @@
 #include "BrainComponent.h"
 #include "Player/CPlayerBullet.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "Player/DDTPlayer.h"
 
 // Sets default values
 ACFlowerEnemy::ACFlowerEnemy()
@@ -44,9 +46,8 @@ ACFlowerEnemy::ACFlowerEnemy()
 	// 기본 위치는 전방 80cm (블루프린트에서 자유롭게 변경 가능)
 	ProjectileSpawnArrow->SetRelativeLocation(FVector(80.0f, 0.0f, 0.0f));
 
-	// 소켓 기반 데미지 콜리전들 생성
 	CreateDamageCollisions();
-
+	BindDamageCollisionEvents();
 }
 
 // Called when the game starts or when spawned
@@ -61,10 +62,10 @@ void ACFlowerEnemy::BeginPlay()
 	if (StatusComponent)
 	{
 		// Flower Enemy는 중간 체력과 공격력을 가짐
-		StatusComponent->SetMaxHealth(120.0f);
-		StatusComponent->SetCurrentHealth(120.0f);
+		StatusComponent->SetMaxHealth(MaxHP);
+		StatusComponent->SetCurrentHealth(MaxHP);
 		StatusComponent->SetAttackPower(25.0f);
-		StatusComponent->SetDefensePower(5.0f);
+		StatusComponent->SetDefensePower(0.0f);
 		
 		// 사망 이벤트 바인딩
 		StatusComponent->OnDeath.AddDynamic(this, &ACFlowerEnemy::OnDeath);
@@ -84,8 +85,7 @@ void ACFlowerEnemy::BeginPlay()
 		MeleeAttackComponent->OnMeleeAttackHit.AddDynamic(this, &ACFlowerEnemy::OnMeleeAttackHit);
 	}
 
-	// 소켓 기반 데미지 콜리전 오버랩 이벤트 바인딩
-	BindDamageCollisionEvents();
+
 
 
 	// 낙하 타임라인 델리게이트 바인딩 (커브가 있는 경우에만 재생됨)
@@ -155,6 +155,51 @@ void ACFlowerEnemy::Tick(float DeltaTime)
 	if (bIsMeleeVisualMoving)
 	{
 		UpdateMeleeVisualMove(DeltaTime);
+	}
+
+	// 대쉬 러닝 중이면 플레이어까지 달리다가 임계 거리 이하면 러닝 종료
+	if (bIsDashRunning && !IsDead_Implementation())
+	{
+		APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(this, 0);
+		if (PlayerPawn)
+		{
+			const FVector MyLoc = GetActorLocation();
+			const FVector PlayerLoc = PlayerPawn->GetActorLocation();
+			const float Dist = FVector::Dist2D(MyLoc, PlayerLoc);
+			// 회전은 플레이어 바라보게 유지
+			const FVector Dir = (PlayerLoc - MyLoc).GetSafeNormal2D();
+			FRotator YawRot = Dir.Rotation();
+			YawRot.Pitch = 0.0f; YawRot.Roll = 0.0f;
+			SetActorRotation(YawRot);
+			AddMovementInput(Dir, 1.0f);
+
+			if (Dist <= DashStopDistance)
+			{
+				// 러닝 종료: 속도 복원
+				if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
+				{
+					if (PrevMaxWalkSpeed > 0.0f)
+					{
+						MoveComp->MaxWalkSpeed = PrevMaxWalkSpeed;
+					}
+				}
+				bIsDashRunning = false;
+				// 대쉬 공격 전환 트리거 활성화 (애님 BP 전이용)
+				bDashAttackTrigger = true;
+			}
+		}
+		else
+		{
+			// 플레이어 없으면 러닝 종료 및 속도 복원
+			if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
+			{
+				if (PrevMaxWalkSpeed > 0.0f)
+				{
+					MoveComp->MaxWalkSpeed = PrevMaxWalkSpeed;
+				}
+			}
+			bIsDashRunning = false;
+		}
 	}
 }
 
@@ -314,6 +359,14 @@ void ACFlowerEnemy::PlayDashAttack()
 			APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(this, 0);
 			StartMeleeVisualMove(PlayerPawn);
 		}
+
+		// 대쉬 러닝 시작: 이동 속도 상향 및 플래그 온
+		if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
+		{
+			PrevMaxWalkSpeed = MoveComp->MaxWalkSpeed;
+			MoveComp->MaxWalkSpeed = DashRunSpeed;
+		}
+		bIsDashRunning = true;
 	}
 }
 
@@ -357,6 +410,8 @@ void ACFlowerEnemy::NotifyDashAttackCompleted()
 				
 				// 대시 공격 상태 초기화
 				bIsDashAttacking = false;
+				// 대쉬 공격 전환 트리거 초기화 (애님 노티파이에서 호출되는 이 함수 시점)
+				bDashAttackTrigger = false;
 				
 				// 디버그 출력
 				if (GEngine)
@@ -448,22 +503,22 @@ void ACFlowerEnemy::CloseHeadAutomatically()
 
 void ACFlowerEnemy::UpdateHeadCollisions()
 {
-	// IsHeadOpen이 true이면 약점만 활성화, 평상시 콜리전 비활성화
-	if (HeadWeekPointCollision)
-	{
-		HeadWeekPointCollision->SetCollisionEnabled(bIsHeadOpen ? ECollisionEnabled::QueryOnly : ECollisionEnabled::NoCollision);
-	}
-	if (HeadTakeDamageCollision)
-	{
-		HeadTakeDamageCollision->SetCollisionEnabled(bIsHeadOpen ? ECollisionEnabled::NoCollision : ECollisionEnabled::QueryOnly);
-	}
+//	// IsHeadOpen이 true이면 약점만 활성화, 평상시 콜리전 비활성화
+//	if (HeadWeekPointCollision)
+//	{
+//		HeadWeekPointCollision->SetCollisionEnabled(bIsHeadOpen ? ECollisionEnabled::QueryOnly : ECollisionEnabled::NoCollision);
+//	}
+//	if (HeadTakeDamageCollision)
+//	{
+//		HeadTakeDamageCollision->SetCollisionEnabled(bIsHeadOpen ? ECollisionEnabled::NoCollision : ECollisionEnabled::QueryOnly);
+//	}
 
 	// 디버그 출력
-	if (GEngine)
-	{
-		const TCHAR* OpenClose = bIsHeadOpen ? TEXT("OPEN") : TEXT("CLOSE");
-		GEngine->AddOnScreenDebugMessage(-1, 1.5f, FColor::Purple, FString::Printf(TEXT("Head Collisions Updated: %s"), OpenClose));
-	}
+//	if (GEngine)
+//	{
+//		const TCHAR* OpenClose = bIsHeadOpen ? TEXT("OPEN") : TEXT("CLOSE");
+//		GEngine->AddOnScreenDebugMessage(-1, 1.5f, FColor::Purple, FString::Printf(TEXT("Head Collisions Updated: %s"), OpenClose));
+//	}
 }
 
 void ACFlowerEnemy::StartAutoHeadOpening()
@@ -543,175 +598,175 @@ void ACFlowerEnemy::CreateDamageCollisions()
 	if (!MeshComp)
 		return;
 
-	// 중앙 콜리전 생성
-	// SpineTakeDamageSocket 콜리전 생성
-	SpineTakeDamageCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("SpineTakeDamageCollision"));
-	SpineTakeDamageCollision->SetupAttachment(MeshComp, TEXT("SpineTakeDamageSocket"));
-	SpineTakeDamageCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	SpineTakeDamageCollision->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
-	SpineTakeDamageCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-	SpineTakeDamageCollision->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
-	SpineTakeDamageCollision->SetRelativeLocation(FVector::ZeroVector);
-	SpineTakeDamageCollision->SetRelativeRotation(FRotator::ZeroRotator);
-	SpineTakeDamageCollision->SetBoxExtent(FVector(15.0f, 15.0f, 25.0f));
-
-	// 헤드 콜리전들 생성
-	// HeadWeekPointSocket 콜리전 생성
-	HeadWeekPointCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("HeadWeekPointCollision"));
-	HeadWeekPointCollision->SetupAttachment(MeshComp, TEXT("HeadWeekPointSocket"));
-	HeadWeekPointCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	HeadWeekPointCollision->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
-	HeadWeekPointCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-	HeadWeekPointCollision->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
-	HeadWeekPointCollision->SetRelativeLocation(FVector(10.0f, 25.0f, 0.0f));
-	HeadWeekPointCollision->SetRelativeRotation(FRotator::ZeroRotator);
-	HeadWeekPointCollision->SetBoxExtent(FVector(38.6f, 12.0f, 38.5f));
-
-	// HeadTakeDamageSocket 콜리전 생성
-	HeadTakeDamageCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("HeadTakeDamageCollision"));
-	HeadTakeDamageCollision->SetupAttachment(MeshComp, TEXT("HeadTakeDamageSocket"));
-	HeadTakeDamageCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	HeadTakeDamageCollision->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
-	HeadTakeDamageCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-	HeadTakeDamageCollision->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
-	HeadTakeDamageCollision->SetRelativeLocation(FVector(8.0f, 17.0f, 0.0f));
-	HeadTakeDamageCollision->SetRelativeRotation(FRotator::ZeroRotator);
-	HeadTakeDamageCollision->SetBoxExtent(FVector(10.0f, 24.7f, 9.9f));
-
-	// 왼쪽 콜리전들 생성
-	// UpperLTakeDamageSocket 콜리전 생성
-	UpperLTakeDamageCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("UpperLTakeDamageCollision"));
-	UpperLTakeDamageCollision->SetupAttachment(MeshComp, TEXT("UpperLTakeDamageSocket"));
-	UpperLTakeDamageCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	UpperLTakeDamageCollision->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
-	UpperLTakeDamageCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-	UpperLTakeDamageCollision->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
-	UpperLTakeDamageCollision->SetRelativeLocation(FVector(16.0f, 0.0f, -2.0f));
-	UpperLTakeDamageCollision->SetRelativeRotation(FRotator::ZeroRotator);
-	UpperLTakeDamageCollision->SetBoxExtent(FVector(19.1f, 6.7f, 7.2f));
-
-	// LowerLTakeDamageSocket 콜리전 생성
-	LowerLTakeDamageCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("LowerLTakeDamageCollision"));
-	LowerLTakeDamageCollision->SetupAttachment(MeshComp, TEXT("LowerLTakeDamageSocket"));
-	LowerLTakeDamageCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	LowerLTakeDamageCollision->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
-	LowerLTakeDamageCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-	LowerLTakeDamageCollision->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
-	LowerLTakeDamageCollision->SetRelativeLocation(FVector(18.0f, -1.0f, 0.0f));
-	LowerLTakeDamageCollision->SetRelativeRotation(FRotator::ZeroRotator);
-	LowerLTakeDamageCollision->SetBoxExtent(FVector(18.2f, 6.3f, 6.9f));
-
-	// HandLTakeDamageSocket 콜리전 생성
-	HandLTakeDamageCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("HandLTakeDamageCollision"));
-	HandLTakeDamageCollision->SetupAttachment(MeshComp, TEXT("HandLTakeDamageSocket"));
-	HandLTakeDamageCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	HandLTakeDamageCollision->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
-	HandLTakeDamageCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-	HandLTakeDamageCollision->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
-	HandLTakeDamageCollision->SetRelativeLocation(FVector(12.0f, -6.0f, 3.0f));
-	HandLTakeDamageCollision->SetRelativeRotation(FRotator::ZeroRotator);
-	HandLTakeDamageCollision->SetBoxExtent(FVector(13.7f, 11.8f, 12.0f));
-
-	// ThighLTakeDamageSocket 콜리전 생성
-	ThighLTakeDamageCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("ThighLTakeDamageCollision"));
-	ThighLTakeDamageCollision->SetupAttachment(MeshComp, TEXT("ThighLTakeDamageSocket"));
-	ThighLTakeDamageCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	ThighLTakeDamageCollision->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
-	ThighLTakeDamageCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-	ThighLTakeDamageCollision->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
-	ThighLTakeDamageCollision->SetRelativeLocation(FVector(-20.0f, 0.0f, 0.0f));
-	ThighLTakeDamageCollision->SetRelativeRotation(FRotator::ZeroRotator);
-	ThighLTakeDamageCollision->SetBoxExtent(FVector(18.6f, 8.3f, 7.6f));
-
-	// CalfLTakeDamageSocket 콜리전 생성
-	CalfLTakeDamageCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("CalfLTakeDamageCollision"));
-	CalfLTakeDamageCollision->SetupAttachment(MeshComp, TEXT("CalfLTakeDamageSocket"));
-	CalfLTakeDamageCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	CalfLTakeDamageCollision->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
-	CalfLTakeDamageCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-	CalfLTakeDamageCollision->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
-	CalfLTakeDamageCollision->SetRelativeLocation(FVector(-23.0f, -2.0f, 0.0f));
-	CalfLTakeDamageCollision->SetRelativeRotation(FRotator::ZeroRotator);
-	CalfLTakeDamageCollision->SetBoxExtent(FVector(22.3f, 8.4f, 6.3f));
-
-	// FootLTakeDamageSocket 콜리전 생성
-	FootLTakeDamageCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("FootLTakeDamageCollision"));
-	FootLTakeDamageCollision->SetupAttachment(MeshComp, TEXT("FootLTakeDamageSocket"));
-	FootLTakeDamageCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	FootLTakeDamageCollision->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
-	FootLTakeDamageCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-	FootLTakeDamageCollision->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
-	FootLTakeDamageCollision->SetRelativeLocation(FVector(-7.0f, 9.0f, 0.0f));
-	FootLTakeDamageCollision->SetRelativeRotation(FRotator::ZeroRotator);
-	FootLTakeDamageCollision->SetBoxExtent(FVector(8.0f, 15.3f, 11.4f));
-
-	// 오른쪽 콜리전들 생성
-	// UpperRTakeDamageSocket 콜리전 생성
-	UpperRTakeDamageCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("UpperRTakeDamageCollision"));
-	UpperRTakeDamageCollision->SetupAttachment(MeshComp, TEXT("UpperRTakeDamageSocket"));
-	UpperRTakeDamageCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	UpperRTakeDamageCollision->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
-	UpperRTakeDamageCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-	UpperRTakeDamageCollision->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
-	UpperRTakeDamageCollision->SetRelativeLocation(FVector(-14.0f, -1.0f, 0.0f));
-	UpperRTakeDamageCollision->SetRelativeRotation(FRotator::ZeroRotator);
-	UpperRTakeDamageCollision->SetBoxExtent(FVector(18.8f, 7.3f, 8.0f));
-
-	// LowerRTakeDamageSocket 콜리전 생성
-	LowerRTakeDamageCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("LowerRTakeDamageCollision"));
-	LowerRTakeDamageCollision->SetupAttachment(MeshComp, TEXT("LowerRTakeDamageSocket"));
-	LowerRTakeDamageCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	LowerRTakeDamageCollision->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
-	LowerRTakeDamageCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-	LowerRTakeDamageCollision->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
-	LowerRTakeDamageCollision->SetRelativeLocation(FVector(-18.0f, 0.0f, 0.0f));
-	LowerRTakeDamageCollision->SetRelativeRotation(FRotator::ZeroRotator);
-	LowerRTakeDamageCollision->SetBoxExtent(FVector(20.8f, 5.3f, 5.0f));
-
-	// HandRTakeDamageSocket 콜리전 생성
-	HandRTakeDamageCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("HandRTakeDamageCollision"));
-	HandRTakeDamageCollision->SetupAttachment(MeshComp, TEXT("HandRTakeDamageSocket"));
-	HandRTakeDamageCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	HandRTakeDamageCollision->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
-	HandRTakeDamageCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-	HandRTakeDamageCollision->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
-	HandRTakeDamageCollision->SetRelativeLocation(FVector(-15.0f, 7.0f, -2.0f));
-	HandRTakeDamageCollision->SetRelativeRotation(FRotator::ZeroRotator);
-	HandRTakeDamageCollision->SetBoxExtent(FVector(10.9f, 9.4f, 11.1f));
-
-	// ThighRTakeDamageSocket 콜리전 생성
-	ThighRTakeDamageCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("ThighRTakeDamageCollision"));
-	ThighRTakeDamageCollision->SetupAttachment(MeshComp, TEXT("ThighRTakeDamageSocket"));
-	ThighRTakeDamageCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	ThighRTakeDamageCollision->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
-	ThighRTakeDamageCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-	ThighRTakeDamageCollision->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
-	ThighRTakeDamageCollision->SetRelativeLocation(FVector(19.0f, 0.0f, 0.0f));
-	ThighRTakeDamageCollision->SetRelativeRotation(FRotator::ZeroRotator);
-	ThighRTakeDamageCollision->SetBoxExtent(FVector(19.3f, 8.5f, 6.5f));
-
-	// CalfRTakeDamageSocket 콜리전 생성
-	CalfRTakeDamageCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("CalfRTakeDamageCollision"));
-	CalfRTakeDamageCollision->SetupAttachment(MeshComp, TEXT("CalfRTakeDamageSocket"));
-	CalfRTakeDamageCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	CalfRTakeDamageCollision->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
-	CalfRTakeDamageCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-	CalfRTakeDamageCollision->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
-	CalfRTakeDamageCollision->SetRelativeLocation(FVector(22.0f, 2.0f, 0.0f));
-	CalfRTakeDamageCollision->SetRelativeRotation(FRotator::ZeroRotator);
-	CalfRTakeDamageCollision->SetBoxExtent(FVector(21.6f, 7.8f, 6.3f));
-
-	// FootRTakeDamageSocket 콜리전 생성
-	FootRTakeDamageCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("FootRTakeDamageCollision"));
-	FootRTakeDamageCollision->SetupAttachment(MeshComp, TEXT("FootRTakeDamageSocket"));
-	FootRTakeDamageCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	FootRTakeDamageCollision->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
-	FootRTakeDamageCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-	FootRTakeDamageCollision->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
-	FootRTakeDamageCollision->SetRelativeLocation(FVector(7.0f, -10.0f, 0.0f));
-	FootRTakeDamageCollision->SetRelativeRotation(FRotator::ZeroRotator);
-	FootRTakeDamageCollision->SetBoxExtent(FVector(6.7f, 14.4f, 11.3f));
-
+// 	// 중앙 콜리전 생성
+// 	// SpineTakeDamageSocket 콜리전 생성
+// 	SpineTakeDamageCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("SpineTakeDamageCollision"));
+// 	SpineTakeDamageCollision->SetupAttachment(MeshComp, TEXT("SpineTakeDamageSocket"));
+// 	SpineTakeDamageCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+// 	SpineTakeDamageCollision->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
+// 	SpineTakeDamageCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+// 	SpineTakeDamageCollision->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
+// 	SpineTakeDamageCollision->SetRelativeLocation(FVector::ZeroVector);
+// 	SpineTakeDamageCollision->SetRelativeRotation(FRotator::ZeroRotator);
+// 	SpineTakeDamageCollision->SetBoxExtent(FVector(15.0f, 15.0f, 25.0f));
+// 
+// 	// 헤드 콜리전들 생성
+// 	// HeadWeekPointSocket 콜리전 생성
+// 	HeadWeekPointCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("HeadWeekPointCollision"));
+// 	HeadWeekPointCollision->SetupAttachment(MeshComp, TEXT("HeadWeekPointSocket"));
+// 	HeadWeekPointCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+// 	HeadWeekPointCollision->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
+// 	HeadWeekPointCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+// 	HeadWeekPointCollision->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
+// 	HeadWeekPointCollision->SetRelativeLocation(FVector(10.0f, 25.0f, 0.0f));
+// 	HeadWeekPointCollision->SetRelativeRotation(FRotator::ZeroRotator);
+// 	HeadWeekPointCollision->SetBoxExtent(FVector(38.6f, 12.0f, 38.5f));
+// 
+// 	// HeadTakeDamageSocket 콜리전 생성
+// 	HeadTakeDamageCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("HeadTakeDamageCollision"));
+// 	HeadTakeDamageCollision->SetupAttachment(MeshComp, TEXT("HeadTakeDamageSocket"));
+// 	HeadTakeDamageCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+// 	HeadTakeDamageCollision->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
+// 	HeadTakeDamageCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+// 	HeadTakeDamageCollision->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
+// 	HeadTakeDamageCollision->SetRelativeLocation(FVector(8.0f, 17.0f, 0.0f));
+// 	HeadTakeDamageCollision->SetRelativeRotation(FRotator::ZeroRotator);
+// 	HeadTakeDamageCollision->SetBoxExtent(FVector(10.0f, 24.7f, 9.9f));
+// 
+// 	// 왼쪽 콜리전들 생성
+// 	// UpperLTakeDamageSocket 콜리전 생성
+// 	UpperLTakeDamageCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("UpperLTakeDamageCollision"));
+// 	UpperLTakeDamageCollision->SetupAttachment(MeshComp, TEXT("UpperLTakeDamageSocket"));
+// 	UpperLTakeDamageCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+// 	UpperLTakeDamageCollision->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
+// 	UpperLTakeDamageCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+// 	UpperLTakeDamageCollision->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
+// 	UpperLTakeDamageCollision->SetRelativeLocation(FVector(16.0f, 0.0f, -2.0f));
+// 	UpperLTakeDamageCollision->SetRelativeRotation(FRotator::ZeroRotator);
+// 	UpperLTakeDamageCollision->SetBoxExtent(FVector(19.1f, 6.7f, 7.2f));
+// 
+// 	// LowerLTakeDamageSocket 콜리전 생성
+// 	LowerLTakeDamageCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("LowerLTakeDamageCollision"));
+// 	LowerLTakeDamageCollision->SetupAttachment(MeshComp, TEXT("LowerLTakeDamageSocket"));
+// 	LowerLTakeDamageCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+// 	LowerLTakeDamageCollision->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
+// 	LowerLTakeDamageCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+// 	LowerLTakeDamageCollision->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
+// 	LowerLTakeDamageCollision->SetRelativeLocation(FVector(18.0f, -1.0f, 0.0f));
+// 	LowerLTakeDamageCollision->SetRelativeRotation(FRotator::ZeroRotator);
+// 	LowerLTakeDamageCollision->SetBoxExtent(FVector(18.2f, 6.3f, 6.9f));
+// 
+// 	// HandLTakeDamageSocket 콜리전 생성
+// 	HandLTakeDamageCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("HandLTakeDamageCollision"));
+// 	HandLTakeDamageCollision->SetupAttachment(MeshComp, TEXT("HandLTakeDamageSocket"));
+// 	HandLTakeDamageCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+// 	HandLTakeDamageCollision->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
+// 	HandLTakeDamageCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+// 	HandLTakeDamageCollision->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
+// 	HandLTakeDamageCollision->SetRelativeLocation(FVector(12.0f, -6.0f, 3.0f));
+// 	HandLTakeDamageCollision->SetRelativeRotation(FRotator::ZeroRotator);
+// 	HandLTakeDamageCollision->SetBoxExtent(FVector(13.7f, 11.8f, 12.0f));
+// 
+// 	// ThighLTakeDamageSocket 콜리전 생성
+// 	ThighLTakeDamageCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("ThighLTakeDamageCollision"));
+// 	ThighLTakeDamageCollision->SetupAttachment(MeshComp, TEXT("ThighLTakeDamageSocket"));
+// 	ThighLTakeDamageCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+// 	ThighLTakeDamageCollision->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
+// 	ThighLTakeDamageCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+// 	ThighLTakeDamageCollision->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
+// 	ThighLTakeDamageCollision->SetRelativeLocation(FVector(-20.0f, 0.0f, 0.0f));
+// 	ThighLTakeDamageCollision->SetRelativeRotation(FRotator::ZeroRotator);
+// 	ThighLTakeDamageCollision->SetBoxExtent(FVector(18.6f, 8.3f, 7.6f));
+// 
+// 	// CalfLTakeDamageSocket 콜리전 생성
+// 	CalfLTakeDamageCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("CalfLTakeDamageCollision"));
+// 	CalfLTakeDamageCollision->SetupAttachment(MeshComp, TEXT("CalfLTakeDamageSocket"));
+// 	CalfLTakeDamageCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+// 	CalfLTakeDamageCollision->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
+// 	CalfLTakeDamageCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+// 	CalfLTakeDamageCollision->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
+// 	CalfLTakeDamageCollision->SetRelativeLocation(FVector(-23.0f, -2.0f, 0.0f));
+// 	CalfLTakeDamageCollision->SetRelativeRotation(FRotator::ZeroRotator);
+// 	CalfLTakeDamageCollision->SetBoxExtent(FVector(22.3f, 8.4f, 6.3f));
+// 
+// 	// FootLTakeDamageSocket 콜리전 생성
+// 	FootLTakeDamageCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("FootLTakeDamageCollision"));
+// 	FootLTakeDamageCollision->SetupAttachment(MeshComp, TEXT("FootLTakeDamageSocket"));
+// 	FootLTakeDamageCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+// 	FootLTakeDamageCollision->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
+// 	FootLTakeDamageCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+// 	FootLTakeDamageCollision->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
+// 	FootLTakeDamageCollision->SetRelativeLocation(FVector(-7.0f, 9.0f, 0.0f));
+// 	FootLTakeDamageCollision->SetRelativeRotation(FRotator::ZeroRotator);
+// 	FootLTakeDamageCollision->SetBoxExtent(FVector(8.0f, 15.3f, 11.4f));
+// 
+// 	// 오른쪽 콜리전들 생성
+// 	// UpperRTakeDamageSocket 콜리전 생성
+// 	UpperRTakeDamageCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("UpperRTakeDamageCollision"));
+// 	UpperRTakeDamageCollision->SetupAttachment(MeshComp, TEXT("UpperRTakeDamageSocket"));
+// 	UpperRTakeDamageCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+// 	UpperRTakeDamageCollision->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
+// 	UpperRTakeDamageCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+// 	UpperRTakeDamageCollision->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
+// 	UpperRTakeDamageCollision->SetRelativeLocation(FVector(-14.0f, -1.0f, 0.0f));
+// 	UpperRTakeDamageCollision->SetRelativeRotation(FRotator::ZeroRotator);
+// 	UpperRTakeDamageCollision->SetBoxExtent(FVector(18.8f, 7.3f, 8.0f));
+// 
+// 	// LowerRTakeDamageSocket 콜리전 생성
+// 	LowerRTakeDamageCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("LowerRTakeDamageCollision"));
+// 	LowerRTakeDamageCollision->SetupAttachment(MeshComp, TEXT("LowerRTakeDamageSocket"));
+// 	LowerRTakeDamageCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+// 	LowerRTakeDamageCollision->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
+// 	LowerRTakeDamageCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+// 	LowerRTakeDamageCollision->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
+// 	LowerRTakeDamageCollision->SetRelativeLocation(FVector(-18.0f, 0.0f, 0.0f));
+// 	LowerRTakeDamageCollision->SetRelativeRotation(FRotator::ZeroRotator);
+// 	LowerRTakeDamageCollision->SetBoxExtent(FVector(20.8f, 5.3f, 5.0f));
+// 
+// 	// HandRTakeDamageSocket 콜리전 생성
+// 	HandRTakeDamageCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("HandRTakeDamageCollision"));
+// 	HandRTakeDamageCollision->SetupAttachment(MeshComp, TEXT("HandRTakeDamageSocket"));
+// 	HandRTakeDamageCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+// 	HandRTakeDamageCollision->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
+// 	HandRTakeDamageCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+// 	HandRTakeDamageCollision->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
+// 	HandRTakeDamageCollision->SetRelativeLocation(FVector(-15.0f, 7.0f, -2.0f));
+// 	HandRTakeDamageCollision->SetRelativeRotation(FRotator::ZeroRotator);
+// 	HandRTakeDamageCollision->SetBoxExtent(FVector(10.9f, 9.4f, 11.1f));
+// 
+// 	// ThighRTakeDamageSocket 콜리전 생성
+// 	ThighRTakeDamageCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("ThighRTakeDamageCollision"));
+// 	ThighRTakeDamageCollision->SetupAttachment(MeshComp, TEXT("ThighRTakeDamageSocket"));
+// 	ThighRTakeDamageCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+// 	ThighRTakeDamageCollision->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
+// 	ThighRTakeDamageCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+// 	ThighRTakeDamageCollision->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
+// 	ThighRTakeDamageCollision->SetRelativeLocation(FVector(19.0f, 0.0f, 0.0f));
+// 	ThighRTakeDamageCollision->SetRelativeRotation(FRotator::ZeroRotator);
+// 	ThighRTakeDamageCollision->SetBoxExtent(FVector(19.3f, 8.5f, 6.5f));
+// 
+// 	// CalfRTakeDamageSocket 콜리전 생성
+// 	CalfRTakeDamageCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("CalfRTakeDamageCollision"));
+// 	CalfRTakeDamageCollision->SetupAttachment(MeshComp, TEXT("CalfRTakeDamageSocket"));
+// 	CalfRTakeDamageCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+// 	CalfRTakeDamageCollision->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
+// 	CalfRTakeDamageCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+// 	CalfRTakeDamageCollision->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
+// 	CalfRTakeDamageCollision->SetRelativeLocation(FVector(22.0f, 2.0f, 0.0f));
+// 	CalfRTakeDamageCollision->SetRelativeRotation(FRotator::ZeroRotator);
+// 	CalfRTakeDamageCollision->SetBoxExtent(FVector(21.6f, 7.8f, 6.3f));
+// 
+// 	// FootRTakeDamageSocket 콜리전 생성
+// 	FootRTakeDamageCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("FootRTakeDamageCollision"));
+// 	FootRTakeDamageCollision->SetupAttachment(MeshComp, TEXT("FootRTakeDamageSocket"));
+// 	FootRTakeDamageCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+// 	FootRTakeDamageCollision->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
+// 	FootRTakeDamageCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+// 	FootRTakeDamageCollision->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
+// 	FootRTakeDamageCollision->SetRelativeLocation(FVector(7.0f, -10.0f, 0.0f));
+// 	FootRTakeDamageCollision->SetRelativeRotation(FRotator::ZeroRotator);
+// 	FootRTakeDamageCollision->SetBoxExtent(FVector(6.7f, 14.4f, 11.3f));
+// 
 	// 공격 콜리전들 생성
 	// HandLAttackCollisionSocket 콜리전 생성
 	HandLAttackCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("HandLAttackCollision"));
@@ -750,37 +805,6 @@ void ACFlowerEnemy::CreateDamageCollisions()
 // 소켓 기반 데미지 콜리전 이벤트 바인딩 함수
 void ACFlowerEnemy::BindDamageCollisionEvents()
 {
-	// 모든 데미지 콜리전에 오버랩 이벤트 바인딩
-	TArray<UPrimitiveComponent*> DamageCollisions = {
-		// 중앙 콜리전
-		SpineTakeDamageCollision,
-		// 헤드 콜리전들
-		HeadWeekPointCollision,
-		HeadTakeDamageCollision,
-		// 왼쪽 콜리전들
-		UpperLTakeDamageCollision,
-		LowerLTakeDamageCollision,
-		HandLTakeDamageCollision,
-		ThighLTakeDamageCollision,
-		CalfLTakeDamageCollision,
-		FootLTakeDamageCollision,
-		// 오른쪽 콜리전들
-		UpperRTakeDamageCollision,
-		LowerRTakeDamageCollision,
-		HandRTakeDamageCollision,
-		ThighRTakeDamageCollision,
-		CalfRTakeDamageCollision,
-		FootRTakeDamageCollision
-	};
-
-	for (UPrimitiveComponent* Collision : DamageCollisions)
-	{
-		if (Collision)
-		{
-			Collision->OnComponentBeginOverlap.AddDynamic(this, &ACFlowerEnemy::OnDamageCollisionOverlap);
-		}
-	}
-
 	// 공격 콜리전들에 오버랩 이벤트 바인딩
 	if (HandLAttackCollision)
 	{
@@ -801,25 +825,6 @@ void ACFlowerEnemy::DisableDamageCollisions()
 {
 	// 모든 데미지 콜리전을 비활성화
 	TArray<UPrimitiveComponent*> DamageCollisions = {
-		// 중앙 콜리전
-		SpineTakeDamageCollision,
-		// 헤드 콜리전들
-		HeadWeekPointCollision,
-		HeadTakeDamageCollision,
-		// 왼쪽 콜리전들
-		UpperLTakeDamageCollision,
-		LowerLTakeDamageCollision,
-		HandLTakeDamageCollision,
-		ThighLTakeDamageCollision,
-		CalfLTakeDamageCollision,
-		FootLTakeDamageCollision,
-		// 오른쪽 콜리전들
-		UpperRTakeDamageCollision,
-		LowerRTakeDamageCollision,
-		HandRTakeDamageCollision,
-		ThighRTakeDamageCollision,
-		CalfRTakeDamageCollision,
-		FootRTakeDamageCollision,
 		// 공격 콜리전들
 		HandLAttackCollision,
 		HandRAttackCollision,
@@ -864,18 +869,18 @@ void ACFlowerEnemy::OnDamageCollisionOverlap(UPrimitiveComponent* OverlappedComp
 	// 기본 데미지 설정
 	float DamageAmount = 10.0f; // 기본 데미지 (실제로는 플레이어의 공격력에 따라 결정되어야 함)
 	
-	// HeadTakeDamageCollision인 경우 머리 열기
-	if (OverlappedComponent == HeadTakeDamageCollision)
-	{
-		// 머리를 열고 타이머 설정
-		OpenHeadWithTimer();
-	}
+//	// HeadTakeDamageCollision인 경우 머리 열기
+//	if (OverlappedComponent == HeadTakeDamageCollision)
+//	{
+//		// 머리를 열고 타이머 설정
+//		OpenHeadWithTimer();
+//	}
 	
-	// HeadWeekPointCollision인 경우 2배 대미지 적용
-	if (OverlappedComponent == HeadWeekPointCollision)
-	{
-		DamageAmount *= 2.0f; // 헤드 약점에 2배 대미지
-	}
+//	// HeadWeekPointCollision인 경우 2배 대미지 적용
+//	if (OverlappedComponent == HeadWeekPointCollision)
+//	{
+//		DamageAmount *= 2.0f; // 헤드 약점에 2배 대미지
+//	}
 	
 	// IDamageable 인터페이스의 TakeDamage_Implementation 호출
 	TakeDamage_Implementation(DamageAmount);
@@ -887,15 +892,15 @@ void ACFlowerEnemy::OnDamageCollisionOverlap(UPrimitiveComponent* OverlappedComp
 		FString DebugMessage = FString::Printf(TEXT("Flower Enemy hit on %s by %s! Damage: %.1f"), 
 			*CollisionName, *OtherActor->GetName(), DamageAmount);
 		
-		// 헤드 약점 히트 시 다른 색상으로 표시
-		if (OverlappedComponent == HeadWeekPointCollision)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, DebugMessage + TEXT(" (HEAD WEAK POINT!)"));
-		}
-		else
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, DebugMessage);
-		}
+	//	// 헤드 약점 히트 시 다른 색상으로 표시
+	//	if (OverlappedComponent == HeadWeekPointCollision)
+	//	{
+	//		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, DebugMessage + TEXT(" (HEAD WEAK POINT!)"));
+	//	}
+	//	if
+	//	{
+	//		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, DebugMessage);
+	//	}
 	}
 }
 
@@ -931,6 +936,8 @@ void ACFlowerEnemy::SpawnRangedProjectileAtLocation(AActor* TargetPlayer, FVecto
 			PooledProjectile->SetActorRotation(SpawnRotation);
 			PooledProjectile->SetOwner(this);
 			PooledProjectile->SetInstigator(this);
+			
+			// 히트 이펙트 풀 매니저 사용 제거
 			
 			// 프로젝타일 활성화 및 타겟 설정
 			FVector TargetLocation = TargetPlayer->GetActorLocation();
@@ -1275,112 +1282,18 @@ void ACFlowerEnemy::EndMeleeVisualMove(bool bSnapToStart)
 // 돌진 공격 이동 함수들
 void ACFlowerEnemy::StartDashMovementToPlayer()
 {
-	// AI Controller 이동 중지
-	if (AController* MyController = GetController())
-	{
-		if (AAIController* AIController = Cast<AAIController>(MyController))
-		{
-			AIController->StopMovement();
-		}
-	}
-
-	// 플레이어 위치 가져오기
-	APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
-	if (PlayerPawn)
-	{
-		FVector PlayerLocation = PlayerPawn->GetActorLocation();
-		FRotator PlayerRotation = PlayerPawn->GetActorRotation();
-		
-		// 플레이어가 바라보는 방향 계산 (Yaw 회전만 사용)
-		FVector PlayerForward = FRotationMatrix(FRotator(0.0f, PlayerRotation.Yaw, 0.0f)).GetUnitAxis(EAxis::X);
-		
-		// 플레이어 정면 앞 70cm 지점 계산
-		CachedPlayerLocation = PlayerLocation + (PlayerForward * 70.0f);
-		bIsDashMoving = true;
-		
-		// 디버그 출력
-		if (GEngine)
-		{
-			FString DebugMessage = FString::Printf(TEXT("Flower Enemy Dash Target Location (70cm in front of player): %s"), *CachedPlayerLocation.ToString());
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Cyan, DebugMessage);
-		}
-	}
-	else
-	{
-		// 플레이어를 찾을 수 없는 경우
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("Player not found for flower dash movement!"));
-		}
-		bIsDashMoving = false;
-	}
+	bIsDashMoving = false;
 }
 
 void ACFlowerEnemy::UpdateDashMovementToPlayer(float DeltaTime, float Speed)
 {
-	// 이동 중이 아니면 리턴
-	if (!bIsDashMoving)
-		return;
-
-	// 사망한 경우 이동하지 않음
-	if (StatusComponent && StatusComponent->IsDead())
-	{
-		bIsDashMoving = false;
-		return;
-	}
-
-	// 캐릭터 이동 컴포넌트 가져오기
-	UCharacterMovementComponent* MoveComp = GetCharacterMovement();
-	if (!MoveComp)
-	{
-		bIsDashMoving = false;
-		return;
-	}
-
-	// 현재 위치에서 저장된 플레이어 위치로의 방향 계산
-	FVector CurrentLocation = GetActorLocation();
-	FVector Direction = (CachedPlayerLocation - CurrentLocation).GetSafeNormal();
-	
-	// 목표 방향으로 회전 (Yaw만 사용)
-	FRotator TargetRotation = Direction.Rotation();
-	TargetRotation.Pitch = 0.0f;
-	TargetRotation.Roll = 0.0f;
-	
-	// 캐릭터를 목표 방향으로 회전
-	SetActorRotation(TargetRotation);
-	
-	// 목표 방향으로 이동 (SetActorLocation 사용)
-	FVector Movement = Direction * Speed * DeltaTime;
-	FVector NewLocation = CurrentLocation + Movement;
-	SetActorLocation(NewLocation);
-	
-	// 목표 지점에 도달했는지 확인 (거리 체크)
-	float DistanceToTarget = FVector::Dist(CurrentLocation, CachedPlayerLocation);
-	if (DistanceToTarget < 70.0f) // 70cm 이내에 도달하면 이동 종료
-	{
-		bIsDashMoving = false;
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Green, TEXT("Flower Enemy reached target location (70cm in front of player)"));
-		}
-	}
+	// 비활성화: 대쉬 이동 사용 안 함
+	bIsDashMoving = false;
 }
 
 void ACFlowerEnemy::EndDashMovementToPlayer()
 {
 	bIsDashMoving = false;
-	
-	// 이동 정지
-	if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
-	{
-		MoveComp->StopMovementImmediately();
-	}
-	
-	// 디버그 출력
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Orange, TEXT("Flower Enemy Dash Movement Ended"));
-	}
 }
 
 // 공격 콜리전 활성화/비활성화 함수들
@@ -1434,14 +1347,16 @@ void ACFlowerEnemy::DisableHandRAttackCollision()
 
 void ACFlowerEnemy::EnableDashAttackCollision()
 {
-	if (DashAttackCollision)
-	{
-		DashAttackCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Red, TEXT("Flower Enemy Dash Attack Collision Enabled"));
-		}
-	}
+    if (DashAttackCollision)
+    {
+        DashAttackCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+        // 대쉬 1회 타격 가드 초기화
+        bDashHasHitOnce = false;
+        if (GEngine)
+        {
+            GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Red, TEXT("Flower Enemy Dash Attack Collision Enabled"));
+        }
+    }
 }
 
 void ACFlowerEnemy::DisableDashAttackCollision()
@@ -1459,61 +1374,71 @@ void ACFlowerEnemy::DisableDashAttackCollision()
 // 공격 콜리전 오버랩 이벤트 핸들러
 void ACFlowerEnemy::OnAttackCollisionOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	// 플레이어인지 확인
-	if (!OtherActor || !OtherActor->IsA<APawn>())
-		return;
+    // 플레이어인지 확인
+    if (!OtherActor || !OtherActor->IsA<ADDTPlayer>())
+        return;
 
-	APawn* HitPawn = Cast<APawn>(OtherActor);
-	if (!HitPawn)
-		return;
+    ADDTPlayer* HitPawn = Cast<ADDTPlayer>(OtherActor);
+    if (!HitPawn)
+        return;
 
-	// 플레이어인지 확인 (플레이어 컨트롤러가 있는지 체크)
-	if (!HitPawn->GetController() || !HitPawn->GetController()->IsA<APlayerController>())
-		return;
+    // 플레이어인지 확인 (플레이어 컨트롤러가 있는지 체크)
+    if (!HitPawn->GetController() || !HitPawn->GetController()->IsA<APlayerController>())
+        return;
 
-	// 공격 콜리전인지 확인
-	if (OverlappedComponent != HandLAttackCollision && OverlappedComponent != HandRAttackCollision && OverlappedComponent != DashAttackCollision)
-		return;
+    // 대쉬 공격 콜리전 중 중복 타격 방지
+    if (OverlappedComponent == DashAttackCollision)
+    {
+        if (bDashHasHitOnce)
+            return;
+        bDashHasHitOnce = true;
+        // 필요 시 즉시 비활성화하여 다중 타격 방지 강화
+        DisableDashAttackCollision();
+    }
 
-	// 데미지 적용 (돌진 공격은 더 높은 데미지)
-	float DamageAmount = (OverlappedComponent == DashAttackCollision) ? 40.0f : 25.0f;
-	AController* InstigatorController = GetInstigatorController();
-	UGameplayStatics::ApplyDamage(HitPawn, DamageAmount, InstigatorController, this, nullptr);
+    // 공격 콜리전인지 확인
+    if (OverlappedComponent != HandLAttackCollision && OverlappedComponent != HandRAttackCollision && OverlappedComponent != DashAttackCollision)
+        return;
 
-	// 디버그 출력
-	if (GEngine)
-	{
-		FString AttackType;
-		if (OverlappedComponent == HandLAttackCollision)
-		{
-			AttackType = TEXT("Left Hand");
-		}
-		else if (OverlappedComponent == HandRAttackCollision)
-		{
-			AttackType = TEXT("Right Hand");
-		}
-		else if (OverlappedComponent == DashAttackCollision)
-		{
-			AttackType = TEXT("Dash");
-		}
-		
-		/*FString DebugMessage = FString::Printf(TEXT("Flower Enemy %s Attack Hit Player! Damage: %.1f"), AttackType, DamageAmount);*/
-		/*GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, DebugMessage);*/
-	}
+    // 데미지 적용 (돌진 공격은 더 높은 데미지)
+    float DamageAmount = (OverlappedComponent == DashAttackCollision) ? 40.0f : 25.0f;
+    AController* InstigatorController = GetInstigatorController();
+    UGameplayStatics::ApplyDamage(HitPawn, DamageAmount, InstigatorController, this, nullptr);
 
-	// 공격 콜리전 즉시 비활성화 (중복 데미지 방지)
-	if (OverlappedComponent == HandLAttackCollision)
-	{
-		DisableHandLAttackCollision();
-	}
-	else if (OverlappedComponent == HandRAttackCollision)
-	{
-		DisableHandRAttackCollision();
-	}
-	else if (OverlappedComponent == DashAttackCollision)
-	{
-		DisableDashAttackCollision();
-	}
+    // 디버그 출력
+    if (GEngine)
+    {
+        FString AttackType;
+        if (OverlappedComponent == HandLAttackCollision)
+        {
+            AttackType = TEXT("Left Hand");
+        }
+        else if (OverlappedComponent == HandRAttackCollision)
+        {
+            AttackType = TEXT("Right Hand");
+        }
+        else if (OverlappedComponent == DashAttackCollision)
+        {
+            AttackType = TEXT("Dash");
+        }
+        
+        /*FString DebugMessage = FString::Printf(TEXT("Flower Enemy %s Attack Hit Player! Damage: %.1f"), AttackType, DamageAmount);*/
+        /*GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, DebugMessage);*/
+    }
+
+    // 공격 콜리전 즉시 비활성화 (중복 데미지 방지)
+    if (OverlappedComponent == HandLAttackCollision)
+    {
+        DisableHandLAttackCollision();
+    }
+    else if (OverlappedComponent == HandRAttackCollision)
+    {
+        DisableHandRAttackCollision();
+    }
+    else if (OverlappedComponent == DashAttackCollision)
+    {
+        DisableDashAttackCollision();
+    }
 }
 
 

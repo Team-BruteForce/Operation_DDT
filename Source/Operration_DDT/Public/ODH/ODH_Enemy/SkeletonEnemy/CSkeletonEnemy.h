@@ -117,8 +117,8 @@ protected:
 	UCEnemyMeleeAttackComponent* MeleeAttackComponent;
 
 	// 소켓 부착 콜리전 (Mesh의 자식)
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	UBoxComponent* WeakPointCollision;
+//	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+//	UBoxComponent* WeakPointCollision;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UBoxComponent* MeleeAttackCollisionR;
@@ -129,43 +129,11 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UBoxComponent* ComboAttackLastCollision;
 
-	// 바디 대미지 소켓별 콜리전 (L/R)
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	UBoxComponent* UpperLTakeDamageCollision;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	UBoxComponent* LowerLTakeDamageCollision;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	UBoxComponent* HandLTakeDamageCollision;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	UBoxComponent* CalfLTakeDamageCollision;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	UBoxComponent* FootLTakeDamageCollision;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	UBoxComponent* UpperRTakeDamageCollision;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	UBoxComponent* LowerRTakeDamageCollision;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	UBoxComponent* HandRTakeDamageCollision;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	UBoxComponent* CalfRTakeDamageCollision;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	UBoxComponent* FootRTakeDamageCollision;
-
-	// 중앙부 추가 콜리전
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	UBoxComponent* PelvisTakeDamageCollision;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	UBoxComponent* BustTakeDamageCollision;
+	// 바디 데미지용 TakeDamage 콜리전 멤버 제거됨
+public:
+	// 에디터에서 조정 가능한 최대 체력
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats|Health")
+	float MaxHP = 810.0f;
 
 private:
 	// 이벤트 핸들러들
@@ -180,6 +148,10 @@ private:
 
 	UFUNCTION()
 	void OnWeakPointOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	// 바디 피격(타격 가능) 콜리전 오버랩 이벤트 (TakeDamage 라벨용)
+	UFUNCTION()
+	void OnTakeDamageOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 	// 사망 타이머 핸들
 	FTimerHandle DeathTimerHandle;

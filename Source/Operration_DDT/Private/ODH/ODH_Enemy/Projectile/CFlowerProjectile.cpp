@@ -2,9 +2,11 @@
 
 #include "ODH/ODH_Enemy/Projectile/CFlowerProjectile.h"
 #include "ODH/ODH_Enemy/FlowerEnemy/CFlowerEnemyRangedATKManager.h"
+#include "ODH/ODH_Enemy/FlowerEnemy/CFlowerHitEffectPoolManager.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/SphereComponent.h"
 #include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Engine/Engine.h"
 #include "DrawDebugHelpers.h"
@@ -95,13 +97,15 @@ void ACFlowerProjectile::ActivateProjectile(FVector InStartLocation, FVector InT
 		ProjectileEffect->Activate();
 	}
 
-	// 위치 및 타겟 설정
+	// 위치 및 타겟 설정 (타겟 Z를 +100 보정)
 	StartLocation = InStartLocation;
 	TargetLocation = InTargetLocation;
+	TargetLocation.Z += 100.0f;
 	TargetPlayer = InTargetPlayer;
 
 	// 프로젝타일을 시작 위치에 배치
 	SetActorLocation(InStartLocation);
+	PreviousLocation = InStartLocation;
 
 	// 포물선 궤적 계산
 	CalculateTrajectory();
@@ -168,25 +172,27 @@ void ACFlowerProjectile::SetPoolManager(ACFlowerEnemyRangedATKManager* Manager)
 
 void ACFlowerProjectile::CalculateTrajectory()
 {
-	// 목표 위치까지의 거리 계산
+	// 목표 위치까지의 벡터 및 수평/수직 분해
 	FVector ToTarget = TargetLocation - StartLocation;
 	float HorizontalDistance = FVector(ToTarget.X, ToTarget.Y, 0.0f).Size();
 	float VerticalDistance = ToTarget.Z;
 
-	// 포물선 궤적 계산을 위한 초기 속도 계산
-	// 수평 거리와 수직 거리를 고려한 최적 각도 계산
-	float Angle = 0.785f; // 45도 (라디안)
-	
-	// 초기 속도 크기 계산
-	float InitialSpeed = ProjectileSpeed;
-	
-	// 초기 속도 벡터 계산
-	FVector HorizontalDirection = FVector(ToTarget.X, ToTarget.Y, 0.0f).GetSafeNormal();
-	InitialVelocity = HorizontalDirection * (InitialSpeed * FMath::Cos(Angle)) + FVector(0, 0, InitialSpeed * FMath::Sin(Angle));
+	// 고정된 발사각과 속도 사용
+	const float AngleDeg = 45.0f; // 45도 고정
+	const float InitialSpeed = ProjectileSpeed; // 설정된 속도 그대로 사용
 
-	// 최대 비행 시간 계산
-	float TimeToTarget = HorizontalDistance / (InitialSpeed * FMath::Cos(Angle));
-	MaxFlightTime_Internal = FMath::Max(TimeToTarget, MaxFlightTime);
+	const float AngleRad = FMath::DegreesToRadians(AngleDeg);
+
+	// 초기 속도 벡터 계산 (수평방향 + 상승 성분)
+	FVector HorizontalDirection = FVector(ToTarget.X, ToTarget.Y, 0.0f).GetSafeNormal();
+	InitialVelocity = HorizontalDirection * (InitialSpeed * FMath::Cos(AngleRad)) + FVector(0, 0, InitialSpeed * FMath::Sin(AngleRad));
+
+	// 예상 도달 시간: 수평 성분 기준
+	float HorizontalSpeed = InitialSpeed * FMath::Cos(AngleRad);
+	float TimeToTarget = (HorizontalSpeed > KINDA_SMALL_NUMBER) ? (HorizontalDistance / HorizontalSpeed) : 0.25f;
+
+	// 비행 시간 상한 설정: 예상시간 + 0.5초 여유, MaxFlightTime와 비교해 더 작은 값 사용
+	MaxFlightTime_Internal = FMath::Min(TimeToTarget + 0.5f, MaxFlightTime);
 }
 
 void ACFlowerProjectile::UpdateMovement(float DeltaTime)
@@ -203,18 +209,19 @@ void ACFlowerProjectile::UpdateMovement(float DeltaTime)
 		return;
 	}
 
-	// 바닥 충돌 체크
+	// 포물선 이동: 바닥 체크 및 중력 적용
 	if (CheckGroundCollision())
 	{
 		DeactivateProjectile();
 		return;
 	}
 
-	// 중력 적용하여 속도 업데이트
+	// 중력 적용
 	CurrentVelocity.Z -= Gravity * DeltaTime;
 
 	// 위치 업데이트
 	FVector NewLocation = GetActorLocation() + CurrentVelocity * DeltaTime;
+	PreviousLocation = GetActorLocation(); // 이전 위치 저장
 	SetActorLocation(NewLocation);
 
 	// 회전 업데이트 (이동 방향에 맞춰)
@@ -264,7 +271,15 @@ void ACFlowerProjectile::OnProjectileHit(UPrimitiveComponent* HitComp, AActor* O
 			DamageEvent.ShotDirection = CurrentVelocity.GetSafeNormal();
 			DamageEvent.DamageTypeClass = nullptr;
 
-			Player->TakeDamage(Damage, DamageEvent, nullptr, this);
+            Player->TakeDamage(Damage, DamageEvent, nullptr, this);
+
+            // 히트 이펙트: 즉시 스폰(풀링 제거)
+            if (HitEffect)
+            {
+                const FVector EffectLocation = Player->GetActorLocation() + HitEffectOffset;
+                UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), HitEffect, EffectLocation);
+            }
+
 
 			if (GEngine)
 			{
@@ -295,7 +310,15 @@ void ACFlowerProjectile::OnProjectileBeginOverlap(UPrimitiveComponent* Overlappe
 			DamageEvent.ShotDirection = CurrentVelocity.GetSafeNormal();
 			DamageEvent.DamageTypeClass = nullptr;
 
-			Player->TakeDamage(Damage, DamageEvent, nullptr, this);
+            Player->TakeDamage(Damage, DamageEvent, nullptr, this);
+
+            // 히트 이펙트: 즉시 스폰(풀링 제거)
+            if (HitEffect)
+            {
+                const FVector EffectLocation = Player->GetActorLocation() + HitEffectOffset;
+                UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), HitEffect, EffectLocation);
+            }
+
 
 			if (GEngine)
 			{
@@ -341,4 +364,38 @@ void ACFlowerProjectile::DrawDebugTrajectory()
 		0,
 		2.0f
 	);
+}
+
+
+
+FVector ACFlowerProjectile::CalculateHitLocation(AActor* HitActor)
+{
+	if (!HitActor)
+		return GetActorLocation();
+
+	// 이전 위치에서 현재 위치까지의 라인 트레이스로 정확한 충돌 지점 찾기
+	FVector StartTrace = PreviousLocation;
+	FVector EndTrace = GetActorLocation();
+	
+	FHitResult HitResult;
+	FCollisionQueryParams QueryParams;
+	QueryParams.AddIgnoredActor(this);
+	QueryParams.AddIgnoredActor(GetOwner());
+	
+	bool bHit = GetWorld()->LineTraceSingleByChannel(
+		HitResult,
+		StartTrace,
+		EndTrace,
+		ECC_Pawn, // 플레이어와의 충돌 채널
+		QueryParams
+	);
+	
+	if (bHit && HitResult.GetActor() == HitActor)
+	{
+		// 정확한 충돌 지점 반환
+		return HitResult.Location;
+	}
+	
+	// 라인 트레이스가 실패하면 플레이어와 프로젝타일 위치의 중간점 사용
+	return (GetActorLocation() + HitActor->GetActorLocation()) * 0.5f;
 }

@@ -6,6 +6,7 @@
 #include "DropBulletItem.generated.h"
 
 class USphereComponent;
+class UNiagaraComponent;
 
 UCLASS()
 class OPERRATION_DDT_API ADropBulletItem : public AActor, public IPooledItem
@@ -64,9 +65,13 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Drop|Effect")
     float EffectSpawnHeight = 10.0f; // 지면에서 얼마나 위에 이펙트를 스폰할지
     
-    // 현재 활성화된 이펙트 컴포넌트 (파괴용)
+    // 이펙트 위치 보정 오프셋 (XYZ)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Drop|Effect")
+    FVector EffectOffset = FVector(0.f, 0.f, 0.f);
+    
+    // 현재 활성화된 이펙트 컴포넌트 (풀링용)
     UPROPERTY()
-    class UNiagaraComponent* ActiveEffectComponent;
+    UNiagaraComponent* ActiveEffectComponent;
 
 public:
     // (지면 스냅 로직 제거됨)

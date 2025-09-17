@@ -28,6 +28,10 @@ public:
 	UPROPERTY()
 	class UCPlayerUI* playerUI;
 
+	// 드랍 아이템 이펙트 풀 매니저
+	UPROPERTY()
+	class ACDropItemEffectPoolManager* DropItemEffectPoolManager;
+
 	void test();
 	
 };
