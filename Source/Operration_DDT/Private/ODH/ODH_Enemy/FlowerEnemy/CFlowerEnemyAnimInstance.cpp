@@ -40,6 +40,8 @@ void UCFlowerEnemyAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	// 공격 플래그는 캐릭터 상태를 참조
 	bIsComboAttack = CachedOwner->GetIsComboAttacking();
 	bIsDashAttack = CachedOwner->GetIsDashAttacking();
+    // 대쉬 공격 전환 트리거
+	bDashAttackTrigger = CachedOwner->GetDashAttackTrigger();
 	bIsRangedAttack = CachedOwner->GetIsRangedAttacking();
 
 	// 머리 상태 플래그는 캐릭터 상태를 참조

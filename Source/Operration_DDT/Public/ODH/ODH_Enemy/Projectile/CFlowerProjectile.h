@@ -10,6 +10,9 @@
 #include "Engine/Engine.h"
 #include "CFlowerProjectile.generated.h"
 
+// 전방 선언: 히트 이펙트 풀 매니저
+class ACFlowerHitEffectPoolManager;
+
 UCLASS()
 class OPERRATION_DDT_API ACFlowerProjectile : public AActor
 {
@@ -67,6 +70,16 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectile|Effect")
 	UNiagaraSystem* ProjectileEffectAsset;
 
+	// 히트 이펙트 (플레이어 피격 시 스폰)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectile|Effect")
+	UNiagaraSystem* HitEffect = nullptr;
+
+	// 히트 이펙트 위치 오프셋
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectile|Effect")
+	FVector HitEffectOffset = FVector::ZeroVector;
+
+
+
 	// 프로젝타일 활성화 상태
 	UPROPERTY(BlueprintReadOnly, Category = "Projectile")
 	bool bIsActive = false;
@@ -86,6 +99,10 @@ private:
 	// 바닥 감지를 위한 라인 트레이스
 	bool CheckGroundCollision();
 
+	// 정확한 충돌 지점 계산 함수
+	FVector CalculateHitLocation(AActor* HitActor);
+	
+private:
 	// 포물선 이동 관련 변수들
 	FVector StartLocation;
 	FVector TargetLocation;
@@ -93,6 +110,9 @@ private:
 	FVector CurrentVelocity;
 	float FlightTime;
 	float MaxFlightTime_Internal;
+
+	// 이전 프레임 위치 (정확한 충돌 지점 계산용)
+	FVector PreviousLocation;
 
 	// 타겟 플레이어 (충돌 감지용)
 	AActor* TargetPlayer;

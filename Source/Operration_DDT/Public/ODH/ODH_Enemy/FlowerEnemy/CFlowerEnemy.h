@@ -108,6 +108,14 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "State")
 	bool GetIsDashAttacking() const { return bIsDashAttacking; }
 
+	// 대쉬 공격 전환 트리거(거리 임계 도달 표시)
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "State")
+	bool GetDashAttackTrigger() const { return bDashAttackTrigger; }
+
+	// 대쉬 러닝 상태(달리기 애니메이션용)
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "State")
+	bool GetIsDashRunning() const { return bIsDashRunning; }
+
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "State")
 	bool GetIsHeadOpen() const { return bIsHeadOpen; }
 
@@ -122,54 +130,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UArrowComponent* ProjectileSpawnArrow;
 
-	// 소켓 기반 데미지 콜리전들 (중앙)
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Damage Collisions|Center")
-	UBoxComponent* SpineTakeDamageCollision = nullptr;
-
-	// 소켓 기반 데미지 콜리전들 (헤드)
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Damage Collisions|Head")
-	UBoxComponent* HeadWeekPointCollision = nullptr;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Damage Collisions|Head")
-	UBoxComponent* HeadTakeDamageCollision = nullptr;
-
-	// 소켓 기반 데미지 콜리전들 (왼쪽)
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Damage Collisions|Left")
-	UBoxComponent* UpperLTakeDamageCollision = nullptr;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Damage Collisions|Left")
-	UBoxComponent* LowerLTakeDamageCollision = nullptr;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Damage Collisions|Left")
-	UBoxComponent* HandLTakeDamageCollision = nullptr;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Damage Collisions|Left")
-	UBoxComponent* ThighLTakeDamageCollision = nullptr;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Damage Collisions|Left")
-	UBoxComponent* CalfLTakeDamageCollision = nullptr;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Damage Collisions|Left")
-	UBoxComponent* FootLTakeDamageCollision = nullptr;
-
-	// 소켓 기반 데미지 콜리전들 (오른쪽)
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Damage Collisions|Right")
-	UBoxComponent* UpperRTakeDamageCollision = nullptr;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Damage Collisions|Right")
-	UBoxComponent* LowerRTakeDamageCollision = nullptr;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Damage Collisions|Right")
-	UBoxComponent* HandRTakeDamageCollision = nullptr;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Damage Collisions|Right")
-	UBoxComponent* ThighRTakeDamageCollision = nullptr;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Damage Collisions|Right")
-	UBoxComponent* CalfRTakeDamageCollision = nullptr;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Damage Collisions|Right")
-	UBoxComponent* FootRTakeDamageCollision = nullptr;
+	// 소켓 기반 데미지 TakeDamage 콜리전 멤버 제거됨
 
 	// 공격 콜리전들 (HandL/HandR Attack Sockets)
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Attack Collisions")
@@ -275,6 +236,26 @@ private:
 	FVector CachedPlayerLocation = FVector::ZeroVector;
 	bool bIsDashMoving = false;
 
+	// 대쉬 러닝 상태 및 이동 속도 제어
+	bool bIsDashRunning = false;
+	float PrevMaxWalkSpeed = -1.0f;
+
+public:
+	// 대쉬 러닝 설정값 (블루프린트에서 조정 가능)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dash|Run")
+	float DashRunSpeed = 1000.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dash|Run")
+	float DashStopDistance = 70.0f;
+
+	// 대쉬 공격 전환 신호 (거리 임계 도달 시 true)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dash|Run")
+	bool bDashAttackTrigger = false;
+
+	// 대쉬 공격 1회 타격 보장 가드
+	bool bDashHasHitOnce = false;
+
+private:
 	// ===== 메쉬 상대 이동 근접 연출 상태 =====
 	bool bIsMeleeVisualMoving = false;
 	bool bMeleeVisualGoingOut = false;
@@ -285,6 +266,11 @@ private:
 	void StartMeleeVisualMove(AActor* TargetActor);
 	void UpdateMeleeVisualMove(float DeltaTime);
 	void EndMeleeVisualMove(bool bSnapToStart);
+
+public:
+	// 에디터에서 조정 가능한 최대 체력
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats|Health")
+	float MaxHP = 1130.0f;
 
 public:
 	// 떨어지는 연출 관련 변수들

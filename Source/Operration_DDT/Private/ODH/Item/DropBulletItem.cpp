@@ -8,6 +8,7 @@
 #include "DrawDebugHelpers.h"
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraComponent.h"
+#include "ODH/Item/CDropItemEffectPoolManager.h"
 
 ADropBulletItem::ADropBulletItem()
 {
@@ -98,10 +99,17 @@ void ADropBulletItem::OnPooledDeactivated()
         GetWorld()->GetTimerManager().ClearTimer(AutoReturnTimerHandle);
     }
     
-    // 활성화된 이펙트 파괴
+    // 활성화된 이펙트를 풀에 반환
     if (ActiveEffectComponent)
     {
-        ActiveEffectComponent->DestroyComponent();
+        UWorld* World = GetWorld();
+        if (World)
+        {
+            if (ACDropItemEffectPoolManager* EffectPool = Cast<ACDropItemEffectPoolManager>(UGameplayStatics::GetActorOfClass(World, ACDropItemEffectPoolManager::StaticClass())))
+            {
+                EffectPool->ReleaseDropItemEffect(ActiveEffectComponent);
+            }
+        }
         ActiveEffectComponent = nullptr;
     }
 }
@@ -111,11 +119,19 @@ void ADropBulletItem::EnablePickup()
     bCanBePickedUp = true;
     Collision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
     
-    // 나이아가라 이펙트 스폰
-    if (PickupEffect)
+    // 나이아가라 이펙트 풀에서 가져와서 재생
+    UWorld* World = GetWorld();
+    if (World)
     {
-        FVector EffectLocation = GetActorLocation() + FVector(0, 0, EffectSpawnHeight);
-        ActiveEffectComponent = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), PickupEffect, EffectLocation, GetActorRotation());
+        if (ACDropItemEffectPoolManager* EffectPool = Cast<ACDropItemEffectPoolManager>(UGameplayStatics::GetActorOfClass(World, ACDropItemEffectPoolManager::StaticClass())))
+        {
+            ActiveEffectComponent = EffectPool->AcquireDropItemEffect();
+            if (ActiveEffectComponent)
+            {
+                const FVector EffectLocation = GetActorLocation() + FVector(0, 0, EffectSpawnHeight) + EffectOffset;
+                EffectPool->PlayDropItemEffectAtLocation(ActiveEffectComponent, EffectLocation, GetActorRotation());
+            }
+        }
     }
 
     // 자동 반환 타이머 시작

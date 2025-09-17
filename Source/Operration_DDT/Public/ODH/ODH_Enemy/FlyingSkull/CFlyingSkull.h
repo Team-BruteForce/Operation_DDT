@@ -100,21 +100,12 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UBoxComponent* MeleeAttackCollision = nullptr;
 
-	// 소켓 기반 데미지 콜리전들
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Damage Collisions")
-	UBoxComponent* HandLTakeDamageCollision = nullptr;
+	// 소켓 기반 데미지 TakeDamage 콜리전 멤버 제거됨
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Damage Collisions")
-	UBoxComponent* HandRTakeDamageCollision = nullptr;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Damage Collisions")
-	UBoxComponent* MiddleFingerLTakeDamageCollision = nullptr;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Damage Collisions")
-	UBoxComponent* MiddleFingerRTakeDamageCollision = nullptr;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Damage Collisions")
-	USphereComponent* HeadTakeDamageCollision = nullptr;
+public:
+	// 에디터에서 조정 가능한 최대 체력
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats|Health")
+	float MaxHP = 320.0f;
 
 private:
 	// 이벤트 핸들러들
@@ -133,9 +124,6 @@ private:
 
 	// 프로젝타일 클래스 가져오기
 	TSubclassOf<AActor> GetProjectileClass() const;
-
-	// 소켓 기반 데미지 콜리전 생성 함수
-	void CreateDamageCollisions();
 
 	// 소켓 기반 데미지 콜리전 이벤트 바인딩 함수
 	void BindDamageCollisionEvents();
