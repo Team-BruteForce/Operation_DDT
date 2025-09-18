@@ -23,6 +23,7 @@
 #include "Player/Components/CStaminaComponent.h"
 #include "Player/Components/CBulletObjectPoolComponent.h"
 #include "Player/Components/CUIComponent.h"
+#include "InputMappingContext.h"
 
 // Sets default values
 ADDTPlayer::ADDTPlayer()
@@ -125,11 +126,30 @@ void ADDTPlayer::BeginPlay()
 	APlayerController* pc = Cast<APlayerController>(GetController());
 	if (pc)
 	{
+		UE_LOG(LogTemp, Log, TEXT("ADDTPlayer) PC Loaded"));
 		UEnhancedInputLocalPlayerSubsystem* subsys = ULocalPlayer::GetSubsystem <UEnhancedInputLocalPlayerSubsystem>(pc->GetLocalPlayer());
 		if (subsys)
 		{
-			subsys->AddMappingContext(IMC_Player, 0);
+			//subsys->AddMappingContext(IMC_Player, 0);
+			//UE_LOG(LogTemp, Log, TEXT("ADDTPlayer) Mapping Context Loaded"));
+			if (IMC_Player)
+            {
+                subsys->AddMappingContext(IMC_Player, 0);
+                UE_LOG(LogTemp, Log, TEXT("ADDTPlayer) Mapping Context Loaded: %s, Priority: %d"), *IMC_Player->GetName(), 0);
+                for (const FEnhancedActionKeyMapping& Mapping : IMC_Player->GetMappings())
+                {
+                    UE_LOG(LogTemp, Log, TEXT("Mapped Action: %s, Key: %s"), *Mapping.GetDisplayName().ToString(), *Mapping.Key.ToString());
+                }
+            }
 		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("ADDTPlayer) Mapping Context Load Error"));
+		}
+	}
+	else
+	{
+		UE_LOG (LogTemp, Error, TEXT("ADDTPlayer) PC Load Error"));
 	}
 	
 }
@@ -150,6 +170,7 @@ void ADDTPlayer::SetupPlayerInputComponent(class UInputComponent* PlayerInputCom
 
 	if (input)
 	{
+		UE_LOG(LogTemp, Log, TEXT("ADDTPlayer) Input Loaded"));
 		//Movement->SetupInputBinding (input);
 		input->BindAction(IA_Sword, ETriggerEvent::Started, WeaponComp, &UCWeaponComponent::SetSwordMode);
 		input->BindAction(IA_Rifle, ETriggerEvent::Started, WeaponComp, &UCWeaponComponent::SetRifleMode);
@@ -166,6 +187,10 @@ void ADDTPlayer::SetupPlayerInputComponent(class UInputComponent* PlayerInputCom
 		input->BindAction(IA_TurnVer, ETriggerEvent::Triggered, Movement, &UCMovementComponent::OnVerticalLook);
 		input->BindAction(IA_Sprint, ETriggerEvent::Started, Movement, &UCMovementComponent::SprintStart);
 		input->BindAction(IA_Sprint, ETriggerEvent::Completed, Movement, &UCMovementComponent::SprintEnd);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("ADDTPlayer) Input Loaded Failed"));
 	}
 
 }

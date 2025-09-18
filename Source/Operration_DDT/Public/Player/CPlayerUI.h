@@ -28,6 +28,25 @@ public:
 
 	void SetHPBar(float value, float maxHP);
 	void SetStaminaBar(float value, float maxStamina);
+
+	UPROPERTY(blueprintReadWrite, Category = "UI", meta = (BindWidget))
+	class UTextBlock* txt_CurrentBullet;
 	
+	UPROPERTY(blueprintReadWrite, Category = "UI", meta = (BindWidget))
+	class UTextBlock* txt_TotalBullet;
+
+	void SetCurrentBullet(int32 value);
+	void SetTotalBullet(int32 value);
+
+	UPROPERTY(blueprintReadWrite, Category = "UI", meta = (BindWidget))
+	class UTextBlock* txt_HealItem;
+
+	void SetHealItem(int32 value);
+
+	UPROPERTY(blueprintReadWrite, Category = "UI", meta = (BindWidget))
+	class UImage* img_injection_full;
+	
+	UPROPERTY(blueprintReadWrite, Category = "UI", meta = (BindWidget))
+	class UImage* img_injection_empty;
 	
 };

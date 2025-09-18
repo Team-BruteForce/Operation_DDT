@@ -45,13 +45,6 @@ private:
 	class UCMagazineComponent* MagazineComponent;
 	class UCBulletObjectPoolComponent* BulletPool;
 
-	
-	UPROPERTY(EditDefaultsOnly, Category = "Gun")
-	TSubclassOf<ACPlayerBullet> PlayerBulletClass;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Gun")
-	TSubclassOf<ACPlayerBullet> PlayerBulletVFXClass;
-
 	FVector MuzzleVector;
 	FRotator MuzzleRotator;
 	FVector MuzzleForwardDirection;

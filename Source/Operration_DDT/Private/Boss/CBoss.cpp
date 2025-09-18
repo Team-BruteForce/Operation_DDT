@@ -22,6 +22,11 @@
 #include "Components/StateTreeComponent.h"
 #include "Engine/DamageEvents.h"
 #include "Boss/Actor/BossDissolve.h"
+#include "Boss/Component/BossStateComponent.h"
+#include "Boss/Component/CBossMovementComponent.h"
+#include "Boss/Component/BossProjectileComponent.h"
+#include "Boss/Component/CBossTargetingComponent.h"
+#include "Boss/Component/BossDebugComponent.h"
 
 /**
  * @brief 보스 캐릭터 생성자
@@ -49,7 +54,7 @@ ACBoss::ACBoss()
 	CHelpers::GetClass<ACBossAIC>(&AIC, AssetPaths::Boss_AIC);
 	AIControllerClass = AIC;
 
-	CHelpers::GetClass<ABossDissolve>(&BossDissolveClass, AssetPaths::Boss_AIC);
+	//CHelpers::GetClass<ABossDissolve>(&BossDissolveClass, AssetPaths::Boss_Dissolve);
 	
 
 	CHelpers::CreateActorComponent<UBossStateComponent>(this,&BossStateComponent,"StateComp");

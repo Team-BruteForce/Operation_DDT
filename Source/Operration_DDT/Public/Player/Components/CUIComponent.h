@@ -40,11 +40,21 @@ public:
 	UFUNCTION()
 	void OnHealthChanged(float nowHp, float maxHp);
 
+	UFUNCTION()
+	void OnHealItemChanged(int32 NewCount);
+
+	UFUNCTION()
+	void OnCurrentBulletChanged(int32 value);
+	
+	UFUNCTION()
+	void OnTotalBulletChanged(int32 value);
+
 
 private:
 	class ADDTPlayer* OwnerCharater;
 	class UCStaminaComponent* StaminaComp;
 	class UCStatusComponent* StatusComp;
+	class UCMagazineComponent* MagazineComp;
 
 
 		
