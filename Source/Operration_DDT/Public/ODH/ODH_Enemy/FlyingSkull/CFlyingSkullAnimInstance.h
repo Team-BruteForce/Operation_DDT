@@ -33,6 +33,10 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "State")
 	bool bIsDead = false;
 
+	// 피격 상태
+	UPROPERTY(BlueprintReadOnly, Category = "State")
+	bool bIsHitState = false;
+
 private:
 	UPROPERTY(Transient)
 	ACFlyingSkull* CachedOwner = nullptr;

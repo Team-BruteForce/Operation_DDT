@@ -31,6 +31,10 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "State")
 	bool bIsDead = false;
 
+	// 피격 상태
+	UPROPERTY(BlueprintReadOnly, Category = "State")
+	bool bIsHitState = false;
+
 	// 근접 공격 세부 상태
 	// 콤보 공격 중 여부 (연속 애니메이션 트리거용)
 	UPROPERTY(BlueprintReadOnly, Category = "Melee")

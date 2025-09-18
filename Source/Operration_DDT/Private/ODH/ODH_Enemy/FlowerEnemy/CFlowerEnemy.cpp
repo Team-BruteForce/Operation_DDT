@@ -19,6 +19,7 @@
 #include "BrainComponent.h"
 #include "Player/CPlayerBullet.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "ODH/ODH_Enemy/Component/CEnemyHealthBarComponent.h"
 #include "Player/DDTPlayer.h"
 
 // Sets default values
@@ -248,6 +249,72 @@ float ACFlowerEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const& D
 	// IDamageable 인터페이스의 TakeDamage_Implementation 호출
 	TakeDamage_Implementation(DamageAmount);
 
+	// 약점 본 피격 즉시 그로기 100 누적
+	bool bWeakSpotHit = false;
+	if (const FPointDamageEvent* PointEvt = static_cast<const FPointDamageEvent*>(DamageEvent.GetTypeID() == FPointDamageEvent::ClassID ? &DamageEvent : nullptr))
+	{
+		const FName HitBone = PointEvt->HitInfo.BoneName;
+		if (HitBone == "head" || HitBone == "Head" || HitBone == "head_01" || HitBone == "Head_01" || HitBone == "skull" || HitBone == "Skull")
+		{
+			bWeakSpotHit = true;
+		}
+	}
+
+	if (bWeakSpotHit)
+	{
+		GroggyGage += 100;
+	}
+	else
+	{
+		// 플라워는 3~4대: 평균 33씩 가정
+		GroggyGage += 34;
+	}
+
+	if (GroggyGage >= 100)
+	{
+		bIsHitState = true;
+		GroggyGage = 0; // 임계 도달 시 초기화(원치 않으면 제거)
+		if (UCharacterMovementComponent* Move = GetCharacterMovement())
+		{
+			SavedMovementMode = Move->MovementMode;
+			SavedCustomMovementMode = Move->CustomMovementMode;
+			Move->DisableMovement();
+		}
+	}
+
+	// 전투 비진입 상태에서 피격 시 타겟 및 전투 상태 설정
+	if (AController* OwnerController = Cast<AController>(GetController()))
+	{
+		if (AAIController* AI = Cast<AAIController>(OwnerController))
+		{
+			if (UBlackboardComponent* BB = AI->GetBlackboardComponent())
+			{
+				const FName KeyIsInCombat = TEXT("IsInCombat");
+				const FName KeyTargetPlayer = TEXT("TargetPlayer");
+				const bool bInCombat = BB->GetValueAsBool(KeyIsInCombat);
+				if (!bInCombat)
+				{
+					UObject* TargetObj = nullptr;
+					if (EventInstigator)
+					{
+						APawn* InstigatorPawn = EventInstigator->GetPawn();
+						TargetObj = InstigatorPawn ? static_cast<UObject*>(InstigatorPawn) : static_cast<UObject*>(EventInstigator);
+					}
+					if (TargetObj)
+					{
+                        BB->SetValueAsObject(KeyTargetPlayer, TargetObj);
+                        BB->SetValueAsBool(KeyIsInCombat, true);
+                        // 전투 돌입: 체력바 표시
+                        if (UCEnemyHealthBarComponent* HB = FindComponentByClass<UCEnemyHealthBarComponent>())
+                        {
+                            HB->ShowHealthBar();
+                        }
+					}
+				}
+			}
+		}
+	}
+
 	// 블랙보드에 IsRangedAttackGage 값 추가 (25~50 랜덤)
 	ACFlowerEnemyAIController* FlowerAIController = Cast<ACFlowerEnemyAIController>(GetController());
 	if (FlowerAIController)
@@ -287,6 +354,15 @@ float ACFlowerEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const& D
 	}
 
 	return DamageAmount;
+}
+
+void ACFlowerEnemy::EndHitState()
+{
+	bIsHitState = false;
+	if (UCharacterMovementComponent* Move = GetCharacterMovement())
+	{
+		Move->SetMovementMode(static_cast<EMovementMode>(SavedMovementMode), SavedCustomMovementMode);
+	}
 }
 
 // IGenericTeamAgentInterface 구현

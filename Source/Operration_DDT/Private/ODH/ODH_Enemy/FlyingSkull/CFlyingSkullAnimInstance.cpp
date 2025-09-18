@@ -24,6 +24,7 @@ void UCFlyingSkullAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		bIsMeleeAttacking = false;
 		bIsRangedAttacking = false;
 		bIsDead = false;
+		bIsHitState = false;
 		return;
 	}
 
@@ -34,6 +35,7 @@ void UCFlyingSkullAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 	// 캐릭터 상태 플래그 참조
 	bIsDead = CachedOwner->IsDead_Implementation();
+	bIsHitState = CachedOwner->bIsHitState;
 
 	// 공격 플래그는 캐릭터에 변수 추가 후 참조(추가 예정). 안전 장치로 false 유지
 	bIsMeleeAttacking = false;

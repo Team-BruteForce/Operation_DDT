@@ -6,6 +6,7 @@
 #include "Perception/AIPerceptionComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Player/DDTPlayer.h"
+#include "ODH/ODH_Enemy/Interface/AllResettable.h"
 
 ACCombatEncounterManager::ACCombatEncounterManager()
 {
@@ -150,7 +151,9 @@ void ACCombatEncounterManager::ResetOneEnemy(APawn* Pawn, AActor* InstigatorActo
 	{
 		static const FName KeyIsInCombat = TEXT("IsInCombat");
 		static const FName KeyTargetPlayer = TEXT("TargetPlayer");
+		static const FName KeyIsPlayerInBoss = TEXT("IsPlayerInBoss");
 		BB->SetValueAsBool(KeyIsInCombat, false);
+		BB->SetValueAsBool(KeyIsPlayerInBoss, true);
 		BB->ClearValue(KeyTargetPlayer);
 	}
 
@@ -158,6 +161,12 @@ void ACCombatEncounterManager::ResetOneEnemy(APawn* Pawn, AActor* InstigatorActo
 	if (TryGetHomeLocationFromPatrolArray(Pawn, Home))
 	{
 		AI->MoveToLocation(Home, 5.0f, false);
+	}
+
+	// BP 인터페이스 AllReset 호출(있으면)
+	if (Pawn->GetClass()->ImplementsInterface(UAllResettable::StaticClass()))
+	{
+		IAllResettable::Execute_AllReset(Pawn);
 	}
 }
 

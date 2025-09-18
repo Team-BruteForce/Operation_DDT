@@ -66,6 +66,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Attack")
 	void EnableLastComboCollision();
 
+	// 마지막 콤보 공격 전진 움직임
+	UFUNCTION(BlueprintCallable, Category = "Combo Movement")
+	void LastComboMovement(float ForwardDistance = 100.0f);
+
 	// 돌진 공격 콜리전 제어
 	UFUNCTION(BlueprintCallable, Category = "Attack")
 	void EnableDashCollision();
@@ -103,6 +107,19 @@ public:
 
 	// 공격 상태 플래그
 public:
+		// 그로기/피격 상태
+		UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Groggy")
+		int32 GroggyGage = 0;
+
+		UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Groggy")
+		bool bIsHitState = false;
+
+		// 이동 복구를 위한 저장된 이동 모드
+		uint8 SavedMovementMode = 0;
+		uint8 SavedCustomMovementMode = 0;
+
+		UFUNCTION(BlueprintCallable, Category = "Groggy")
+		void EndHitState();
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "State")
 	bool GetIsComboAttacking() const { return bIsComboAttacking; }
 
@@ -172,6 +189,12 @@ private:
 	FVector ComboMovementStartLocation = FVector::ZeroVector;
 	bool bIsComboMoving = false;
 	float ComboMovementProgress = 0.0f;
+
+	// 마지막 콤보 공격 이동 관련 변수들
+	FVector LastComboStartLocation = FVector::ZeroVector;
+	FVector LastComboTargetLocation = FVector::ZeroVector;
+	bool bIsLastComboMoving = false;
+	float LastComboMovementSpeed = 800.0f; // 이동 속도 (cm/s)
 
 public:
 	// 공격 쿨다운 시스템

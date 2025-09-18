@@ -30,12 +30,13 @@ void UCSkeletonEnemyAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	Speed = Velocity.Size2D();
 	bIsMoving = Speed > 3.0f;
 
-	// 전투/사망 플래그는 캐릭터에서 가져옴
+	// 전투/사망/피격 플래그는 캐릭터에서 가져옴
 	if (CachedOwner)
 	{
 		bIsComboAttacking = CachedOwner->GetIsComboAttacking();
 		bIsDashAttacking = CachedOwner->GetIsDashAttacking();
 		bIsDead = CachedOwner->IsDead_Implementation();
+		bIsHitState = CachedOwner->bIsHitState;
 
 		// Blackboard 의 IsInCombat 값을 읽어서 bIsRun 동기화
 		if (AAIController* AICon = Cast<AAIController>(CachedOwner->GetController()))

@@ -26,6 +26,7 @@ void UCFlowerEnemyAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		bIsRangedAttack = false;
 		bIsHeadOpen = false;
 		bIsDead = false;
+		bIsHitState = false;
 		return;
 	}
 
@@ -36,6 +37,7 @@ void UCFlowerEnemyAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 	// 캐릭터 상태 플래그 참조
 	bIsDead = CachedOwner->IsDead_Implementation();
+	bIsHitState = CachedOwner->bIsHitState;
 
 	// 공격 플래그는 캐릭터 상태를 참조
 	bIsComboAttack = CachedOwner->GetIsComboAttacking();

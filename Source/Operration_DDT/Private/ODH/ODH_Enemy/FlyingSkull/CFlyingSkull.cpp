@@ -18,6 +18,8 @@
 #include "BrainComponent.h"
 #include "Player/CPlayerBullet.h"
 #include "ODH/ODH_Enemy/CCombatEncounterManager.h"
+#include "../../AIModule/Classes/BehaviorTree/BlackboardComponent.h"
+#include "ODH/ODH_Enemy/Component/CEnemyHealthBarComponent.h"
 
 // Sets default values
 ACFlyingSkull::ACFlyingSkull()
@@ -238,6 +240,57 @@ float ACFlyingSkull::TakeDamage(float DamageAmount, struct FDamageEvent const& D
 	// IDamageable 인터페이스의 TakeDamage_Implementation 호출
 	TakeDamage_Implementation(DamageAmount);
 
+	// 약점 본 피격 시 즉시 피격 상태 진입 (그로기 누적은 하지 않음)
+	if (const FPointDamageEvent* PointEvt = static_cast<const FPointDamageEvent*>(DamageEvent.GetTypeID() == FPointDamageEvent::ClassID ? &DamageEvent : nullptr))
+	{
+		const FName HitBone = PointEvt->HitInfo.BoneName;
+		if (HitBone == "head" || HitBone == "Head" || HitBone == "head_01" || HitBone == "Head_01" || HitBone == "skull" || HitBone == "Skull")
+		{
+			GroggyGage += 100; // 명세상 누적은 불필요하지만, 임계 체크를 위해 더해도 무방
+			bIsHitState = true;
+			GroggyGage = 0; // 즉시 초기화(선호에 따라 유지 가능)
+			if (UCharacterMovementComponent* Move = GetCharacterMovement())
+			{
+				SavedMovementMode = Move->MovementMode;
+				SavedCustomMovementMode = Move->CustomMovementMode;
+				Move->DisableMovement();
+			}
+		}
+	}
+
+	// 전투 비진입 상태에서 피격 시 타겟 및 전투 상태 설정
+	if (AController* OwnerController = Cast<AController>(GetController()))
+	{
+		if (AAIController* AI = Cast<AAIController>(OwnerController))
+		{
+			if (UBlackboardComponent* BB = AI->GetBlackboardComponent())
+			{
+				const FName KeyIsInCombat = TEXT("IsInCombat");
+				const FName KeyTargetPlayer = TEXT("TargetPlayer");
+				const bool bInCombat = BB->GetValueAsBool(KeyIsInCombat);
+				if (!bInCombat)
+				{
+					UObject* TargetObj = nullptr;
+					if (EventInstigator)
+					{
+						APawn* InstigatorPawn = EventInstigator->GetPawn();
+						TargetObj = InstigatorPawn ? static_cast<UObject*>(InstigatorPawn) : static_cast<UObject*>(EventInstigator);
+					}
+					if (TargetObj)
+					{
+                        BB->SetValueAsObject(KeyTargetPlayer, TargetObj);
+                        BB->SetValueAsBool(KeyIsInCombat, true);
+                        // 전투 돌입: 체력바 표시
+                        if (UCEnemyHealthBarComponent* HB = FindComponentByClass<UCEnemyHealthBarComponent>())
+                        {
+                            HB->ShowHealthBar();
+                        }
+					}
+				}
+			}
+		}
+	}
+
 	// 디버그 출력
 	if (GEngine)
 	{
@@ -250,6 +303,15 @@ float ACFlyingSkull::TakeDamage(float DamageAmount, struct FDamageEvent const& D
 	}
 
 	return DamageAmount;
+}
+
+void ACFlyingSkull::EndHitState()
+{
+	bIsHitState = false;
+	if (UCharacterMovementComponent* Move = GetCharacterMovement())
+	{
+		Move->SetMovementMode(static_cast<EMovementMode>(SavedMovementMode), SavedCustomMovementMode);
+	}
 }
 
 // IGenericTeamAgentInterface 구현
