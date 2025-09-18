@@ -211,6 +211,25 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Hovering")
 	bool IsMovingToRandomPoint() const { return bIsMovingToRandomPoint; }
 	
+	/**
+	 * @brief 베지어 곡선 계산 (3점 기준)
+	 * @param P0 시작점
+	 * @param P1 제어점 (중간점)
+	 * @param P2 끝점
+	 * @param t 진행도 (0.0 ~ 1.0)
+	 * @return 곡선 상의 위치
+	 */
+	UFUNCTION(BlueprintPure, Category = "Movement")
+	FVector CalculateBezierPoint(const FVector& P0, const FVector& P1, const FVector& P2, float t) const;
+	
+	/**
+	 * @brief 이징 함수 - 천천히 시작해서 빨라졌다가 천천히 끝남 (EaseInOut)
+	 * @param t 진행도 (0.0 ~ 1.0)
+	 * @return 속도 배수 (0.0 ~ 1.0+)
+	 */
+	UFUNCTION(BlueprintPure, Category = "Movement")
+	float CalculateEaseInOutMultiplier(float t) const;
+	
 private:
 
 	// ===== 비행 상태 변수들 =====
@@ -353,6 +372,16 @@ protected:
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Hovering")
 	FVector SideTargetLocation = FVector::ZeroVector;
+	
+	// 곡선 사이드 이동을 위한 새로운 변수들
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Hovering")
+	FVector SideStartLocation = FVector::ZeroVector;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Hovering")
+	FVector SideMidPoint = FVector::ZeroVector;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Hovering")
+	float SideMovementProgress = 0.0f;
 	
 	// 스플라인 반원 이동 관련 변수들
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spline Semicircle")

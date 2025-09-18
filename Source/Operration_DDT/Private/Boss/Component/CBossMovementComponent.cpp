@@ -29,6 +29,7 @@
 #include "Boss/Component/FlyingComponent.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Navigation/PathFollowingComponent.h"
 
 // Sets default values for this component's properties
 UCBossMovementComponent::UCBossMovementComponent()
@@ -441,10 +442,15 @@ void UCBossMovementComponent::ExecuteSmartMovement(float DeltaTime, float MinDis
 	static float TimeInOptimalRange = 0.0f;
 	static bool bWasInOptimalRange = false;
 	
-			// 플레이어 방향 추적을 위한 static 변수들
-		static FVector PreviousPlayerLocation = FVector::ZeroVector;
-		static bool bPlayerLocationInitialized = false;
-		static FVector LastMovementDirection = FVector::ZeroVector; // 이전 이동 방향 저장
+	// 플레이어 방향 추적을 위한 static 변수들
+	static FVector PreviousPlayerLocation = FVector::ZeroVector;
+	static bool bPlayerLocationInitialized = false;
+	static FVector LastMovementDirection = FVector::ZeroVector; // 이전 이동 방향 저장
+	
+	// 180도 방향 전환 감지를 위한 변수들
+	static FVector LastBossMovementDirection = FVector::ZeroVector;
+	static bool bLastMovementInitialized = false;
+	static float DirectionChangeTimer = 0.0f;
 	
 	// 거리 계산
 	FVector TargetLocation, OwnerLocation, DirectionToTarget;
@@ -510,6 +516,10 @@ void UCBossMovementComponent::ExecuteSmartMovement(float DeltaTime, float MinDis
 	
 	// 목표 위치 변수
 	FVector TargetPosition;
+	
+	// 180도 방향 전환 감지 및 처리
+	FVector CurrentBossMovementDirection = FVector::ZeroVector;
+	bool bIs180DegreeTurn = false;
 	
 	// 항상 타겟을 바라보기 (기존 함수 사용)
 	RotateTowardsPlayer(DeltaTime, 5.0f);
@@ -580,6 +590,7 @@ void UCBossMovementComponent::ExecuteSmartMovement(float DeltaTime, float MinDis
 					// 좌우 이동이 더 강함
 					FVector SideDirection = (RightDot > 0) ? -BossRight : BossRight; // 반대 방향
 					TargetPosition = OwnerLocation + (SideDirection * 200.0f);
+					CurrentBossMovementDirection = SideDirection;
 				}
 				// 앞뒤 방향 처리 (좌우보다 앞뒤가 더 강할 때)
 				else if (ForwardDot > 0.1f) // 앞으로 이동 (양수)
@@ -587,39 +598,94 @@ void UCBossMovementComponent::ExecuteSmartMovement(float DeltaTime, float MinDis
 					// 플레이어가 앞으로 가면 보스도 앞으로 이동
 					FVector ForwardDirection = BossForward;
 					TargetPosition = OwnerLocation + (ForwardDirection * 200.0f);
+					CurrentBossMovementDirection = ForwardDirection;
 				}
 				else if (ForwardDot < -0.1f) // 뒤로 이동 (음수)
 				{
 					// 플레이어가 뒤로 가면 보스도 뒤로 이동
 					FVector BackwardDirection = -BossForward;
 					TargetPosition = OwnerLocation + (BackwardDirection * 200.0f);
+					CurrentBossMovementDirection = BackwardDirection;
 				}
 			}
 			// 플레이어가 정지하고 이전 방향도 없으면 그대로 유지
 			
-			// AI MoveTo로 목표 좌표로 이동
-			if (AIC)
+		// 180도 방향 전환 감지 (조건 강화)
+		if (bLastMovementInitialized && CurrentBossMovementDirection.Size() > 0.1f)
+		{
+			float DotProduct = FVector::DotProduct(LastBossMovementDirection.GetSafeNormal(), CurrentBossMovementDirection.GetSafeNormal());
+			// DotProduct가 -0.7보다 작으면 180도에 가까운 전환 (더 민감하게)
+			if (DotProduct < -0.7f)
 			{
-					AIC->MoveToLocation(TargetPosition, 0);
+				bIs180DegreeTurn = true;
+				DirectionChangeTimer = 0.0f; // 타이머 리셋
+				
+				// 디버그 로그
+				UE_LOG(LogTemp, Warning, TEXT("180도 방향 전환 감지! DotProduct: %f"), DotProduct);
+			}
+		}
+		
+		// 180도 방향 전환 시 잠깐 멈춤 (0.2초로 연장 + 속도 리셋)
+		if (bIs180DegreeTurn && DirectionChangeTimer < 0.2f)
+		{
+			DirectionChangeTimer += DeltaTime;
+			// 멈춤 상태: 현재 위치 유지
+			TargetPosition = OwnerLocation;
+			
+			// CharacterMovement 속도 강제 리셋
+			if (ACharacter* BossChar = Cast<ACharacter>(Owner))
+			{
+				BossChar->GetCharacterMovement()->StopMovementImmediately();
+				BossChar->GetCharacterMovement()->Velocity = FVector::ZeroVector;
 			}
 		}
 		else
 		{
-			// 아직 목표 위치에 도착하지 않았으면 계속 목표 위치로 이동
-			FVector CurrentTargetPosition = TargetLocation - DirectionToTarget * MinDistance;
-			TargetPosition = CurrentTargetPosition;
-			
-			// AI 컨트롤러로 이동
-			if (AIC)
+			// 정상 이동 또는 멈춤 시간 완료
+			if (DirectionChangeTimer >= 0.2f)
 			{
-					AIC->MoveToLocation(TargetPosition, 0);
+				bIs180DegreeTurn = false; // 180도 전환 완료
 			}
+		}
+		
+		// 이전 이동 방향 저장
+		if (CurrentBossMovementDirection.Size() > 0.1f)
+		{
+			LastBossMovementDirection = CurrentBossMovementDirection;
+			bLastMovementInitialized = true;
+		}
+		
+		// AI MoveTo로 목표 좌표로 이동 (Strafe 모드)
+		if (AIC)
+		{
+			FAIMoveRequest MoveRequest;
+			MoveRequest.SetGoalLocation(TargetPosition);
+			MoveRequest.SetCanStrafe(true);  // 옆걸음 모드 - 회전하지 않고 이동
+			MoveRequest.SetAcceptanceRadius(50.0f);
+			AIC->MoveTo(MoveRequest);
+		}
+		}
+		else
+		{
+		// 아직 목표 위치에 도착하지 않았으면 계속 목표 위치로 이동
+		FVector CurrentTargetPosition = TargetLocation - DirectionToTarget * MinDistance;
+		TargetPosition = CurrentTargetPosition;
+		
+		// AI 컨트롤러로 이동 (Strafe 모드)
+		if (AIC)
+		{
+			FAIMoveRequest MoveRequest;
+			MoveRequest.SetGoalLocation(TargetPosition);
+			MoveRequest.SetCanStrafe(true);  // 옆걸음 모드 - 회전하지 않고 이동
+			MoveRequest.SetAcceptanceRadius(50.0f);
+			AIC->MoveTo(MoveRequest);
+		}
 		}
 		
 		// 속도 조정 (궤도 이동)
 		if (ACharacter* BossChar = Cast<ACharacter>(Owner))
 		{
-			BossChar->GetCharacterMovement()->MaxWalkSpeed = 150;
+			BossChar->GetCharacterMovement()->MaxWalkSpeed = 200;
 		}
 	}
 	else
@@ -633,13 +699,17 @@ void UCBossMovementComponent::ExecuteSmartMovement(float DeltaTime, float MinDis
 			// 속도 조정 (거리 유지 - 빠른 이동)
 			if (ACharacter* BossChar = Cast<ACharacter>(Owner))
 			{
-				BossChar->GetCharacterMovement()->MaxWalkSpeed = 300;
+				BossChar->GetCharacterMovement()->MaxWalkSpeed = 200;
 			}
 			
-			// AI 컨트롤러로 이동
+			// AI 컨트롤러로 이동 (Strafe 모드)
 			if (AIC)
 			{
-					AIC->MoveToLocation(TargetPosition, 0);
+				FAIMoveRequest MoveRequest;
+				MoveRequest.SetGoalLocation(TargetPosition);
+				MoveRequest.SetCanStrafe(true);  // 옆걸음 모드 - 회전하지 않고 이동
+				MoveRequest.SetAcceptanceRadius(50.0f);
+				AIC->MoveTo(MoveRequest);
 			}
 		}
 		else if (CurrentDistance > AdjustedMaxDistance)
@@ -649,13 +719,17 @@ void UCBossMovementComponent::ExecuteSmartMovement(float DeltaTime, float MinDis
 			// 속도 조정 (거리 유지 - 빠른 이동)
 			if (ACharacter* BossChar = Cast<ACharacter>(Owner))
 			{
-				BossChar->GetCharacterMovement()->MaxWalkSpeed = 300;
+				BossChar->GetCharacterMovement()->MaxWalkSpeed = 200;
 			}
 			
-			// AI 컨트롤러로 이동
+			// AI 컨트롤러로 이동 (Strafe 모드)
 			if (AIC)
 			{
-					AIC->MoveToLocation(TargetPosition, 0);
+				FAIMoveRequest MoveRequest;
+				MoveRequest.SetGoalLocation(TargetPosition);
+				MoveRequest.SetCanStrafe(true);  // 옆걸음 모드 - 회전하지 않고 이동
+				MoveRequest.SetAcceptanceRadius(50.0f);
+				AIC->MoveTo(MoveRequest);
 			}
 		}
 		else
@@ -666,13 +740,17 @@ void UCBossMovementComponent::ExecuteSmartMovement(float DeltaTime, float MinDis
 			// 속도 조정 (거리 유지 - 부드러운 접근)
 			if (ACharacter* BossChar = Cast<ACharacter>(Owner))
 			{
-				BossChar->GetCharacterMovement()->MaxWalkSpeed = 300;
+				BossChar->GetCharacterMovement()->MaxWalkSpeed = 200;
 			}
 			
-			// AI 컨트롤러로 이동
+			// AI 컨트롤러로 이동 (Strafe 모드)
 			if (AIC)
 			{
-					AIC->MoveToLocation(TargetPosition, 0);
+				FAIMoveRequest MoveRequest;
+				MoveRequest.SetGoalLocation(TargetPosition);
+				MoveRequest.SetCanStrafe(true);  // 옆걸음 모드 - 회전하지 않고 이동
+				MoveRequest.SetAcceptanceRadius(50.0f);
+				AIC->MoveTo(MoveRequest);
 			}
 		}
 	}

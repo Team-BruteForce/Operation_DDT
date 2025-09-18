@@ -22,7 +22,7 @@ void UFlyingComponent::BeginPlay()
 	OwnerCharacter = Cast<ACharacter>(GetOwner());
 	if (OwnerCharacter)
 	{
-		CharacterMovement = OwnerCharacter->GetCharacterMovement();
+		CharacterMovement = OwnerCharacter->GetCharacterMovement(); 
 		StartLocation = OwnerCharacter->GetActorLocation();
 		CurrentAltitude = StartLocation.Z;
 		TargetAltitude = StartLocation.Z + DefaultFlyingHeight;
@@ -675,25 +675,72 @@ void UFlyingComponent::UpdateHovering(float DeltaTime)
 			CompletionDelayTimer = CompletionDelay;
 		}
 	}
-	// 사이드 이동 중인지 확인
+	// 사이드 이동 중인지 확인 (곡선 이동으로 개선)
 	else if (bIsMovingSideways)
 	{
-		// 첫 프레임은 스킵
+		// 첫 프레임: 곡선 이동 초기화
 		if (bJustStartedMovement)
 		{
 			bJustStartedMovement = false;
-			float SideMovementSpeed = FlyingSpeed * 1.5f;
-			MoveToLocation(SideTargetLocation, SideMovementSpeed, 50.0f); // 이동만 시작
+			SideMovementProgress = 0.0f; // 곡선 진행도 초기화
+			SideStartLocation = OwnerCharacter->GetActorLocation(); // 시작 위치 저장
+			
+			// 중간점 계산 (곡선을 위한 제어점)
+			FVector ToTarget = SideTargetLocation - SideStartLocation;
+			FVector Perpendicular = FVector::CrossProduct(ToTarget, FVector::UpVector).GetSafeNormal();
+			SideMidPoint = SideStartLocation + ToTarget * 0.5f + Perpendicular * 150.0f; // 곡선의 높이
 			return;
 		}
 		
-		// 사이드 위치로 이동
-		float SideMovementSpeed = FlyingSpeed * 1.5f;
-		bool bReached = MoveToLocation(SideTargetLocation, SideMovementSpeed, 50.0f);
+		// 곡선 이동 업데이트 (이징 적용)
+		float BaseSideMovementSpeed = FlyingSpeed * 0.8f; // 1.5f에서 0.8f로 감소
 		
-		if (bReached)
+		// 이징 함수: 천천히 → 정상 → 천천히 (SmoothStep)
+		float EaseMultiplier = CalculateEaseInOutMultiplier(SideMovementProgress);
+		float AdjustedSpeed = BaseSideMovementSpeed * EaseMultiplier;
+		
+		SideMovementProgress += DeltaTime * (AdjustedSpeed / 1000.0f); // 진행도 업데이트
+		SideMovementProgress = FMath::Clamp(SideMovementProgress, 0.0f, 1.0f);
+		
+		// 베지어 곡선으로 부드러운 경로 계산
+		FVector CurrentPosition = CalculateBezierPoint(SideStartLocation, SideMidPoint, SideTargetLocation, SideMovementProgress);
+		
+		// 항상 플레이어를 바라보도록 회전 설정
+		APawn* TargetPawn = nullptr;
+		for (FConstPlayerControllerIterator Iterator = GetWorld()->GetPlayerControllerIterator(); Iterator; ++Iterator)
 		{
-			CLog::Log("사이드 이동 완료! 호버링 전환 후 0.5초 딜레이");
+			APlayerController* PC = Iterator->Get();
+			if (PC && PC->GetPawn())
+			{
+				TargetPawn = PC->GetPawn();
+				break;
+			}
+		}
+		
+		if (TargetPawn)
+		{
+			FVector PlayerLocation = TargetPawn->GetActorLocation();
+			FVector CurrentPos = OwnerCharacter->GetActorLocation();
+			FVector LookDirection = (PlayerLocation - CurrentPos).GetSafeNormal();
+			FRotator TargetRotation = FRotationMatrix::MakeFromX(LookDirection).Rotator();
+			
+			// Yaw만 업데이트 (비행 중 고도 유지)
+			FRotator CurrentRotation = OwnerCharacter->GetActorRotation();
+			TargetRotation.Pitch = CurrentRotation.Pitch;
+			TargetRotation.Roll = CurrentRotation.Roll;
+			
+			// 부드러운 회전 적용
+			FRotator NewRotation = FMath::RInterpTo(CurrentRotation, TargetRotation, DeltaTime, 3.0f);
+			OwnerCharacter->SetActorRotation(NewRotation);
+		}
+		
+		// 곡선 경로로 이동
+		bool bReached = MoveToLocation(CurrentPosition, BaseSideMovementSpeed, 50.0f);
+		
+		// 곡선 이동 완료 확인 (진행도 기반)
+		if (SideMovementProgress >= 1.0f)
+		{
+			CLog::Log("곡선 사이드 이동 완료! 호버링 전환 후 0.5초 딜레이");
 			
 			// 1단계: 이동 완료
 			bIsMovingSideways = false;
@@ -1301,6 +1348,9 @@ void UFlyingComponent::ResetFlyingSystem()
 	HoveringLocation = FVector::ZeroVector;
 	RandomTargetLocation = FVector::ZeroVector;
 	SideTargetLocation = FVector::ZeroVector;
+	SideStartLocation = FVector::ZeroVector;
+	SideMidPoint = FVector::ZeroVector;
+	SideMovementProgress = 0.0f;
 	CurrentSplineSemicircleTarget = FVector::ZeroVector;
 	CurrentRandomOffset = FVector::ZeroVector;
 
@@ -1347,4 +1397,37 @@ void UFlyingComponent::ResetFlyingSystem()
 	}
 
 	UE_LOG(LogTemp, Warning, TEXT("비행 시스템 완전 초기화 완료 - 착륙 상태로 리셋"));
+}
+
+/**
+ * @brief 베지어 곡선 계산 함수 (3점 기준 2차 베지어)
+ */
+FVector UFlyingComponent::CalculateBezierPoint(const FVector& P0, const FVector& P1, const FVector& P2, float t) const
+{
+	// 2차 베지어 곡선 공식: (1-t)²P0 + 2(1-t)tP1 + t²P2
+	float OneMinusT = 1.0f - t;
+	float OneMinusTSquared = OneMinusT * OneMinusT;
+	float TSquared = t * t;
+	float TwoOneMinusTT = 2.0f * OneMinusT * t;
+	
+	return OneMinusTSquared * P0 + TwoOneMinusTT * P1 + TSquared * P2;
+}
+
+/**
+ * @brief 이징 함수 - 천천히 → 정상 → 천천히 (SmoothStep 기반)
+ */
+float UFlyingComponent::CalculateEaseInOutMultiplier(float t) const
+{
+	// SmoothStep 함수: 3t² - 2t³
+	float SmoothT = t * t * (3.0f - 2.0f * t);
+	
+	// 속도 배수 계산 (미분값 기반)
+	// SmoothStep의 미분: 6t - 6t²
+	float SpeedMultiplier = 6.0f * t * (1.0f - t);
+	
+	// 최소 속도 0.3배, 최대 속도 1.2배로 조정 (더 부드럽게)
+	float MinSpeed = 0.3f;
+	float MaxSpeed = 1.2f;
+	
+	return FMath::Lerp(MinSpeed, MaxSpeed, SpeedMultiplier);
 }
