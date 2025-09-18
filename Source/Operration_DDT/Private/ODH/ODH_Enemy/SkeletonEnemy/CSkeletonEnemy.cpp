@@ -15,6 +15,7 @@
 #include "Player/CPlayerBullet.h"
 #include "Player/DDTPlayer.h"
 #include "ODH/ODH_Enemy/CCombatEncounterManager.h"
+#include "ODH/ODH_Enemy/Component/CEnemyHealthBarComponent.h"
 
 // Sets default values
 ACSkeletonEnemy::ACSkeletonEnemy()
@@ -179,7 +180,38 @@ void ACSkeletonEnemy::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	// 애니메이션에서 처리하므로 코드 기반 이동 연출 업데이트 제거
+	// 마지막 콤보 공격 부드러운 이동 업데이트
+	if (bIsLastComboMoving)
+	{
+		// 현재 위치에서 목표 위치로의 방향 계산
+		FVector CurrentLocation = GetActorLocation();
+		FVector Direction = (LastComboTargetLocation - CurrentLocation).GetSafeNormal();
+		
+		// 이동 거리 계산
+		float DistanceToTarget = FVector::Dist(CurrentLocation, LastComboTargetLocation);
+		float MovementDistance = LastComboMovementSpeed * DeltaTime;
+		
+		// 목표 지점에 도달했거나 가까워졌는지 확인
+		if (DistanceToTarget <= MovementDistance || DistanceToTarget < 5.0f)
+		{
+			// 목표 지점에 도달
+			SetActorLocation(LastComboTargetLocation);
+			bIsLastComboMoving = false;
+			
+			if (GEngine)
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Green, TEXT("Last Combo Movement Completed"));
+			}
+		}
+		else
+		{
+			// 목표 방향으로 부드럽게 이동
+			FVector NewLocation = CurrentLocation + (Direction * MovementDistance);
+			SetActorLocation(NewLocation);
+		}
+	}
+
+	// 애니메이션에서 처리하므로 기타 코드 기반 이동 연출 업데이트 제거
 }
 
 // Called to bind functionality to input
@@ -228,6 +260,74 @@ float ACSkeletonEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const&
 	// IDamageable 인터페이스의 TakeDamage_Implementation 호출
 	TakeDamage_Implementation(DamageAmount);
 
+	// 약점(헤드 등) 피격 시 즉시 그로기 100 누적
+	bool bWeakSpotHit = false;
+	if (const FPointDamageEvent* PointEvt = static_cast<const FPointDamageEvent*>(DamageEvent.GetTypeID() == FPointDamageEvent::ClassID ? &DamageEvent : nullptr))
+	{
+		const FName HitBone = PointEvt->HitInfo.BoneName;
+		// 총알의 배율 로직과 일치하도록 단순 본명 판정
+		if (HitBone == "head" || HitBone == "Head" || HitBone == "head_01" || HitBone == "Head_01" || HitBone == "skull" || HitBone == "Skull")
+		{
+			bWeakSpotHit = true;
+		}
+	}
+
+	if (bWeakSpotHit)
+	{
+		GroggyGage += 100;
+	}
+	else
+	{
+		// 스켈레톤은 2~3대 맞으면 100 이상: 평균 50씩 가정
+		GroggyGage += 50;
+	}
+
+	if (GroggyGage >= 100)
+	{
+		bIsHitState = true;
+		GroggyGage = 0; // 임계 도달 시 초기화(원치 않으면 제거)
+		// 이동 정지 처리
+		if (UCharacterMovementComponent* Move = GetCharacterMovement())
+		{
+			SavedMovementMode = Move->MovementMode;
+			SavedCustomMovementMode = Move->CustomMovementMode;
+			Move->DisableMovement();
+		}
+	}
+
+	// 전투 비진입 상태에서 피격 시 타겟 및 전투 상태 설정
+	if (AController* OwnerController = Cast<AController>(GetController()))
+	{
+		if (AAIController* AI = Cast<AAIController>(OwnerController))
+		{
+			if (UBlackboardComponent* BB = AI->GetBlackboardComponent())
+			{
+				const FName KeyIsInCombat = TEXT("IsInCombat");
+				const FName KeyTargetPlayer = TEXT("TargetPlayer");
+				const bool bInCombat = BB->GetValueAsBool(KeyIsInCombat);
+				if (!bInCombat)
+				{
+					UObject* TargetObj = nullptr;
+					if (EventInstigator)
+					{
+						APawn* InstigatorPawn = EventInstigator->GetPawn();
+						TargetObj = InstigatorPawn ? static_cast<UObject*>(InstigatorPawn) : static_cast<UObject*>(EventInstigator);
+					}
+					if (TargetObj)
+					{
+                        BB->SetValueAsObject(KeyTargetPlayer, TargetObj);
+                        BB->SetValueAsBool(KeyIsInCombat, true);
+                        // 전투 돌입: 체력바 표시
+                        if (UCEnemyHealthBarComponent* HB = FindComponentByClass<UCEnemyHealthBarComponent>())
+                        {
+                            HB->ShowHealthBar();
+                        }
+					}
+				}
+			}
+		}
+	}
+
 	// 전투 중 피격 시 NoHitTime 초기화
 	if (AController* C = GetController())
 	{
@@ -258,6 +358,15 @@ float ACSkeletonEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const&
 	}
 
 	return DamageAmount;
+}
+
+void ACSkeletonEnemy::EndHitState()
+{
+	bIsHitState = false;
+	if (UCharacterMovementComponent* Move = GetCharacterMovement())
+	{
+		Move->SetMovementMode(static_cast<EMovementMode>(SavedMovementMode), SavedCustomMovementMode);
+	}
 }
 
 // IGenericTeamAgentInterface 구현
@@ -429,6 +538,33 @@ void ACSkeletonEnemy::EnableLastComboCollision()
 	if (GEngine)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Magenta, TEXT("Last Combo Collision Enabled"));
+	}
+}
+
+void ACSkeletonEnemy::LastComboMovement(float ForwardDistance)
+{
+	// 사망한 경우 이동하지 않음
+	if (StatusComponent && StatusComponent->IsDead())
+	{
+		return;
+	}
+
+	// 현재 바라보는 방향 계산 (Yaw 회전만 사용)
+	FRotator CurrentRotation = GetActorRotation();
+	FVector ForwardDirection = FRotationMatrix(FRotator(0.0f, CurrentRotation.Yaw, 0.0f)).GetUnitAxis(EAxis::X);
+	
+	// 시작 위치와 목표 위치 설정
+	LastComboStartLocation = GetActorLocation();
+	LastComboTargetLocation = LastComboStartLocation + (ForwardDirection * ForwardDistance);
+	
+	// 이동 상태 시작
+	bIsLastComboMoving = true;
+	
+	// 디버그 출력
+	if (GEngine)
+	{
+		FString DebugMessage = FString::Printf(TEXT("Last Combo Movement Started: Moving %.1f cm forward"), ForwardDistance);
+		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Magenta, DebugMessage);
 	}
 }
 
@@ -720,6 +856,9 @@ void ACSkeletonEnemy::OnDeath()
 		MoveComp->DisableMovement();
 		MoveComp->SetMovementMode(MOVE_None);
 	}
+	
+	// 모든 이동 상태 초기화
+	bIsLastComboMoving = false;
 	if (AController* C = GetController())
 	{
 		if (AAIController* AI = Cast<AAIController>(C))

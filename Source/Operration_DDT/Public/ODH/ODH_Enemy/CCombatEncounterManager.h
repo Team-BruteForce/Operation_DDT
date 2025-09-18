@@ -27,7 +27,7 @@ public:
 	int32 BatchSize = 10;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Encounter|Performance")
-	float BatchIntervalSeconds = 0.01f;
+	float BatchIntervalSeconds = 0.0f;
 
 	// 수동 호출용
 	UFUNCTION(BlueprintCallable, Category = "Encounter")

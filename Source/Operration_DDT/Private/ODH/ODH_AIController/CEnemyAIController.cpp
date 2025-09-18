@@ -9,6 +9,7 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Engine/Engine.h"
 #include "Kismet/GameplayStatics.h"
+#include "ODH/ODH_Enemy/Component/CEnemyHealthBarComponent.h"
 
 ACEnemyAIController::ACEnemyAIController()
 {
@@ -65,6 +66,18 @@ void ACEnemyAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus S
 		return;
 	}
 	
+	// IsPlayerInBoss가 true이면 탐색하지 않음
+	UBlackboardComponent* BlackboardComp = GetBlackboardComponent();
+	if (BlackboardComp)
+	{
+		static const FName KeyIsPlayerInBoss = TEXT("IsPlayerInBoss");
+		const bool bIsPlayerInBoss = BlackboardComp->GetValueAsBool(KeyIsPlayerInBoss);
+		if (bIsPlayerInBoss)
+		{
+			return; // 보스 구역에 플레이어가 있으면 탐색 중단
+		}
+	}
+	
 	// 시각 감지인지 확인
 	if (Stimulus.Type == UAISense::GetSenseID<UAISense_Sight>())
 	{
@@ -77,12 +90,19 @@ void ACEnemyAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus S
 				OnEnemyDetected(Actor);
 				
 				// 블랙보드에 타겟 플레이어 설정
-				UBlackboardComponent* BlackboardComp = GetBlackboardComponent();
 				if (BlackboardComp)
 				{
 					BlackboardComp->SetValueAsObject("TargetPlayer", Actor);
 					BlackboardComp->SetValueAsBool("IsInCombat", true);
 					BlackboardComp->SetValueAsVector("LastSeenLocation", Actor->GetActorLocation());
+					// 전투 돌입: 체력바 표시
+					if (APawn* P = GetPawn())
+					{
+						if (UCEnemyHealthBarComponent* HB = P->FindComponentByClass<UCEnemyHealthBarComponent>())
+						{
+							HB->ShowHealthBar();
+						}
+					}
 					
 					// 기존 타이머가 있다면 취소 (새로운 타겟을 찾았으므로)
 					if (TargetLostTimerHandle.IsValid())

@@ -79,6 +79,18 @@ public:
 
 	// 공격/사망 상태 플래그
 public:
+		// 그로기/피격 상태
+		UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Groggy")
+		int32 GroggyGage = 0;
+
+		UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Groggy")
+		bool bIsHitState = false;
+
+		uint8 SavedMovementMode = 0;
+		uint8 SavedCustomMovementMode = 0;
+
+		UFUNCTION(BlueprintCallable, Category = "Groggy")
+		void EndHitState();
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "State")
 	bool GetIsMeleeAttacking() const { return bIsMeleeAttacking; }
 	
