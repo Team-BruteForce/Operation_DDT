@@ -26,14 +26,9 @@
  */
 ACBossAIC::ACBossAIC()
 {
+
 	// StateTree 컴포넌트 생성
 	CHelpers::CreateActorComponent(this, &StateTreeComp, "StateTreeComp");
-
-	// // StateTree 설정
-	// if (StateTree && StateTreeComp)
-	// {
-	// 	StateTreeComp->SetStateTree(StateTree);
-	// }
 }
 
 /**

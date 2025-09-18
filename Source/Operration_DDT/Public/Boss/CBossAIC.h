@@ -14,7 +14,6 @@
 
 #include "CoreMinimal.h"
 #include "AIController.h"
-#include "StateTree.h"
 #include "CBossAIC.generated.h"
 
 /**
@@ -50,6 +49,6 @@ protected:
 	 * 
 	 * StateTree 기반 AI 시스템을 실행하는 컴포넌트입니다.
 	 */
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	class UStateTreeAIComponent* StateTreeComp;
 };
