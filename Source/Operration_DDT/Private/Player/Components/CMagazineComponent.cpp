@@ -3,6 +3,7 @@
 
 #include "Player/Components/CMagazineComponent.h"
 #include "Global.h"
+#include "IO/OnDemandToc.h"
 #include "Player/DDTPlayer.h"
 
 // Sets default values for this component's properties
@@ -26,6 +27,8 @@ void UCMagazineComponent::BeginPlay()
 	TotalRifleBullets <= RifleMagazines ? CurrentRifleBullets = TotalRifleBullets : CurrentRifleBullets = RifleMagazines;
 	TotalRifleBullets -= CurrentRifleBullets;
 
+	OnCurrentBulletChanged.Broadcast(CurrentRifleBullets);
+	OnTotalBulletChanged.Broadcast(TotalRifleBullets);
 	
 }
 
@@ -50,12 +53,15 @@ void UCMagazineComponent::ReloadRifleMagazine()
 	if (CheckCanReload() == false ) return;
 	
 	++CurrentRifleBullets;
+	OnCurrentBulletChanged.Broadcast(CurrentRifleBullets);
 	--TotalRifleBullets;
+	OnTotalBulletChanged.Broadcast(TotalRifleBullets);
 }
 
 void UCMagazineComponent::LootRifleBullets(int32 InValue)
 {
 	TotalRifleBullets += InValue;
+	OnTotalBulletChanged.Broadcast(TotalRifleBullets);
 }
 
 void UCMagazineComponent::Reloading()

@@ -28,6 +28,7 @@ void UCStatusComponent::BeginPlay()
 	// 초기 체력 설정
 	NowHp = MaxHp;
 	OnPlayerHealthChanged.Broadcast(NowHp, MaxHp);
+	OnHealItemChanged.Broadcast(HealItemCount);
 	
 }
 
@@ -60,9 +61,16 @@ void UCStatusComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAct
 			HealElapsedTime = 0.0f;
 
 			HealItemCount--;
+			OnHealItemChanged.Broadcast(HealItemCount);
 			CLog::Log("회복 완료! 현재 체력: " + FString::SanitizeFloat(NowHp));
 		}
 	}
+}
+
+void UCStatusComponent::GainHealItem()
+{
+	HealItemCount++;
+	OnHealItemChanged.Broadcast(HealItemCount);
 }
 
 void UCStatusComponent::GetDamage(float value)

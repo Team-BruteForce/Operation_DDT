@@ -7,6 +7,7 @@
 #include "CStatusComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPlayerHealthChanged, float, NewHP, float, MaxHP);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHealItemChanged, int32, NewCount);
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class OPERRATION_DDT_API UCStatusComponent : public UActorComponent
 {
@@ -31,7 +32,8 @@ public:
 	FORCEINLINE int32 GetHealItemCount () { return HealItemCount; }
 	FORCEINLINE bool GetIsHealing () { return bIsHealing; }
 
-	FORCEINLINE void GainHealItem() { HealItemCount++; }
+	UFUNCTION()
+	void GainHealItem();
 
 	void GetDamage(float value);
 	void GetHeal(float value);
@@ -74,6 +76,9 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Health")
 	FOnPlayerHealthChanged OnPlayerHealthChanged;
+
+	UPROPERTY(BlueprintAssignable, Category = "Health")
+	FOnHealItemChanged OnHealItemChanged;
 	
 private:
 	UPROPERTY(VisibleAnywhere, Category = "Health")

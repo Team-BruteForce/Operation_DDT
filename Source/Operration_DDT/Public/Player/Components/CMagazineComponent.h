@@ -6,7 +6,8 @@
 #include "Components/ActorComponent.h"
 #include "CMagazineComponent.generated.h"
 
-
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCurrentBulletChanged, int32, NewCount);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTotalBulletChanged, int32, NewCount);
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class OPERRATION_DDT_API UCMagazineComponent : public UActorComponent
 {
@@ -40,7 +41,7 @@ public:
 	int32 RevolverMagazines = 6;
 	int32 CurrentRevolverBullets = 0;
 	
-	FORCEINLINE void FireBullet() { --CurrentRifleBullets; }
+	FORCEINLINE void FireBullet() { --CurrentRifleBullets; OnCurrentBulletChanged.Broadcast(CurrentRifleBullets); }
 	
 	// 장전 시퀀스 관련 변수들
 	int32 ReloadLoopCount = 0;           // 현재 루프 반복 횟수
@@ -50,6 +51,12 @@ public:
 	bool bIsReloading = false;
 	FORCEINLINE bool GetIsReloading() { return bIsReloading; }
 	FORCEINLINE void SetIsReloading(bool bValue) { bIsReloading = bValue; }
+
+	UPROPERTY(BlueprintAssignable, Category = "UI")
+	FOnCurrentBulletChanged OnCurrentBulletChanged;
+	
+	UPROPERTY(BlueprintAssignable, Category = "UI")
+	FOnTotalBulletChanged OnTotalBulletChanged;
 	
 public:
 	void ReloadRifleMagazine();

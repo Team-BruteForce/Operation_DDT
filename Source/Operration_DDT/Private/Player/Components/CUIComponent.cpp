@@ -6,6 +6,7 @@
 #include "Blueprint/UserWidget.h"
 #include "Player/CPlayerUI.h"
 #include "Player/DDTPlayer.h"
+#include "Player/Components/CMagazineComponent.h"
 #include "Player/Components/CStaminaComponent.h"
 #include "Player/Components/CStatusComponent.h"
 
@@ -30,6 +31,7 @@ void UCUIComponent::BeginPlay()
 	OwnerCharater = Cast<ADDTPlayer>(GetOwner());
 	StaminaComp = CHelpers::GetComponent<UCStaminaComponent>(OwnerCharater);
 	StatusComp = CHelpers::GetComponent<UCStatusComponent>(OwnerCharater);
+	MagazineComp = CHelpers::GetComponent<UCMagazineComponent>(OwnerCharater);
 
 	if (OwnerCharater && playerUI)
 	{
@@ -42,6 +44,16 @@ void UCUIComponent::BeginPlay()
 		{
 			StatusComp->OnPlayerHealthChanged.AddDynamic(this, &UCUIComponent::OnHealthChanged);
 			OnHealthChanged(StatusComp->GetNowHp(), StatusComp->GetMaxHP());
+
+			StatusComp->OnHealItemChanged.AddDynamic(this, &UCUIComponent::OnHealItemChanged);
+			playerUI->SetHealItem(StatusComp->GetHealItemCount());
+		}
+		if (MagazineComp)
+		{
+			MagazineComp->OnCurrentBulletChanged.AddDynamic(this, &UCUIComponent::OnCurrentBulletChanged);
+			OnCurrentBulletChanged(MagazineComp->CurrentRifleBullets);
+			MagazineComp->OnTotalBulletChanged.AddDynamic(this, &UCUIComponent::OnTotalBulletChanged);
+			OnTotalBulletChanged(MagazineComp->TotalRifleBullets);
 		}
 	}
 	
@@ -83,6 +95,30 @@ void UCUIComponent::OnHealthChanged(float nowHp, float maxHp)
 		playerUI->SetHPBar(nowHp, maxHp);
 		CLog::Log(FString::Printf(TEXT("체력 UI 업데이트: %.1f/%.1f"), nowHp, maxHp));
 		
+	}
+}
+
+void UCUIComponent::OnHealItemChanged(int32 NewCount)
+{
+	if (playerUI)
+	{
+		playerUI->SetHealItem(NewCount);
+	}
+}
+
+void UCUIComponent::OnCurrentBulletChanged(int32 value)
+{
+	if (playerUI)
+	{
+		playerUI->SetCurrentBullet(value);
+	}
+}
+
+void UCUIComponent::OnTotalBulletChanged(int32 value)
+{
+	if (playerUI)
+	{
+		playerUI->SetTotalBullet(value);
 	}
 }
 

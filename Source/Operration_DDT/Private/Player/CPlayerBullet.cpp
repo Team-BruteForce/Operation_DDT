@@ -134,7 +134,7 @@ void ACPlayerBullet::OnBulletHit(UPrimitiveComponent* HitComponent, AActor* Othe
 	
 	// 본별 데미지 배율 계산
 	float DamageMultiplier = GetDamageMultiplierForBone(HitBoneName);
-	float FinalDamage = BulletDamage * DamageMultiplier;
+	float FinalDamage = BulletDamage;
 	
 	// 본별 로그 출력
 	if (DamageMultiplier > 1.0f)
@@ -146,7 +146,7 @@ void ACPlayerBullet::OnBulletHit(UPrimitiveComponent* HitComponent, AActor* Othe
 		CLog::Log("BODYSHOT! Damage: " + FString::SanitizeFloat(FinalDamage));
 	}
 	
-	// 충돌 지점에 본별 색상 디버그 구체 그리기
+	/*// 충돌 지점에 본별 색상 디버그 구체 그리기
 	FColor HitColor = (DamageMultiplier > 1.0f) ? FColor::Red : FColor::Green;  // 헤드샷: 빨간색, 바디샷: 녹색
 	DrawDebugSphere(
 		GetWorld(),
@@ -158,7 +158,7 @@ void ACPlayerBullet::OnBulletHit(UPrimitiveComponent* HitComponent, AActor* Othe
 		30.0f,  // LifeTime (초)
 		0,      // DepthPriority
 		2.0f    // Thickness
-	);
+	);*/
 	
 	// FPointDamageEvent 생성 및 설정
 	FPointDamageEvent PointDamageEvent;
