@@ -134,18 +134,30 @@ void UCFireComponent::Fire()
 	FVector CameraLocation = Camera->GetComponentLocation();
 	FVector CameraForwardVector = Camera->GetForwardVector();
 	
-	// 3. 카메라 전방벡터를 기준으로 라인트레이스 실행
+	// 3. 카메라 전방벡터를 기준으로 구체 스윕 실행
 	FHitResult HitResult;
 	FVector TraceStart = CameraLocation;
 	FVector TraceEnd = CameraLocation + (CameraForwardVector * MaxTraceDistance);
-	
-	bool bHit = GetWorld()->LineTraceSingleByChannel(
+
+	// 구체 반경 및 쿼리 파라미터 설정
+	const float SphereRadius = 8.0f;
+	FCollisionShape SphereShape = FCollisionShape::MakeSphere(SphereRadius);
+	FCollisionQueryParams QueryParams = FCollisionQueryParams::DefaultQueryParam;
+	QueryParams.AddIgnoredActor(OwnerCharacter);
+	if (Rifle)
+		QueryParams.AddIgnoredActor(Rifle);
+
+	bool bHit = GetWorld()->SweepSingleByChannel(
 		HitResult,
 		TraceStart,
 		TraceEnd,
+		FQuat::Identity,
 		ECollisionChannel::ECC_GameTraceChannel9, // "Rifle" trace channel
-		FCollisionQueryParams::DefaultQueryParam
+		SphereShape,
+		QueryParams
 	);
+
+	
 	
 	// 5. 총구 정보 가져오기
 	SetMuzzleVector(RifleSocketName);
@@ -179,7 +191,17 @@ void UCFireComponent::Fire()
 		0,      // DepthPriority
 		1.0f    // Thickness
 	);
-	
+	*/
+
+	#if WITH_EDITOR
+	{
+		const FColor DebugColor = bHit ? FColor::Yellow : FColor::Turquoise;
+		DrawDebugSphere(GetWorld(), TraceStart, SphereRadius, 12, DebugColor, false, 1.5f);
+		DrawDebugSphere(GetWorld(), bHit ? HitResult.ImpactPoint : TraceEnd, SphereRadius, 12, DebugColor, false, 10.f);
+		DrawDebugLine(GetWorld(), TraceStart, bHit ? HitResult.ImpactPoint : TraceEnd, DebugColor, false, 10.f, 0, 1.0f);
+	}
+	#endif
+	/*
 	// 총구에서 발사하는 라인트레이스 그리기 (녹색)
 	FVector MuzzleTraceEnd = MuzzleLocation + ((TargetPoint - MuzzleLocation).GetSafeNormal() * MaxTraceDistance);
 	DrawDebugLine(
