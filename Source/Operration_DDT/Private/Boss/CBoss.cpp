@@ -50,9 +50,9 @@ ACBoss::ACBoss()
 	GetMesh()->SetAnimInstanceClass(Anim);
 
 	// AI 컨트롤러 클래스 에셋 로드 및 설정
-	TSubclassOf<ACBossAIC> AIC;
-	CHelpers::GetClass<ACBossAIC>(&AIC, AssetPaths::Boss_AIC);
-	AIControllerClass = AIC;
+	// TSubclassOf<ACBossAIC> AIC;
+	// CHelpers::GetClass<ACBossAIC>(&AIC, AssetPaths::Boss_AIC);
+	// AIControllerClass = AIC;
 
 	//CHelpers::GetClass<ABossDissolve>(&BossDissolveClass, AssetPaths::Boss_Dissolve);
 	
