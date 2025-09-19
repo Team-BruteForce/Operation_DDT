@@ -6,7 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "CStatusComponent.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPlayerHealthChanged, float, NewHP, float, MaxHP);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnPlayerHealthChanged, float, prevHP, float, NewHP, float, MaxHP);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHealItemChanged, int32, NewCount);
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class OPERRATION_DDT_API UCStatusComponent : public UActorComponent

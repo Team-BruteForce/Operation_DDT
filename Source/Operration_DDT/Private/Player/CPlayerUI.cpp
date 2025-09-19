@@ -23,14 +23,94 @@ void UCPlayerUI::ShowCrosshair(bool bValue)
 void UCPlayerUI::SetHPBar(float value, float maxHP)
 {
 	CheckNull(pb_HP);
-
-	pb_HP->SetPercent(value / maxHP);
+    LastMaxHp = FMath::Max(1.0f, maxHP);
+    pb_HP->SetPercent(value / LastMaxHp);
 }
 
 void UCPlayerUI::SetStaminaBar(float value, float maxStamina)
 {
 	CheckNull(pb_Stamina);
-	pb_Stamina->SetPercent(value / maxStamina);
+    LastMaxStamina = FMath::Max(1.0f, maxStamina);
+    pb_Stamina->SetPercent(value / LastMaxStamina);
+}
+
+void UCPlayerUI::SetHPBar_Background(float prevHP, float newHP)
+{
+    CheckNull(pb_HP_Background);
+
+    const float prevPct = FMath::Clamp(prevHP / FMath::Max(1.0f, LastMaxHp), 0.0f, 1.0f);
+    const float newPct = FMath::Clamp(newHP / FMath::Max(1.0f, LastMaxHp), 0.0f, 1.0f);
+
+    // 체력 증가 시에는 즉시 동기화 (원하면 보간으로 바꿀 수 있음)
+    if (newPct >= prevPct)
+    {
+        pb_HP_Background->SetPercent(newPct);
+        bHPBgLerping = false;
+        HPBgCurrent = newPct;
+        return;
+    }
+
+    // 감소일 때: 기존 대기/보간 취소 후 1초 지연 예약
+    if (GetWorld())
+    {
+        GetWorld()->GetTimerManager().ClearTimer(HPBgDelayHandle);
+    }
+    bHPBgLerping = false;
+
+    HPBgPrev = prevPct;
+    HPBgTarget = newPct;
+    HPBgCurrent = prevPct;
+    HPBgElapsed = 0.0f;
+
+    if (GetWorld())
+    {
+        GetWorld()->GetTimerManager().SetTimer(
+            HPBgDelayHandle,
+            this,
+            &UCPlayerUI::StartHPBackgroundLerp,
+            1.0f,
+            false
+        );
+    }
+}
+
+void UCPlayerUI::SetStaminaBar_Background(float prevStamina, float newStamina)
+{
+    CheckNull(pb_Stamina_Background);
+
+    const float prevPct = FMath::Clamp(prevStamina / FMath::Max(1.0f, LastMaxStamina), 0.0f, 1.0f);
+    const float newPct  = FMath::Clamp(newStamina / FMath::Max(1.0f, LastMaxStamina), 0.0f, 1.0f);
+
+    // 증가(회복)일 때는 즉시 동기화
+    if (newPct >= prevPct)
+    {
+        pb_Stamina_Background->SetPercent(newPct);
+        bStaminaBgLerping = false;
+        StaminaBgCurrent = newPct;
+        return;
+    }
+
+    if (GetWorld())
+    {
+        GetWorld()->GetTimerManager().ClearTimer(StaminaBgDelayHandle);
+    }
+    bStaminaBgLerping = false;
+
+    StaminaBgPrev = prevPct;
+    StaminaBgTarget = newPct;
+    StaminaBgCurrent = prevPct;
+    StaminaBgElapsed = 0.0f;
+
+    if (GetWorld())
+    {
+        GetWorld()->GetTimerManager().SetTimer(
+            StaminaBgDelayHandle,
+            this,
+            &UCPlayerUI::StartStaminaBackgroundLerp,
+            1.0f,
+            false
+        );
+    }
 }
 
 void UCPlayerUI::SetCurrentBullet(int32 value)
@@ -77,4 +157,59 @@ void UCPlayerUI::SetHealItem(int32 value)
 		img_injection_full->SetVisibility(ESlateVisibility::Hidden);
 		img_injection_empty->SetVisibility(ESlateVisibility::Visible);
 	}
+}
+
+void UCPlayerUI::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
+{
+    Super::NativeTick(MyGeometry, InDeltaTime);
+
+    if (bHPBgLerping)
+    {
+        HPBgElapsed += InDeltaTime;
+        const float t = FMath::Clamp(HPBgElapsed / HPBgLerpDuration, 0.0f, 1.0f);
+        const float easedT = t; // 선형. 필요시 EaseOut: 1 - FMath::Pow(1 - t, 3)
+        HPBgCurrent = FMath::Lerp(HPBgPrev, HPBgTarget, easedT);
+
+        if (pb_HP_Background)
+        {
+            pb_HP_Background->SetPercent(HPBgCurrent);
+        }
+
+        if (t >= 1.0f)
+        {
+            bHPBgLerping = false;
+            HPBgCurrent = HPBgTarget;
+        }
+    }
+
+    if (bStaminaBgLerping)
+    {
+        StaminaBgElapsed += InDeltaTime;
+        const float t = FMath::Clamp(StaminaBgElapsed / StaminaBgLerpDuration, 0.0f, 1.0f);
+        const float easedT = t;
+        StaminaBgCurrent = FMath::Lerp(StaminaBgPrev, StaminaBgTarget, easedT);
+
+        if (pb_Stamina_Background)
+        {
+            pb_Stamina_Background->SetPercent(StaminaBgCurrent);
+        }
+
+        if (t >= 1.0f)
+        {
+            bStaminaBgLerping = false;
+            StaminaBgCurrent = StaminaBgTarget;
+        }
+    }
+}
+
+void UCPlayerUI::StartHPBackgroundLerp()
+{
+    bHPBgLerping = true;
+    HPBgElapsed = 0.0f;
+}
+
+void UCPlayerUI::StartStaminaBackgroundLerp()
+{
+    bStaminaBgLerping = true;
+    StaminaBgElapsed = 0.0f;
 }

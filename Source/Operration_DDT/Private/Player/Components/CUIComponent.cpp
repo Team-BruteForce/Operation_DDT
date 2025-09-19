@@ -38,12 +38,12 @@ void UCUIComponent::BeginPlay()
 		if (StaminaComp)
 		{
 			StaminaComp->OnStaminaChanged.AddDynamic(this, &UCUIComponent::OnStaminaChanged);
-			OnStaminaChanged(StaminaComp->GetNowStamina(), StaminaComp->GetMaxStamina());
+			OnStaminaChanged(StaminaComp->GetNowStamina(),StaminaComp->GetNowStamina(), StaminaComp->GetMaxStamina());
 		}
 		if (StatusComp)
 		{
 			StatusComp->OnPlayerHealthChanged.AddDynamic(this, &UCUIComponent::OnHealthChanged);
-			OnHealthChanged(StatusComp->GetNowHp(), StatusComp->GetMaxHP());
+			OnHealthChanged(StatusComp->GetNowHp(),StatusComp->GetNowHp(), StatusComp->GetMaxHP());
 
 			StatusComp->OnHealItemChanged.AddDynamic(this, &UCUIComponent::OnHealItemChanged);
 			playerUI->SetHealItem(StatusComp->GetHealItemCount());
@@ -78,21 +78,22 @@ void UCUIComponent::InitUIWidget()
 	}
 }
 
-void UCUIComponent::OnStaminaChanged(float nowStamina, float maxStamina)
+void UCUIComponent::OnStaminaChanged(float prevStamina, float nowStamina, float maxStamina)
 {
 	if (playerUI)
 	{
 		playerUI->SetStaminaBar(nowStamina, maxStamina);
+		playerUI->SetStaminaBar_Background(prevStamina, nowStamina);
 		CLog::Log(FString::Printf(TEXT("스테미나 UI 업데이트: %.1f/%.1f"), nowStamina, maxStamina));
 	}
 }
 
-void UCUIComponent::OnHealthChanged(float nowHp, float maxHp)
+void UCUIComponent::OnHealthChanged(float prevHp, float nowHp, float maxHp)
 {
 	if (playerUI)
 	{
-
 		playerUI->SetHPBar(nowHp, maxHp);
+		playerUI->SetHPBar_Background(prevHp,nowHp);
 		CLog::Log(FString::Printf(TEXT("체력 UI 업데이트: %.1f/%.1f"), nowHp, maxHp));
 		
 	}
