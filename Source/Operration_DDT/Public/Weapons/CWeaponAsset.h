@@ -5,6 +5,9 @@
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
 #include "CWeaponStructures.h"
+#include "Weapons/CAttachment.h"
+#include "Weapons/CEquipment.h"
+#include "Weapons/CDoAction.h"
 #include "CWeaponAsset.generated.h"
 
 /**
@@ -36,6 +39,10 @@ public:
 	FORCEINLINE class ACAttachment* GetAttachment() { return Attachment; }
 	FORCEINLINE class UCEquipment* GetEquipment() { return Equipment; }
 	FORCEINLINE class UCDoAction* GetDoAction() { return DoAction; }
+	/*FORCEINLINE ACAttachment* GetAttachment(){ return Attachment.Get(); }
+	FORCEINLINE UCEquipment* GetEquipment(){ return Equipment.Get(); }
+	FORCEINLINE UCDoAction* GetDoAction(){ return DoAction.Get(); }*/
+	
 	
 
 	UCWeaponAsset();
@@ -43,8 +50,7 @@ public:
 	void BeginPlay(class ACharacter* InOwner);
 
 private:
-	// UPROPERTY ?? ??? ?????? ?????? ??????? ?????? ???? ??? ?????.
-	// UWeaponAsset ?? UObject?¥ê??? ????? Actor?? ??????? ????X -> ?????? ?????? ???????
+
 	UPROPERTY()
 	class ACAttachment* Attachment;
 
@@ -53,6 +59,15 @@ private:
 
 	UPROPERTY()
 	class UCDoAction* DoAction;
+
+	/*UPROPERTY()
+	TObjectPtr<class ACAttachment> Attachment;
+	
+	UPROPERTY()
+	TObjectPtr<class UCEquipment> Equipment;
+	
+	UPROPERTY()
+	TObjectPtr<class UCDoAction> DoAction;*/
 
 	
 };
