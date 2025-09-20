@@ -92,6 +92,8 @@ public:
 	void SprintStart();
 	void SprintEnd();
 
+	FORCEINLINE void SetFalseOnMovePressing(){ bOnMovePressing = false; }
+
 private:
 	void SetSpeed(ESpeedType InType);
 
@@ -119,6 +121,8 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Camera")
 	float MaxPitch = 130.f;
+
+	bool bOnMovePressing = false;
 
 		
 };

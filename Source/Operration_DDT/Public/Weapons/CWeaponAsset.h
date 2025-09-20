@@ -49,6 +49,8 @@ public:
 
 	void BeginPlay(class ACharacter* InOwner);
 
+	void Cleanup();
+
 private:
 
 	UPROPERTY()

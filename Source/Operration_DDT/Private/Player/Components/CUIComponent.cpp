@@ -84,7 +84,7 @@ void UCUIComponent::OnStaminaChanged(float prevStamina, float nowStamina, float 
 	{
 		playerUI->SetStaminaBar(nowStamina, maxStamina);
 		playerUI->SetStaminaBar_Background(prevStamina, nowStamina);
-		CLog::Log(FString::Printf(TEXT("스테미나 UI 업데이트: %.1f/%.1f"), nowStamina, maxStamina));
+		//CLog::Log(FString::Printf(TEXT("스테미나 UI 업데이트: %.1f/%.1f"), nowStamina, maxStamina));
 	}
 }
 
@@ -94,7 +94,7 @@ void UCUIComponent::OnHealthChanged(float prevHp, float nowHp, float maxHp)
 	{
 		playerUI->SetHPBar(nowHp, maxHp);
 		playerUI->SetHPBar_Background(prevHp,nowHp);
-		CLog::Log(FString::Printf(TEXT("체력 UI 업데이트: %.1f/%.1f"), nowHp, maxHp));
+		//CLog::Log(FString::Printf(TEXT("체력 UI 업데이트: %.1f/%.1f"), nowHp, maxHp));
 		
 	}
 }

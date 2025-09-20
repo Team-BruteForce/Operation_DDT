@@ -39,7 +39,7 @@ void UCMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	// ...
-	CLog::Log("Movement) Direction " + Direction.ToString());
+	//CLog::Log("Movement) Direction " + Direction.ToString());
 	if (!Direction.IsNearlyZero())
 	{
 		FVector InputDirection = FTransform(OwnerCharacter->GetControlRotation()).TransformVector(Direction);
@@ -77,6 +77,8 @@ void UCMovementComponent::SetupInputBinding(class UEnhancedInputComponent* input
 void UCMovementComponent::OnSprint()
 {
 	if (OwnerStamina->GetNowStamina() <= 0.f) return;
+	if (bOnMovePressing == false) return;
+	
 	SetSpeed(ESpeedType::Sprint);
 	
 	if (bIsSprinting == false)
@@ -131,6 +133,8 @@ void UCMovementComponent::OnMove(const struct FInputActionValue& InAxis)
 	CachedDirection = Direction;
 	CachedDirection.Z = 0.f;
 
+	bOnMovePressing = true;
+
 	//CLog::Log("Forward : " + FString::SanitizeFloat(GetForwardInput()) + " Right : " + FString::SanitizeFloat(GetRightInput()));
 }
 
@@ -168,6 +172,8 @@ void UCMovementComponent::SprintEnd()
 	//OwnerStamina->SetRecoverTimer();
 	OwnerStamina->RecoverStamina();
 }
+
+
 
 void UCMovementComponent::SetSpeed(ESpeedType InType)
 {
