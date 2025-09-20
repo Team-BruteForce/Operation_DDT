@@ -4,6 +4,7 @@
 #include "Engine/Engine.h"
 #include "ODH/Component/CItemPoolManager.h"
 #include "Player/DDTPlayer.h"
+#include "Player/Components/CStatusComponent.h"
 #include "DrawDebugHelpers.h"
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraComponent.h"
@@ -168,11 +169,12 @@ void ADropHPPotionItem::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AAct
             GetWorld()->GetTimerManager().ClearTimer(AutoReturnTimerHandle);
         }
         
-        if (GEngine)
+        // 플레이어의 체력 회복 아이템 개수 증가
+        if (UCStatusComponent* StatusComp = Player->GetComponentByClass<UCStatusComponent>())
         {
-            GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green,
-                TEXT("체력 회복 포션 획득! +1"));
+            StatusComp->GainHealItem();
         }
+        
         ReturnToPool();
     }
 }

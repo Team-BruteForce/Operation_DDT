@@ -88,7 +88,7 @@ void UCEnemyHealthBarComponent::UpdateWidgetPercent()
 		Percent = StatusComponent->GetHealthPercent();
 	}
 
-	HealthWidget->SetHealthPercent(Percent);
+	HealthWidget->SetHealthPercent(Percent, FrontDecreaseSpeed, GhostDecreaseSpeed);
 }
 
 void UCEnemyHealthBarComponent::ShowHealthBar()

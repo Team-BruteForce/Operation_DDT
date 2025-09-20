@@ -83,19 +83,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attack")
 	TSubclassOf<AActor> ProjectileClass;
 
-	// 근접 공격 시 메쉬 상대 이동(연출) 설정 값
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Melee|VisualMove")
-	float MeleeVisualMaxDistance = 300.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Melee|VisualMove")
-	float MeleeVisualOutTime = 0.3f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Melee|VisualMove")
-	float MeleeVisualBackTime = 0.25f;
-
-	// 0이면 Z를 고정하고, 양수면 Z 오프셋을 그 값으로 제한
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Melee|VisualMove")
-	float MeleeVisualMaxZOffset = 0.0f;
 
 	// 공격/사망 상태 플래그
 public:
@@ -119,14 +106,6 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "State")
 	bool GetIsDashAttacking() const { return bIsDashAttacking; }
-
-	// 대쉬 공격 전환 트리거(거리 임계 도달 표시)
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "State")
-	bool GetDashAttackTrigger() const { return bDashAttackTrigger; }
-
-	// 대쉬 러닝 상태(달리기 애니메이션용)
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "State")
-	bool GetIsDashRunning() const { return bIsDashRunning; }
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "State")
 	bool GetIsHeadOpen() const { return bIsHeadOpen; }
@@ -203,10 +182,11 @@ public:
 	void StartDashMovementToPlayer();
 
 	UFUNCTION(BlueprintCallable, Category = "Dash Movement")
-	void UpdateDashMovementToPlayer(float DeltaTime, float Speed);
+	void UpdateDashMovementToPlayer(float DeltaTime, float TotalTime);
 
 	UFUNCTION(BlueprintCallable, Category = "Dash Movement")
 	void EndDashMovementToPlayer();
+
 
 	// 공격 콜리전 활성화/비활성화 함수들 (애니메이션 노티파이용)
 	UFUNCTION(BlueprintCallable, Category = "Attack")
@@ -247,37 +227,17 @@ private:
 	// 돌진 공격 이동 관련 변수들
 	FVector CachedPlayerLocation = FVector::ZeroVector;
 	bool bIsDashMoving = false;
+	
+	// 시간 기반 이동을 위한 변수들
+	FVector DashStartLocation = FVector::ZeroVector;
+	float DashElapsedTime = 0.0f;
+	float DashTotalTime = 0.0f;
 
-	// 대쉬 러닝 상태 및 이동 속도 제어
-	bool bIsDashRunning = false;
-	float PrevMaxWalkSpeed = -1.0f;
+	// 공격별 1회 타격 보장 가드
+	bool bHandLHasHit = false;
+	bool bHandRHasHit = false;
+	bool bDashHasHit = false;
 
-public:
-	// 대쉬 러닝 설정값 (블루프린트에서 조정 가능)
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dash|Run")
-	float DashRunSpeed = 1000.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dash|Run")
-	float DashStopDistance = 70.0f;
-
-	// 대쉬 공격 전환 신호 (거리 임계 도달 시 true)
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dash|Run")
-	bool bDashAttackTrigger = false;
-
-	// 대쉬 공격 1회 타격 보장 가드
-	bool bDashHasHitOnce = false;
-
-private:
-	// ===== 메쉬 상대 이동 근접 연출 상태 =====
-	bool bIsMeleeVisualMoving = false;
-	bool bMeleeVisualGoingOut = false;
-	float MeleeVisualElapsed = 0.0f;
-	FVector MeshStartRelativeLocation = FVector::ZeroVector;
-	FVector MeshTargetRelativeLocation = FVector::ZeroVector;
-
-	void StartMeleeVisualMove(AActor* TargetActor);
-	void UpdateMeleeVisualMove(float DeltaTime);
-	void EndMeleeVisualMove(bool bSnapToStart);
 
 public:
 	// 에디터에서 조정 가능한 최대 체력

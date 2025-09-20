@@ -21,6 +21,7 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "ODH/ODH_Enemy/Component/CEnemyHealthBarComponent.h"
 #include "Player/DDTPlayer.h"
+#include "../../UMG/Public/Components/WidgetComponent.h"
 
 // Sets default values
 ACFlowerEnemy::ACFlowerEnemy()
@@ -152,56 +153,8 @@ void ACFlowerEnemy::Tick(float DeltaTime)
 	}
 
 
-	// 메쉬 상대 이동 기반 근접 공격 연출 업데이트
-	if (bIsMeleeVisualMoving)
-	{
-		UpdateMeleeVisualMove(DeltaTime);
-	}
 
-	// 대쉬 러닝 중이면 플레이어까지 달리다가 임계 거리 이하면 러닝 종료
-	if (bIsDashRunning && !IsDead_Implementation())
-	{
-		APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(this, 0);
-		if (PlayerPawn)
-		{
-			const FVector MyLoc = GetActorLocation();
-			const FVector PlayerLoc = PlayerPawn->GetActorLocation();
-			const float Dist = FVector::Dist2D(MyLoc, PlayerLoc);
-			// 회전은 플레이어 바라보게 유지
-			const FVector Dir = (PlayerLoc - MyLoc).GetSafeNormal2D();
-			FRotator YawRot = Dir.Rotation();
-			YawRot.Pitch = 0.0f; YawRot.Roll = 0.0f;
-			SetActorRotation(YawRot);
-			AddMovementInput(Dir, 1.0f);
 
-			if (Dist <= DashStopDistance)
-			{
-				// 러닝 종료: 속도 복원
-				if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
-				{
-					if (PrevMaxWalkSpeed > 0.0f)
-					{
-						MoveComp->MaxWalkSpeed = PrevMaxWalkSpeed;
-					}
-				}
-				bIsDashRunning = false;
-				// 대쉬 공격 전환 트리거 활성화 (애님 BP 전이용)
-				bDashAttackTrigger = true;
-			}
-		}
-		else
-		{
-			// 플레이어 없으면 러닝 종료 및 속도 복원
-			if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
-			{
-				if (PrevMaxWalkSpeed > 0.0f)
-				{
-					MoveComp->MaxWalkSpeed = PrevMaxWalkSpeed;
-				}
-			}
-			bIsDashRunning = false;
-		}
-	}
 }
 
 // Called to bind functionality to input
@@ -249,14 +202,34 @@ float ACFlowerEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const& D
 	// IDamageable 인터페이스의 TakeDamage_Implementation 호출
 	TakeDamage_Implementation(DamageAmount);
 
+	if (UWidgetComponent* WC = Cast<UWidgetComponent>(
+		GetComponentByClass(UWidgetComponent::StaticClass())))
+	{
+		const bool bShown = WC->IsVisible(); // 월드 컴포넌트 가시성
+		if (!bShown)
+		{
+			if (UCEnemyHealthBarComponent* HB = FindComponentByClass<UCEnemyHealthBarComponent>())
+			{
+				HB->ShowHealthBar();
+			}
+		}
+	}
+
 	// 약점 본 피격 즉시 그로기 100 누적
 	bool bWeakSpotHit = false;
 	if (const FPointDamageEvent* PointEvt = static_cast<const FPointDamageEvent*>(DamageEvent.GetTypeID() == FPointDamageEvent::ClassID ? &DamageEvent : nullptr))
 	{
 		const FName HitBone = PointEvt->HitInfo.BoneName;
-		if (HitBone == "head" || HitBone == "Head" || HitBone == "head_01" || HitBone == "Head_01" || HitBone == "skull" || HitBone == "Skull")
+		if (bIsHeadOpen && (HitBone == "head" || HitBone == "Head" || HitBone == "head_01" || HitBone == "Head_01" || HitBone == "skull" || HitBone == "Skull"))
 		{
 			bWeakSpotHit = true;
+
+			// 디버그 출력
+			if (GEngine)
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Black, 
+				FString::Printf(TEXT("Flower Enemy Weak Spot Hit")));
+			}
 		}
 	}
 
@@ -305,10 +278,10 @@ float ACFlowerEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const& D
                         BB->SetValueAsObject(KeyTargetPlayer, TargetObj);
                         BB->SetValueAsBool(KeyIsInCombat, true);
                         // 전투 돌입: 체력바 표시
-                        if (UCEnemyHealthBarComponent* HB = FindComponentByClass<UCEnemyHealthBarComponent>())
-                        {
-                            HB->ShowHealthBar();
-                        }
+//                         if (UCEnemyHealthBarComponent* HB = FindComponentByClass<UCEnemyHealthBarComponent>())
+//                         {
+//                             HB->ShowHealthBar();
+//                         }
 					}
 				}
 			}
@@ -379,6 +352,11 @@ void ACFlowerEnemy::PlayRangedAttack()
 	bIsComboAttacking = false; // 다른 공격 상태 초기화
 	bIsDashAttacking = false; // 다른 공격 상태 초기화
 	
+	// 다른 공격 콜리전들 비활성화
+	DisableHandLAttackCollision();
+	DisableHandRAttackCollision();
+	DisableDashAttackCollision();
+	
 	// 원거리 공격 시 머리 열기
 	SetHeadOpen(true);
 	
@@ -405,6 +383,11 @@ void ACFlowerEnemy::PlayComboAttack()
 		bIsDashAttacking = false; // 다른 공격 상태 초기화
 		bIsRangedAttacking = false; // 다른 공격 상태 초기화
 		
+		// 다른 공격 콜리전들 비활성화
+		DisableHandLAttackCollision();
+		DisableHandRAttackCollision();
+		DisableDashAttackCollision();
+		
 		// 디버그 출력
 		if (GEngine)
 		{
@@ -422,6 +405,10 @@ void ACFlowerEnemy::PlayDashAttack()
 		bIsComboAttacking = false; // 다른 공격 상태 초기화
 		bIsRangedAttacking = false; // 다른 공격 상태 초기화
 		
+		// 다른 공격 콜리전들 비활성화
+		DisableHandLAttackCollision();
+		DisableHandRAttackCollision();
+		DisableDashAttackCollision();
 		
 		// 디버그 출력
 		if (GEngine)
@@ -429,20 +416,8 @@ void ACFlowerEnemy::PlayDashAttack()
 			GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Cyan, TEXT("Flower Enemy Dash Attack!"));
 		}
 
-		// 시각 연출 이동 시작(서버 권한에서만)
-		if (HasAuthority())
-		{
-			APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(this, 0);
-			StartMeleeVisualMove(PlayerPawn);
-		}
-
-		// 대쉬 러닝 시작: 이동 속도 상향 및 플래그 온
-		if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
-		{
-			PrevMaxWalkSpeed = MoveComp->MaxWalkSpeed;
-			MoveComp->MaxWalkSpeed = DashRunSpeed;
-		}
-		bIsDashRunning = true;
+		// SkeletonEnemy와 동일한 대쉬 이동 시스템 사용
+		StartDashMovementToPlayer();
 	}
 }
 
@@ -486,8 +461,6 @@ void ACFlowerEnemy::NotifyDashAttackCompleted()
 				
 				// 대시 공격 상태 초기화
 				bIsDashAttacking = false;
-				// 대쉬 공격 전환 트리거 초기화 (애님 노티파이에서 호출되는 이 함수 시점)
-				bDashAttackTrigger = false;
 				
 				// 디버그 출력
 				if (GEngine)
@@ -1127,8 +1100,6 @@ void ACFlowerEnemy::OnDeath()
 	// 낙하 연출 시작
 	StartFallingAnimation();
 
-	// 진행 중이던 시각 이동 종료 및 원복
-	EndMeleeVisualMove(true);
 
 	// 소켓 기반 데미지 콜리전 비활성화
 	DisableDamageCollisions();
@@ -1234,143 +1205,130 @@ void ACFlowerEnemy::OnFallTimelineFinished()
 	bIsFalling = false;
 }
 
-// ===== 메쉬 상대 이동 근접 연출 =====
-void ACFlowerEnemy::StartMeleeVisualMove(AActor* TargetActor)
-{
-	USkeletalMeshComponent* MeshComp = GetMesh();
-	if (!MeshComp)
-		return;
-
-	// 시작 상대 위치 저장
-	MeshStartRelativeLocation = MeshComp->GetRelativeLocation();
-
-	// 타겟 위치 계산(수평 위주)
-	FVector TargetWorld = GetActorLocation();
-	if (IsValid(TargetActor))
-	{
-		TargetWorld = TargetActor->GetActorLocation();
-	}
-
-	// 플레이어 위치로 직선 이동 (몸통 박치기)
-	FVector TargetWorldPos = TargetWorld;
-	
-	// 최대 거리 제한 (너무 멀리 가는 것 방지)
-	FVector ToTarget = TargetWorldPos - GetActorLocation();
-	float Distance = ToTarget.Length();
-	if (Distance > MeleeVisualMaxDistance)
-	{
-		FVector Direction = ToTarget / Distance;
-		TargetWorldPos = GetActorLocation() + Direction * MeleeVisualMaxDistance;
-	}
-	
-	// 월드 위치를 상대 위치로 변환
-	FVector LocalTargetPos = GetActorTransform().InverseTransformPosition(TargetWorldPos);
-
-	MeshTargetRelativeLocation = LocalTargetPos;
-
-	MeleeVisualElapsed = 0.0f;
-	bMeleeVisualGoingOut = true;
-	bIsMeleeVisualMoving = true;
-}
-
-void ACFlowerEnemy::UpdateMeleeVisualMove(float DeltaTime)
-{
-	USkeletalMeshComponent* MeshComp = GetMesh();
-	if (!MeshComp)
-	{
-		bIsMeleeVisualMoving = false;
-		return;
-	}
-
-	const float Duration = bMeleeVisualGoingOut ? MeleeVisualOutTime : MeleeVisualBackTime;
-	if (Duration <= 0.0f)
-	{
-		// 즉시 스냅
-		if (bMeleeVisualGoingOut)
-		{
-			MeshComp->SetRelativeLocation(MeshTargetRelativeLocation);
-			bMeleeVisualGoingOut = false;
-			MeleeVisualElapsed = 0.0f;
-		}
-		else
-		{
-			MeshComp->SetRelativeLocation(MeshStartRelativeLocation);
-			bIsMeleeVisualMoving = false;
-		}
-		return;
-	}
-
-	MeleeVisualElapsed += DeltaTime;
-	float Alpha = FMath::Clamp(MeleeVisualElapsed / Duration, 0.0f, 1.0f);
-	// EaseInOut 가중치
-	float Smooth = FMath::InterpEaseInOut(0.0f, 1.0f, Alpha, 2.0f);
-
-	// 직선 이동 계산
-	FVector NewRel;
-	
-	if (bMeleeVisualGoingOut)
-	{
-		// 전진: 시작 → 목표 (직선)
-		NewRel = FMath::Lerp(MeshStartRelativeLocation, MeshTargetRelativeLocation, Smooth);
-	}
-	else
-	{
-		// 복귀: 목표 → 시작 (직선)
-		NewRel = FMath::Lerp(MeshTargetRelativeLocation, MeshStartRelativeLocation, Smooth);
-	}
-	
-	MeshComp->SetRelativeLocation(NewRel);
-
-	if (Alpha >= 1.0f)
-	{
-		if (bMeleeVisualGoingOut)
-		{
-			// 왕복의 복귀 단계로 전환
-			bMeleeVisualGoingOut = false;
-			MeleeVisualElapsed = 0.0f;
-		}
-		else
-		{
-		// 종료
-		bIsMeleeVisualMoving = false;
-		// 잔오차 제거
-		MeshComp->SetRelativeLocation(MeshStartRelativeLocation);
-		}
-	}
-}
-
-void ACFlowerEnemy::EndMeleeVisualMove(bool bSnapToStart)
-{
-	USkeletalMeshComponent* MeshComp = GetMesh();
-	if (!MeshComp)
-		return;
-
-	bIsMeleeVisualMoving = false;
-	bMeleeVisualGoingOut = false;
-	MeleeVisualElapsed = 0.0f;
-
-	if (bSnapToStart)
-	{
-		MeshComp->SetRelativeLocation(MeshStartRelativeLocation);
-	}
-}
 
 // 돌진 공격 이동 함수들
 void ACFlowerEnemy::StartDashMovementToPlayer()
 {
-	bIsDashMoving = false;
+	// AI Controller 이동 중지
+	if (AController* MyController = GetController())
+	{
+		if (AAIController* AIController = Cast<AAIController>(MyController))
+		{
+			AIController->StopMovement();
+		}
+	}
+
+	// 플레이어 위치 가져오기
+	APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+	if (PlayerPawn)
+	{
+		// 플레이어의 위치와 회전 정보 가져오기
+		FVector PlayerLocation = PlayerPawn->GetActorLocation();
+		FRotator PlayerRotation = PlayerPawn->GetActorRotation();
+		
+		// 플레이어가 바라보는 방향 계산 (Yaw 회전만 사용)
+		FVector PlayerForward = FRotationMatrix(FRotator(0.0f, PlayerRotation.Yaw, 0.0f)).GetUnitAxis(EAxis::X);
+		
+		// 플레이어 정면 앞 70cm 지점 계산
+		CachedPlayerLocation = PlayerLocation + (PlayerForward * 70.0f);
+		
+		// 시간 기반 이동 초기화
+		DashStartLocation = GetActorLocation();
+		DashElapsedTime = 0.0f;
+		// DashTotalTime은 애니메이션 노티파이에서 설정됨
+		
+		bIsDashMoving = true;
+		
+		// 디버그 출력
+		if (GEngine)
+		{
+			FString DebugMessage = FString::Printf(TEXT("Flower Enemy Target Location (70cm in front of player): %s"), *CachedPlayerLocation.ToString());
+			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Blue, DebugMessage);
+		}
+	}
+	else
+	{
+		// 플레이어를 찾을 수 없는 경우
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("Player not found for dash movement!"));
+		}
+		bIsDashMoving = false;
+	}
 }
 
-void ACFlowerEnemy::UpdateDashMovementToPlayer(float DeltaTime, float Speed)
+void ACFlowerEnemy::UpdateDashMovementToPlayer(float DeltaTime, float TotalTime)
 {
-	// 비활성화: 대쉬 이동 사용 안 함
-	bIsDashMoving = false;
+	// 이동 중이 아니면 리턴
+	if (!bIsDashMoving)
+		return;
+
+	// 사망한 경우 이동하지 않음
+	if (StatusComponent && StatusComponent->IsDead())
+	{
+		bIsDashMoving = false;
+		return;
+	}
+
+	// 총 이동 시간 설정 (첫 번째 호출 시)
+	if (DashTotalTime <= 0.0f)
+	{
+		DashTotalTime = TotalTime;
+	}
+
+	// 경과 시간 업데이트
+	DashElapsedTime += DeltaTime;
+
+	// 시간 기반 이동 계산 (0.0 ~ 1.0)
+	float Alpha = FMath::Clamp(DashElapsedTime / DashTotalTime, 0.0f, 1.0f);
+	
+	// EaseInOut 곡선 적용 (부드러운 가속/감속)
+	float SmoothAlpha = FMath::InterpEaseInOut(0.0f, 1.0f, Alpha, 2.0f);
+	
+	// 시작 위치에서 목표 위치로 보간
+	FVector NewLocation = FMath::Lerp(DashStartLocation, CachedPlayerLocation, SmoothAlpha);
+	
+	// 목표 방향으로 회전 (Yaw만 사용)
+	FVector Direction = (CachedPlayerLocation - DashStartLocation).GetSafeNormal();
+	FRotator TargetRotation = FRotationMatrix::MakeFromX(Direction).Rotator();
+	TargetRotation.Pitch = 0.0f;
+	TargetRotation.Roll = 0.0f;
+	SetActorRotation(TargetRotation);
+	
+	// 위치 설정
+	SetActorLocation(NewLocation);
+	
+	// 시간이 다 되면 이동 완료
+	if (Alpha >= 1.0f)
+	{
+		// 정확히 목표 위치에 도달
+		SetActorLocation(CachedPlayerLocation);
+		bIsDashMoving = false;
+		
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Green, TEXT("Flower Enemy reached target location in time!"));
+		}
+	}
 }
 
 void ACFlowerEnemy::EndDashMovementToPlayer()
 {
 	bIsDashMoving = false;
+	
+	// 이동 정지
+	if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
+	{
+		MoveComp->StopMovementImmediately();
+	}
+	
+	// 디버그 출력
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Orange, TEXT("Flower Enemy Dash Movement Ended"));
+	}
 }
+
 
 // 공격 콜리전 활성화/비활성화 함수들
 void ACFlowerEnemy::EnableHandLAttackCollision()
@@ -1378,6 +1336,8 @@ void ACFlowerEnemy::EnableHandLAttackCollision()
 	if (HandLAttackCollision)
 	{
 		HandLAttackCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+		// HandL 공격 1회 타격 가드 초기화
+		bHandLHasHit = false;
 		if (GEngine)
 		{
 			GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Red, TEXT("Flower Enemy HandL Attack Collision Enabled"));
@@ -1390,6 +1350,8 @@ void ACFlowerEnemy::DisableHandLAttackCollision()
 	if (HandLAttackCollision)
 	{
 		HandLAttackCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		// HandL 공격 플래그 리셋 (다음 공격을 위해)
+		bHandLHasHit = false;
 		if (GEngine)
 		{
 			GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Blue, TEXT("Flower Enemy HandL Attack Collision Disabled"));
@@ -1402,6 +1364,8 @@ void ACFlowerEnemy::EnableHandRAttackCollision()
 	if (HandRAttackCollision)
 	{
 		HandRAttackCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+		// HandR 공격 1회 타격 가드 초기화
+		bHandRHasHit = false;
 		if (GEngine)
 		{
 			GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Red, TEXT("Flower Enemy HandR Attack Collision Enabled"));
@@ -1414,6 +1378,8 @@ void ACFlowerEnemy::DisableHandRAttackCollision()
 	if (HandRAttackCollision)
 	{
 		HandRAttackCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		// HandR 공격 플래그 리셋 (다음 공격을 위해)
+		bHandRHasHit = false;
 		if (GEngine)
 		{
 			GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Blue, TEXT("Flower Enemy HandR Attack Collision Disabled"));
@@ -1426,8 +1392,8 @@ void ACFlowerEnemy::EnableDashAttackCollision()
     if (DashAttackCollision)
     {
         DashAttackCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-        // 대쉬 1회 타격 가드 초기화
-        bDashHasHitOnce = false;
+        // 대쉬 공격 1회 타격 가드 초기화
+        bDashHasHit = false;
         if (GEngine)
         {
             GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Red, TEXT("Flower Enemy Dash Attack Collision Enabled"));
@@ -1440,6 +1406,8 @@ void ACFlowerEnemy::DisableDashAttackCollision()
 	if (DashAttackCollision)
 	{
 		DashAttackCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		// 대쉬 공격 플래그 리셋 (다음 공격을 위해)
+		bDashHasHit = false;
 		if (GEngine)
 		{
 			GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Blue, TEXT("Flower Enemy Dash Attack Collision Disabled"));
@@ -1462,14 +1430,24 @@ void ACFlowerEnemy::OnAttackCollisionOverlap(UPrimitiveComponent* OverlappedComp
     if (!HitPawn->GetController() || !HitPawn->GetController()->IsA<APlayerController>())
         return;
 
-    // 대쉬 공격 콜리전 중 중복 타격 방지
-    if (OverlappedComponent == DashAttackCollision)
+    // 공격별 중복 타격 방지
+    if (OverlappedComponent == HandLAttackCollision)
     {
-        if (bDashHasHitOnce)
+        if (bHandLHasHit)
             return;
-        bDashHasHitOnce = true;
-        // 필요 시 즉시 비활성화하여 다중 타격 방지 강화
-        DisableDashAttackCollision();
+        bHandLHasHit = true;
+    }
+    else if (OverlappedComponent == HandRAttackCollision)
+    {
+        if (bHandRHasHit)
+            return;
+        bHandRHasHit = true;
+    }
+    else if (OverlappedComponent == DashAttackCollision)
+    {
+        if (bDashHasHit)
+            return;
+        bDashHasHit = true;
     }
 
     // 공격 콜리전인지 확인
@@ -1500,20 +1478,6 @@ void ACFlowerEnemy::OnAttackCollisionOverlap(UPrimitiveComponent* OverlappedComp
         
         /*FString DebugMessage = FString::Printf(TEXT("Flower Enemy %s Attack Hit Player! Damage: %.1f"), AttackType, DamageAmount);*/
         /*GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, DebugMessage);*/
-    }
-
-    // 공격 콜리전 즉시 비활성화 (중복 데미지 방지)
-    if (OverlappedComponent == HandLAttackCollision)
-    {
-        DisableHandLAttackCollision();
-    }
-    else if (OverlappedComponent == HandRAttackCollision)
-    {
-        DisableHandRAttackCollision();
-    }
-    else if (OverlappedComponent == DashAttackCollision)
-    {
-        DisableDashAttackCollision();
     }
 }
 

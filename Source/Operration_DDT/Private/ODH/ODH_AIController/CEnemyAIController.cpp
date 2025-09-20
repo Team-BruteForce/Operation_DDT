@@ -95,14 +95,6 @@ void ACEnemyAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus S
 					BlackboardComp->SetValueAsObject("TargetPlayer", Actor);
 					BlackboardComp->SetValueAsBool("IsInCombat", true);
 					BlackboardComp->SetValueAsVector("LastSeenLocation", Actor->GetActorLocation());
-					// 전투 돌입: 체력바 표시
-					if (APawn* P = GetPawn())
-					{
-						if (UCEnemyHealthBarComponent* HB = P->FindComponentByClass<UCEnemyHealthBarComponent>())
-						{
-							HB->ShowHealthBar();
-						}
-					}
 					
 					// 기존 타이머가 있다면 취소 (새로운 타겟을 찾았으므로)
 					if (TargetLostTimerHandle.IsValid())

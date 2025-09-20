@@ -20,6 +20,7 @@
 #include "ODH/ODH_Enemy/CCombatEncounterManager.h"
 #include "../../AIModule/Classes/BehaviorTree/BlackboardComponent.h"
 #include "ODH/ODH_Enemy/Component/CEnemyHealthBarComponent.h"
+#include "../../UMG/Public/Components/WidgetComponent.h"
 
 // Sets default values
 ACFlyingSkull::ACFlyingSkull()
@@ -240,6 +241,19 @@ float ACFlyingSkull::TakeDamage(float DamageAmount, struct FDamageEvent const& D
 	// IDamageable 인터페이스의 TakeDamage_Implementation 호출
 	TakeDamage_Implementation(DamageAmount);
 
+	if (UWidgetComponent* WC = Cast<UWidgetComponent>(
+		GetComponentByClass(UWidgetComponent::StaticClass())))
+	{
+		const bool bShown = WC->IsVisible(); // 월드 컴포넌트 가시성
+		if (!bShown)
+		{
+			if (UCEnemyHealthBarComponent* HB = FindComponentByClass<UCEnemyHealthBarComponent>())
+			{
+				HB->ShowHealthBar();
+			}
+		}
+	}
+
 	// 약점 본 피격 시 즉시 피격 상태 진입 (그로기 누적은 하지 않음)
 	if (const FPointDamageEvent* PointEvt = static_cast<const FPointDamageEvent*>(DamageEvent.GetTypeID() == FPointDamageEvent::ClassID ? &DamageEvent : nullptr))
 	{
@@ -280,11 +294,11 @@ float ACFlyingSkull::TakeDamage(float DamageAmount, struct FDamageEvent const& D
 					{
                         BB->SetValueAsObject(KeyTargetPlayer, TargetObj);
                         BB->SetValueAsBool(KeyIsInCombat, true);
-                        // 전투 돌입: 체력바 표시
-                        if (UCEnemyHealthBarComponent* HB = FindComponentByClass<UCEnemyHealthBarComponent>())
-                        {
-                            HB->ShowHealthBar();
-                        }
+//                         // 전투 돌입: 체력바 표시
+//                         if (UCEnemyHealthBarComponent* HB = FindComponentByClass<UCEnemyHealthBarComponent>())
+//                         {
+//                             HB->ShowHealthBar();
+//                         }
 					}
 				}
 			}
