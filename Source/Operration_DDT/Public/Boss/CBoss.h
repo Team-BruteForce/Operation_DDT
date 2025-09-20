@@ -141,15 +141,30 @@ public:
 */
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	class UFlyingComponent* FlyingComponent;
-	
 
-protected:
-	
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	TSubclassOf<UUserWidget> BossWidgetClass;
+
+public:
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	class UBossStatusWidget* BossWidget;
 	/**
 	 * @brief 게임 시작 시 호출되는 함수
 	 */
 	virtual void BeginPlay() override;
+	
+public:
+	UFUNCTION()
+	void PlayHitMotion(FName BoneName);
+	UFUNCTION()
+	void ShowBossStatusWidget();
 
-	void PlayHitMotion(FName BoneName="spine_03");
+	UFUNCTION()
+	void ShowBossComplete();
+
+	UFUNCTION()
+	void HPUpdate();
+	
+	
 	
 };

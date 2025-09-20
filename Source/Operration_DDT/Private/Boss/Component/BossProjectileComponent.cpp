@@ -128,7 +128,7 @@ void UBossProjectileComponent::SpawnOrb()
 		}
 		
 		// 3번 소환 완료 시 타이머 정리
-		if (OrbSpawnCount >= 3)
+		if (OrbSpawnCount >= 1)
 		{
 			GetWorld()->GetTimerManager().ClearTimer(OrbTimerHandle);
 			OrbSpawnCount = 0;
