@@ -4,6 +4,15 @@
 #include "Components/ProgressBar.h"
 #include "Components/WidgetSwitcher.h"
 
+void UBossStatusWidget::NativeConstruct()
+{
+	Super::NativeConstruct();
+	FCompleteUIFadeIn.BindDynamic(this,&UBossStatusWidget::ShowCompleteUI);
+	BindToAnimationFinished(FadeIn,FCompleteUIFadeIn);
+	FCompleteUIFadeOut.BindDynamic(this,&UBossStatusWidget::EndWidget);
+	BindToAnimationFinished(FadeOut,FCompleteUIFadeOut);
+}
+
 void UBossStatusWidget::UpdateBossHP(float CurrentHPValue, float MaxHPValue)
 {
 	if (CurrentHP)
@@ -30,5 +39,27 @@ void UBossStatusWidget::UpdateBossHP(float CurrentHPValue, float MaxHPValue)
 void UBossStatusWidget::SwitchBossCompleteUI()
 {
 	BossWidgetSwitcher->SetActiveWidgetIndex(2);
+	FadeInHandler();
+}
+
+void UBossStatusWidget::FadeInHandler()
+{
+	PlayAnimation(FadeIn);
+}
+
+void UBossStatusWidget::ShowCompleteUI()
+{
+	auto Timer=[this](){FadeOutHandler();};
+	GetWorld()->GetTimerManager().SetTimer(Hander,Timer,2.0f,false);
+}
+
+void UBossStatusWidget::FadeOutHandler()
+{
+	PlayAnimation(FadeOut);
+}
+
+void UBossStatusWidget::EndWidget()
+{
+	RemoveFromParent();
 }
 

@@ -202,11 +202,6 @@ void ACBoss::ShowBossStatusWidget()
 	BossWidget->AddToViewport();
 }
 
-void ACBoss::ShowBossComplete()
-{
-	BossWidget->AddToViewport();
-}
-
 void ACBoss::HPUpdate()
 {
 	// UI 업데이트

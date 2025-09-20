@@ -160,9 +160,6 @@ public:
 	void ShowBossStatusWidget();
 
 	UFUNCTION()
-	void ShowBossComplete();
-
-	UFUNCTION()
 	void HPUpdate();
 	
 	

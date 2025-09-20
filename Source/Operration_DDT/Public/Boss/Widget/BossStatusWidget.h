@@ -13,7 +13,9 @@ UCLASS()
 class OPERRATION_DDT_API UBossStatusWidget : public UUserWidget
 {
 	GENERATED_BODY()
-
+public:
+	FWidgetAnimationDynamicEvent FCompleteUIFadeIn;
+	FWidgetAnimationDynamicEvent FCompleteUIFadeOut;
 public:
 	UPROPERTY(EditAnywhere,BlueprintReadOnly,meta = (BindWidget))
 	class UWidgetSwitcher* BossWidgetSwitcher;
@@ -29,18 +31,39 @@ public:
 
 	UPROPERTY(EditAnywhere,BlueprintReadOnly,meta = (BindWidget))
 	class UProgressBar* CurrentHP;
-	
 
+	UPROPERTY(EditAnywhere,BlueprintReadOnly,meta = (BindWidgetAnim),Transient)
+	class UWidgetAnimation* FadeIn;
+
+	UPROPERTY(EditAnywhere,BlueprintReadOnly,meta = (BindWidgetAnim),Transient)
+	class UWidgetAnimation* FadeOut;
+
+	UPROPERTY()
+	FTimerHandle Hander;
+	
 	UPROPERTY()
 	class ACBoss* Owner;
 
 	UPROPERTY()
 	FTimerHandle DelayHPTimer;
 
-	UFUNCTION(BlueprintCallable)
+	virtual void NativeConstruct() override;
+
+	UFUNCTION()
 	void UpdateBossHP(float CurrentHPValue, float MaxHPValue);
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION()
 	void SwitchBossCompleteUI();
+
+	UFUNCTION()
+	void FadeInHandler();
+
+	UFUNCTION()
+	void ShowCompleteUI();
+
+	UFUNCTION()
+	void FadeOutHandler();
+	UFUNCTION()
+	void EndWidget();
 
 };
