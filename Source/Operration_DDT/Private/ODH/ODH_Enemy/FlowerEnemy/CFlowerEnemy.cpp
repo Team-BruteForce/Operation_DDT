@@ -1081,13 +1081,12 @@ void ACFlowerEnemy::OnDeath()
 			{
 				GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("Flower Enemy removed from game!"));
 			}
-			// 비활성화 처리: 보이지 않음, 충돌 비활성화, 틱 중지
-			SetActorHiddenInGame(true);
+			// 블루프린트에서 구현된 흡수 애니메이션 실행
+			StartAbsorbAnimation();
 			SetActorEnableCollision(false);
 			SetActorTickEnabled(false);
 			if (USkeletalMeshComponent* MeshComp = GetMesh())
 			{
-				MeshComp->SetVisibility(false, true);
 				MeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 			}
 		}

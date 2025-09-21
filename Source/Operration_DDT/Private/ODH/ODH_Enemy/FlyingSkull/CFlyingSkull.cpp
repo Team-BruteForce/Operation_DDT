@@ -566,13 +566,12 @@ void ACFlyingSkull::OnDeath()
 			{
 				GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("Flying Skull removed from game!"));
 			}
-			// 비활성화 처리: 보이지 않음, 충돌 비활성화, 틱 중지
-			SetActorHiddenInGame(true);
+			// 블루프린트에서 구현된 흡수 애니메이션 실행
+			StartAbsorbAnimation();
 			SetActorEnableCollision(false);
 			SetActorTickEnabled(false);
 			if (USkeletalMeshComponent* MeshComp = GetMesh())
 			{
-				MeshComp->SetVisibility(false, true);
 				MeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 			}
 		}
@@ -584,31 +583,9 @@ void ACFlyingSkull::OnDeath()
 
 	// 낙하 연출 시작
 	StartFallingAnimation();
-
-	// 진행 중이던 시각 이동 종료 및 원복
-	EndMeleeVisualMove(true);
-
-	// 소켓 기반 데미지 콜리전 비활성화
-	DisableDamageCollisions();
-
-    // Encounter Manager 해제(사망 즉시)
-    if (HasAuthority())
-    {
-        UWorld* World = GetWorld();
-        if (World)
-        {
-            TArray<AActor*> Found;
-            UGameplayStatics::GetAllActorsOfClass(World, ACCombatEncounterManager::StaticClass(), Found);
-            if (Found.Num() > 0)
-            {
-                if (ACCombatEncounterManager* Mgr = Cast<ACCombatEncounterManager>(Found[0]))
-                {
-                    Mgr->UnregisterEnemy(this);
-                }
-            }
-        }
-    }
 }
+
+
 
 void ACFlyingSkull::OnMeleeAttackHit(AActor* HitActor)
 {

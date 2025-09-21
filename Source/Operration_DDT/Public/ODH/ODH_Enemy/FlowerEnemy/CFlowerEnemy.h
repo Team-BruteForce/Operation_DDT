@@ -276,6 +276,12 @@ private:
 	UFUNCTION()
 	void OnFallTimelineFinished();
 
+public:
+	// 블루프린트에서 구현될 흡수 애니메이션 함수
+	UFUNCTION(BlueprintImplementableEvent, Category = "Animation")
+	void StartAbsorbAnimation();
+
+private:
 	// 떨어지는 연출용 변수들
 	float FallStartTime = 0.0f;
 	FVector OriginalMeshLocation;

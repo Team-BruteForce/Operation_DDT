@@ -221,5 +221,10 @@ private:
 
 public:
 	// 사망 연출은 애니메이션에서 처리
+	
+	// 블루프린트에서 구현될 흡수 애니메이션 함수
+	UFUNCTION(BlueprintImplementableEvent, Category = "Animation")
+	void StartAbsorbAnimation();
+
 private:
 };
