@@ -43,6 +43,8 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FOnStaminaChanged OnStaminaChanged;
 
+	void ResetStamina();
+
 
 private:
 	class ADDTPlayer* OwnerCharacter;

@@ -91,6 +91,7 @@ void UCStatusComponent::GetHeal(float value)
 void UCStatusComponent::CalculateHealing()
 {
 	CheckTrue(StateComp->IsHealingMode());
+	CheckTrue(StateComp->IsRollingMode());
 	// 회복 가능 여부 체크
 	if (!CanHeal())
 	{
@@ -153,5 +154,13 @@ bool UCStatusComponent::CanHeal() const
 float UCStatusComponent::GetHealthPercentage() const
 {
 	return (MaxHp > 0.0f) ? (NowHp / MaxHp) : 0.0f;
+}
+
+void UCStatusComponent::ResetStatus()
+{
+	SetFullHealth();
+	OnPlayerHealthChanged.Broadcast(NowHp,NowHp, MaxHp);
+	HealItemCount = 3;
+	OnHealItemChanged.Broadcast(HealItemCount);
 }
 

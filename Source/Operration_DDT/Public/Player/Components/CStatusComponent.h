@@ -79,6 +79,8 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Health")
 	FOnHealItemChanged OnHealItemChanged;
+
+	void ResetStatus();
 	
 private:
 	UPROPERTY(VisibleAnywhere, Category = "Health")
