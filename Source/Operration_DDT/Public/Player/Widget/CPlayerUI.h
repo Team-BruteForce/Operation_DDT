@@ -9,12 +9,16 @@
 /**
  * 
  */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnAnimFinished);
 UCLASS()
 class OPERRATION_DDT_API UCPlayerUI : public UUserWidget
 {
 	GENERATED_BODY()
 
 public:
+
+	virtual void NativeConstruct() override;
+	
 	// Tick에서 보간 업데이트
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 	
@@ -23,6 +27,7 @@ public:
 
 	void ShowCrosshair(bool bValue);
 
+#pragma region HP/Stamina
 	UPROPERTY(blueprintReadWrite, Category = "UI", meta = (BindWidget))
 	class UProgressBar* pb_HP;
 
@@ -40,28 +45,7 @@ public:
 
 	void SetHPBar_Background(float prevHP, float newHP);
 	void SetStaminaBar_Background(float prevStamina, float newStamina);
-	
 
-	UPROPERTY(blueprintReadWrite, Category = "UI", meta = (BindWidget))
-	class UTextBlock* txt_CurrentBullet;
-	
-	UPROPERTY(blueprintReadWrite, Category = "UI", meta = (BindWidget))
-	class UTextBlock* txt_TotalBullet;
-
-	void SetCurrentBullet(int32 value);
-	void SetTotalBullet(int32 value);
-
-	UPROPERTY(blueprintReadWrite, Category = "UI", meta = (BindWidget))
-	class UTextBlock* txt_HealItem;
-
-	void SetHealItem(int32 value);
-
-	UPROPERTY(blueprintReadWrite, Category = "UI", meta = (BindWidget))
-	class UImage* img_injection_full;
-	
-	UPROPERTY(blueprintReadWrite, Category = "UI", meta = (BindWidget))
-	class UImage* img_injection_empty;
-	
 	// HP Background delay timer
 	FTimerHandle HPBgDelayHandle;
 	// Stamina Background delay timer
@@ -90,5 +74,63 @@ public:
 	// 지연 후 보간 시작
 	void StartHPBackgroundLerp();
 	void StartStaminaBackgroundLerp();
+
+#pragma endregion HP/Stamina
+	
+#pragma region Item/Bullet
+	UPROPERTY(blueprintReadWrite, Category = "UI", meta = (BindWidget))
+	class UTextBlock* txt_CurrentBullet;
+	
+	UPROPERTY(blueprintReadWrite, Category = "UI", meta = (BindWidget))
+	class UTextBlock* txt_TotalBullet;
+
+	void SetCurrentBullet(int32 value);
+	void SetTotalBullet(int32 value);
+
+	UPROPERTY(blueprintReadWrite, Category = "UI", meta = (BindWidget))
+	class UTextBlock* txt_HealItem;
+
+	void SetHealItem(int32 value);
+
+	UPROPERTY(blueprintReadWrite, Category = "UI", meta = (BindWidget))
+	class UImage* img_injection_full;
+	
+	UPROPERTY(blueprintReadWrite, Category = "UI", meta = (BindWidget))
+	class UImage* img_injection_empty;
+#pragma endregion
+	
+#pragma region WidgetAnimation
+
+	UPROPERTY(blueprintReadWrite, Category = "UI", meta = (BindWidget))
+	class UImage* img_GameOver;
+
+	UPROPERTY(blueprintReadWrite, Category = "UI", meta = (BindWidget))
+	class UImage* img_GameOver_Sub;
+
+	UPROPERTY(blueprintReadWrite, Category = "UI", meta = (BindWidget))
+	class UImage* img_GameOverBlack;
+
+	UPROPERTY(Transient, blueprintReadWrite, Category = "UI", meta = (BindWidgetAnim))
+	class UWidgetAnimation* Death;
+
+	void CallDeathAnimation();
+
+	void ResetDeathImg();
+
+	UFUNCTION()
+	void OnDeathAnimFinished();
+
+	void StartDeathAnimTimer();
+
+	void DeathTimerEnd();
+
+	FTimerHandle DeathAnimDelayHandle;
+
+	FWidgetAnimationDynamicEvent OnDeathAnimFinishDelegate;
+
+	FOnAnimFinished OnAnimFinishedDelegate;
+
+
+#pragma endregion
 
 };

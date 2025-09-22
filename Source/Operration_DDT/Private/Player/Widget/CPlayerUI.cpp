@@ -1,11 +1,21 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Player/CPlayerUI.h"
+#include "Player/Widget/CPlayerUI.h"
 #include "Global.h"
 #include "Components/Image.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
+
+
+void UCPlayerUI::NativeConstruct()
+{
+	Super::NativeConstruct();
+
+	ResetDeathImg();
+	OnDeathAnimFinishDelegate.BindDynamic(this, &UCPlayerUI::OnDeathAnimFinished);
+	
+}
 
 void UCPlayerUI::ShowCrosshair(bool bValue)
 {
@@ -159,6 +169,7 @@ void UCPlayerUI::SetHealItem(int32 value)
 	}
 }
 
+
 void UCPlayerUI::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 {
     Super::NativeTick(MyGeometry, InDeltaTime);
@@ -212,4 +223,48 @@ void UCPlayerUI::StartStaminaBackgroundLerp()
 {
     bStaminaBgLerping = true;
     StaminaBgElapsed = 0.0f;
+}
+
+void UCPlayerUI::CallDeathAnimation()
+{
+	img_GameOver->SetVisibility(ESlateVisibility::Visible);
+	img_GameOver_Sub->SetVisibility(ESlateVisibility::Visible);
+	img_GameOverBlack->SetVisibility(ESlateVisibility::Visible);
+
+	BindToAnimationFinished(Death, OnDeathAnimFinishDelegate);
+
+	PlayAnimation(Death); 
+}
+
+void UCPlayerUI::ResetDeathImg()
+{
+	img_GameOver->SetVisibility(ESlateVisibility::Hidden);
+	img_GameOver_Sub->SetVisibility(ESlateVisibility::Hidden);
+	img_GameOverBlack->SetVisibility(ESlateVisibility::Hidden);
+}
+
+void UCPlayerUI::OnDeathAnimFinished()
+{
+	StartDeathAnimTimer();
+}
+
+void UCPlayerUI::StartDeathAnimTimer()
+{
+	// 5초 후 델리게이트 브로드캐스트를 위한 타이머 설정
+	if (GetWorld())
+	{
+		GetWorld()->GetTimerManager().SetTimer(
+			DeathAnimDelayHandle,
+			this,
+			&UCPlayerUI::DeathTimerEnd,
+			5.0f,
+			false
+		);
+	}
+}
+
+void UCPlayerUI::DeathTimerEnd()
+{
+	ResetDeathImg();
+	OnAnimFinishedDelegate.Broadcast();
 }

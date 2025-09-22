@@ -7,7 +7,7 @@
 #include "Engine/Engine.h"
 #include "CRespawnComponent.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPlayerRespawned);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPlayerDeath);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class OPERRATION_DDT_API UCRespawnComponent : public UActorComponent
@@ -29,8 +29,9 @@ public:
 	// DieDelegate 구독 함수
 	UFUNCTION()
 	void OnPlayerDied();
-
+	
 	// 실제 부활 처리 함수
+	UFUNCTION()
 	void RespawnPlayer();
 
 	// 부활 위치 설정 함수
@@ -51,7 +52,7 @@ public:
 
 	// 부활 델리게이트
 	UPROPERTY(BlueprintAssignable, Category = "Respawn")
-	FOnPlayerRespawned OnPlayerRespawned;
+	FOnPlayerDeath OnPlayerDeath;
 	
 	// 레벨에 배치된 BossManager BP 인스턴스를 드래그로 연결하거나, BeginPlay에서 자동 탐색합니다.
 	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "Ref", meta = (AllowPrivateAccess = "true"))
@@ -68,6 +69,7 @@ private:
 	class UCStatusComponent* Status;
 	class UCMagazineComponent* Magazine;
 	class UCStaminaComponent* Stamina;
+	class UCUIComponent* UIComp;
 	
 
 	FVector RespawnLocation;

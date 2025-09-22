@@ -70,7 +70,7 @@ void UCStatusComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAct
 
 void UCStatusComponent::GainHealItem()
 {
-	HealItemCount++;
+	HealItemCount = FMath::Clamp(HealItemCount + 1, 0, 3);
 	OnHealItemChanged.Broadcast(HealItemCount);
 }
 

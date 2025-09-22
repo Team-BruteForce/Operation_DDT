@@ -4,9 +4,10 @@
 #include "Player/Components/CUIComponent.h"
 #include "Global.h"
 #include "Blueprint/UserWidget.h"
-#include "Player/CPlayerUI.h"
+#include "Player/Widget/CPlayerUI.h"
 #include "Player/DDTPlayer.h"
 #include "Player/Components/CMagazineComponent.h"
+#include "Player/Components/CRespawnComponent.h"
 #include "Player/Components/CStaminaComponent.h"
 #include "Player/Components/CStatusComponent.h"
 
@@ -32,6 +33,7 @@ void UCUIComponent::BeginPlay()
 	StaminaComp = CHelpers::GetComponent<UCStaminaComponent>(OwnerCharater);
 	StatusComp = CHelpers::GetComponent<UCStatusComponent>(OwnerCharater);
 	MagazineComp = CHelpers::GetComponent<UCMagazineComponent>(OwnerCharater);
+	RespawnComp = CHelpers::GetComponent<UCRespawnComponent>(OwnerCharater);
 
 	if (OwnerCharater && playerUI)
 	{
@@ -54,6 +56,10 @@ void UCUIComponent::BeginPlay()
 			OnCurrentBulletChanged(MagazineComp->CurrentRifleBullets);
 			MagazineComp->OnTotalBulletChanged.AddDynamic(this, &UCUIComponent::OnTotalBulletChanged);
 			OnTotalBulletChanged(MagazineComp->TotalRifleBullets);
+		}
+		if (RespawnComp)
+		{
+			RespawnComp->OnPlayerDeath.AddDynamic(this, &UCUIComponent::OnPlayerDeathCallAnimation);
 		}
 	}
 	
@@ -122,4 +128,13 @@ void UCUIComponent::OnTotalBulletChanged(int32 value)
 		playerUI->SetTotalBullet(value);
 	}
 }
+
+void UCUIComponent::OnPlayerDeathCallAnimation()
+{
+	if (playerUI)
+	{
+		playerUI->CallDeathAnimation();
+	}
+}
+
 

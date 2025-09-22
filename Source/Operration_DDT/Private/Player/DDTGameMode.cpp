@@ -7,7 +7,7 @@
 #include "Player/Components/CStateComponent.h"
 #include "Global.h"
 #include "Blueprint/UserWidget.h"
-#include "Player/CPlayerUI.h"
+#include "Player/Widget/CPlayerUI.h"
 
 ADDTGameMode::ADDTGameMode()
 {

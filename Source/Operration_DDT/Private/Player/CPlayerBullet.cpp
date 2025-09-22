@@ -9,6 +9,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "NiagaraSystem.h"
 #include "NiagaraComponent.h"
+#include "Boss/CBoss.h"
+#include "Player/Widget/CNormalDamageUIActor.h"
 
 // Sets default values
 ACPlayerBullet::ACPlayerBullet()
@@ -169,6 +171,24 @@ void ACPlayerBullet::OnBulletHit(UPrimitiveComponent* HitComponent, AActor* Othe
 	
 	// UGameplayStatics::ApplyPointDamage로 데미지 적용
 	UGameplayStatics::ApplyPointDamage(OtherActor, FinalDamage, PointDamageEvent.ShotDirection, PointDamageEvent.HitInfo, OwnerCharacter->GetInstigatorController(), this, PointDamageEvent.DamageTypeClass);
+
+	ACBoss* Boss = Cast<ACBoss>(OtherActor);
+	if (Boss)
+	{
+		CLog::Log("PlayerBullet) Boss Cast");
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    
+		ACNormalDamageUIActor* DamageActor = GetWorld()->SpawnActor<ACNormalDamageUIActor>(
+			UIWidgetClass,
+			FVector::ZeroVector,
+			FRotator::ZeroRotator,
+			SpawnParams
+		);
+	
+		DamageActor->AttachToComponent(Boss->GetMesh (), FAttachmentTransformRules::KeepRelativeTransform, FName("DamageSocket"));
+
+	}
 	
 	// 충돌 후 Destroy() 대신 풀로 돌아가기
 	ReturnToPool();

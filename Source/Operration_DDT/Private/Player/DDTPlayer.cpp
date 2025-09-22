@@ -99,6 +99,7 @@ void ADDTPlayer::BeginPlay()
 	if(Movement)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Movement is %s"), *Movement->GetName());
+		Movement->Move();
 		Movement->OnRun();
 		Movement->EnableControlRotation ();
 

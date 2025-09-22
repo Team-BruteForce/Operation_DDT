@@ -108,6 +108,10 @@ public:
 
 	FORCEINLINE void SetTargetPoint(FVector value) { TargetPoint = value; }
 
+
+	UPROPERTY(EditDefaultsOnly, Category = "DamageUI")
+	TSubclassOf<class ACNormalDamageUIActor> UIWidgetClass;
+
 private:
 	bool bIsActive = false;
 	bool bIsInUse = false;  // 사용 중 플래그 추가
