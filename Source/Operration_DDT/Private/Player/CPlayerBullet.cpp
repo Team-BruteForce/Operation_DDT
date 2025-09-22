@@ -181,12 +181,12 @@ void ACPlayerBullet::OnBulletHit(UPrimitiveComponent* HitComponent, AActor* Othe
     
 		ACNormalDamageUIActor* DamageActor = GetWorld()->SpawnActor<ACNormalDamageUIActor>(
 			UIWidgetClass,
-			FVector::ZeroVector,
+			Boss->GetMesh()->GetComponentLocation(),
 			FRotator::ZeroRotator,
 			SpawnParams
 		);
 	
-		DamageActor->AttachToComponent(Boss->GetMesh (), FAttachmentTransformRules::KeepRelativeTransform, FName("DamageSocket"));
+		//DamageActor->AttachToComponent(Boss->GetMesh (), FAttachmentTransformRules::KeepRelativeTransform, FName("DamageSocket"));
 
 	}
 	
