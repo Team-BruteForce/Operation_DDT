@@ -22,7 +22,7 @@ void UCAnimNotify_SwitchHandLtoR::Notify(USkeletalMeshComponent* MeshComp, UAnim
     
     if(MeshComp->DoesSocketExist(FName("Reload_Rifle")) && MeshComp->DoesSocketExist(FName("Hand_Rifle")))
     {
-    	Weapon = Firecomp->GetActorAttachedToSocket(FName("Reload_Rifle"));
+    	AActor* Weapon = Firecomp->GetActorAttachedToSocket(FName("Reload_Rifle"));
     	CheckNull(Weapon);
     	Weapon->DetachFromActor(FDetachmentTransformRules::KeepRelativeTransform);
     	Weapon->AttachToComponent (MeshComp, FAttachmentTransformRules(EAttachmentRule::KeepRelative, true), FName("Hand_Rifle"));

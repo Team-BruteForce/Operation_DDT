@@ -28,7 +28,7 @@ void UCStaminaComponent::BeginPlay()
 	movement = CHelpers::GetComponent<UCMovementComponent>(OwnerCharacter);
 	NowStamina = MaxStamina;
 
-	OnStaminaChanged.Broadcast(NowStamina,MaxStamina);
+	OnStaminaChanged.Broadcast(NowStamina,NowStamina,MaxStamina);
 }
 
 
@@ -36,7 +36,7 @@ void UCStaminaComponent::BeginPlay()
 void UCStaminaComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
+	
 	// ...
 	if (movement->GetIsSprinting())
 	{
@@ -44,13 +44,15 @@ void UCStaminaComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAc
 	}
 	else if (bIsRecovering)
 	{
-		if (movement->GetIsShiftPrssing()) return;
+		if (movement->GetIsShiftPressing()) return;
 		if (NowStamina < MaxStamina)
 		{
 			float RecoverRate = RecoveryAmount * DeltaTime;
+			float prevStamina = NowStamina;
+			
 			NowStamina = FMath::Clamp (NowStamina + RecoverRate, 0.f, MaxStamina);
 
-			OnStaminaChanged.Broadcast(NowStamina,MaxStamina);
+			OnStaminaChanged.Broadcast(prevStamina,NowStamina,MaxStamina);
 			
 			if (NowStamina >= MaxStamina)
 			{
@@ -64,15 +66,21 @@ void UCStaminaComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAc
 
 void UCStaminaComponent::ConsumeStamina(float value)
 {
+	float prevStamina = NowStamina;
 	NowStamina = FMath::Clamp(NowStamina - value, 0.f, MaxStamina);
-	OnStaminaChanged.Broadcast(NowStamina,MaxStamina);
+	OnStaminaChanged.Broadcast(prevStamina,NowStamina,MaxStamina);
 	SetRecoverTimer();
 }
 
 void UCStaminaComponent::DrowningStamina(float value)
 {
+	float prevStamina = NowStamina;
 	NowStamina = FMath::Clamp(NowStamina - value, 0.f, MaxStamina);
-	OnStaminaChanged.Broadcast(NowStamina,MaxStamina);
+	OnStaminaChanged.Broadcast(prevStamina,NowStamina,MaxStamina);
+	if (NowStamina <= 0.f)
+	{
+		SetRecoverTimer();
+	}
 }
 
 void UCStaminaComponent::RecoverStamina()
@@ -88,10 +96,14 @@ void UCStaminaComponent::RecoverStamina()
 
 void UCStaminaComponent::SetRecoverTimer()
 {
-	if (!state->IsIdleMode()) return;
+	CLog::Log(TEXT("Stamina) State : ") + state->GetTypeString());
+	if (!(state->IsIdleMode() || state->IsRollingMode())) return;
 	if (movement->GetIsSprinting()) return;
 	bIsRecovering = false;
-
+	
+	/*if (GetWorld()->GetTimerManager().IsTimerActive(StaminaRecoveryTimerHandle))
+		return;*/
+	
 	GetWorld()->GetTimerManager().ClearTimer(StaminaRecoveryTimerHandle);
 	
 	GetWorld()->GetTimerManager().SetTimer(
@@ -102,6 +114,14 @@ void UCStaminaComponent::SetRecoverTimer()
 		false
 		);
 	
+}
+
+void UCStaminaComponent::ResetStamina()
+{
+	NowStamina = MaxStamina;
+	bIsRecovering = false;
+	OnStaminaChanged.Broadcast(NowStamina,NowStamina,MaxStamina);
+	GetWorld()->GetTimerManager().ClearTimer(StaminaRecoveryTimerHandle);
 }
 
 

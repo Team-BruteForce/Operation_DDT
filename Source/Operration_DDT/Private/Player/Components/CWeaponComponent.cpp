@@ -186,3 +186,16 @@ void UCWeaponComponent::ChangeType(EWeaponType InType)
 	if (OnWeaponTypeChanged.IsBound())
 		OnWeaponTypeChanged.Broadcast(prevType, Type);
 }
+
+void UCWeaponComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	for (auto& data: DataAssets)
+	{
+		//data->Cleanup();
+		if (IsValid(data))
+		{
+			data->Cleanup();
+		}
+	}
+	Super::EndPlay(EndPlayReason);
+}

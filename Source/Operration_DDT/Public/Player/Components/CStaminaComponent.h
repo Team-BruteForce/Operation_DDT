@@ -6,7 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "CStaminaComponent.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnStaminaChanged, float, NewStamina, float, MaxStamina);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnStaminaChanged, float, prevStamina, float, NewStamina, float, MaxStamina);
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class OPERRATION_DDT_API UCStaminaComponent : public UActorComponent
 {
@@ -42,6 +42,8 @@ public:
 
 	UPROPERTY(BlueprintAssignable)
 	FOnStaminaChanged OnStaminaChanged;
+
+	void ResetStamina();
 
 
 private:

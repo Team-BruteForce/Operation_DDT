@@ -65,6 +65,9 @@ private:
 	class UCStateComponent* State;
 	class UCapsuleComponent* Capsule;
 	class UCMovementComponent* Movement;
+	class UCStatusComponent* Status;
+	class UCMagazineComponent* Magazine;
+	class UCStaminaComponent* Stamina;
 	
 
 	FVector RespawnLocation;

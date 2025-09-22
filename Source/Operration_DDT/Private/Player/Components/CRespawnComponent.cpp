@@ -14,6 +14,8 @@
 #include "Components/CapsuleComponent.h"
 // BossManager BP 자동 탐색용
 #include "Kismet/GameplayStatics.h"
+#include "Player/Components/CMagazineComponent.h"
+#include "Player/Components/CStaminaComponent.h"
 
 // Sets default values for this component's properties
 UCRespawnComponent::UCRespawnComponent()
@@ -37,6 +39,9 @@ void UCRespawnComponent::BeginPlay()
 	RespawnLocation = OwnerCharacter->GetActorLocation();
 	Capsule = CHelpers::GetComponent<UCapsuleComponent>(OwnerCharacter);
 	Movement = CHelpers::GetComponent<UCMovementComponent>(OwnerCharacter);
+	Status = CHelpers::GetComponent<UCStatusComponent>(OwnerCharacter);
+	Magazine = CHelpers::GetComponent<UCMagazineComponent>(OwnerCharacter);
+	Stamina = CHelpers::GetComponent<UCStaminaComponent>(OwnerCharacter);
 	
 	// DieDelegate 구독
 	if (OwnerCharacter && OwnerCharacter->Montages)
@@ -135,10 +140,18 @@ void UCRespawnComponent::RespawnPlayer()
 	CLog::Log("RespawnComponent: Player state set to Idle and dead state reset");
 	
 	// 3. HP를 최대치로 복구 (Status 컴포넌트가 있다면)
-	if (OwnerCharacter->Status)
+	if (Status)
 	{
-		OwnerCharacter->Status->SetFullHealth();
+		Status->ResetStatus();
 		CLog::Log("RespawnComponent: Player health restored to full");
+	}
+	if (Stamina)
+	{
+		Stamina->ResetStamina();
+	}
+	if (Magazine)
+	{
+		Magazine->ResetMagazines();
 	}
 	
 	// 4. 컨트롤러 회전 다시 활성화

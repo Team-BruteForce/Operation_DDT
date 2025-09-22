@@ -27,7 +27,7 @@ void UCStatusComponent::BeginPlay()
 
 	// 초기 체력 설정
 	NowHp = MaxHp;
-	OnPlayerHealthChanged.Broadcast(NowHp, MaxHp);
+	OnPlayerHealthChanged.Broadcast(NowHp, NowHp, MaxHp);
 	OnHealItemChanged.Broadcast(HealItemCount);
 	
 }
@@ -50,8 +50,9 @@ void UCStatusComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAct
 		float EasedProgress = 1.0f - FMath::Pow(1.0f - HealProgress, 3.0f);
 		
 		// 현재 체력 = 시작 체력 + (목표 회복량 * 진행률)
+		float prevHP = NowHp;
 		NowHp = HealStartAmount + (HealTargetAmount * EasedProgress);
-		OnPlayerHealthChanged.Broadcast(NowHp, MaxHp);
+		OnPlayerHealthChanged.Broadcast(prevHP,NowHp, MaxHp);
 		
 		// 회복 완료 체크
 		if (HealElapsedTime >= HealDuration)
@@ -75,19 +76,22 @@ void UCStatusComponent::GainHealItem()
 
 void UCStatusComponent::GetDamage(float value)
 {
+	float prevHp = NowHp;
 	NowHp = FMath::Clamp(NowHp - value, 0.0f, MaxHp);
-	OnPlayerHealthChanged.Broadcast(NowHp, MaxHp);
+	OnPlayerHealthChanged.Broadcast(prevHp, NowHp, MaxHp);
 }
 
 void UCStatusComponent::GetHeal(float value)
 {
+	float prevHp = NowHp;
 	NowHp = FMath::Clamp(NowHp + value, 0.0f, MaxHp);
-	OnPlayerHealthChanged.Broadcast(NowHp, MaxHp);
+	OnPlayerHealthChanged.Broadcast(prevHp,NowHp, MaxHp);
 }
 
 void UCStatusComponent::CalculateHealing()
 {
 	CheckTrue(StateComp->IsHealingMode());
+	CheckTrue(StateComp->IsRollingMode());
 	// 회복 가능 여부 체크
 	if (!CanHeal())
 	{
@@ -150,5 +154,13 @@ bool UCStatusComponent::CanHeal() const
 float UCStatusComponent::GetHealthPercentage() const
 {
 	return (MaxHp > 0.0f) ? (NowHp / MaxHp) : 0.0f;
+}
+
+void UCStatusComponent::ResetStatus()
+{
+	SetFullHealth();
+	OnPlayerHealthChanged.Broadcast(NowHp,NowHp, MaxHp);
+	HealItemCount = 3;
+	OnHealItemChanged.Broadcast(HealItemCount);
 }
 

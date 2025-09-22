@@ -35,10 +35,10 @@ public:
 
 	//델리게이트 핸들러
 	UFUNCTION()
-	void OnStaminaChanged(float nowStamina, float maxStamina);
+	void OnStaminaChanged(float prevStamina, float nowStamina, float maxStamina);
 
 	UFUNCTION()
-	void OnHealthChanged(float nowHp, float maxHp);
+	void OnHealthChanged(float prevHp, float nowHp, float maxHp);
 
 	UFUNCTION()
 	void OnHealItemChanged(int32 NewCount);

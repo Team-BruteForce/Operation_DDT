@@ -63,4 +63,6 @@ public:
 	void LootRifleBullets(int32 InValue);
 
 	void Reloading();
+
+	void ResetMagazines();
 };

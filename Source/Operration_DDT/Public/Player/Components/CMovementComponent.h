@@ -62,7 +62,7 @@ public:
 	FORCEINLINE bool GetIsSprinting() { return bIsSprinting; }
 	FORCEINLINE void SetIsSprinting(bool inBool) { bIsSprinting = inBool; }
 
-	FORCEINLINE bool GetIsShiftPrssing() { return bIsShiftPressing; }
+	FORCEINLINE bool GetIsShiftPressing() { return bIsShiftPressing; }
 	
 	// BlendSpace용 방향 계산
 	FORCEINLINE float GetForwardInput() const;
@@ -92,6 +92,8 @@ public:
 	void SprintStart();
 	void SprintEnd();
 
+	FORCEINLINE void SetFalseOnMovePressing(){ bOnMovePressing = false; }
+
 private:
 	void SetSpeed(ESpeedType InType);
 
@@ -119,6 +121,8 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Camera")
 	float MaxPitch = 130.f;
+
+	bool bOnMovePressing = false;
 
 		
 };

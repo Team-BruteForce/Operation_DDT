@@ -15,10 +15,7 @@ class OPERRATION_DDT_API UCAnimNotify_SwitchHandLtoR : public UAnimNotify
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(EditDefaultsOnly)
-	class AActor* Weapon;
-
-	UPROPERTY(EditDefaultsOnly)
+	
 	class ADDTPlayer* OwnerCharacter;
 
 	class UCFireComponent* Firecomp;

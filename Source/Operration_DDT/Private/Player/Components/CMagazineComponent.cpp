@@ -77,3 +77,14 @@ void UCMagazineComponent::Reloading()
 	OwnerCharacter->PlayAnimMontage(Reload_Start);
 }
 
+void UCMagazineComponent::ResetMagazines()
+{
+	TotalRifleBullets = 50;
+	
+	TotalRifleBullets <= RifleMagazines ? CurrentRifleBullets = TotalRifleBullets : CurrentRifleBullets = RifleMagazines;
+	TotalRifleBullets -= CurrentRifleBullets;
+
+	OnCurrentBulletChanged.Broadcast(CurrentRifleBullets);
+	OnTotalBulletChanged.Broadcast(TotalRifleBullets);
+}
+

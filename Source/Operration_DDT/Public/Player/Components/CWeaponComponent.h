@@ -68,6 +68,9 @@ private:
 	class ACharacter* OwnerCharacter;
 	EWeaponType Type = EWeaponType::Rifle;
 
+public:
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
 
 		
 };

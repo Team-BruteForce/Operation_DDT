@@ -158,7 +158,7 @@ void ADDTPlayer::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	//CLog::Print(*(State->GetTypeString()));
+	CLog::Print(TEXT("ADDTPlayer) Type : " + State->GetTypeString()));
 }
 
 
@@ -183,6 +183,7 @@ void ADDTPlayer::SetupPlayerInputComponent(class UInputComponent* PlayerInputCom
 		input->BindAction(IA_Reload, ETriggerEvent::Started, State, &UCStateComponent::SetReloadMode);
 
 		input->BindAction(IA_Move, ETriggerEvent::Triggered, Movement, &UCMovementComponent::OnMove);
+		input->BindAction(IA_Move, ETriggerEvent::Completed, Movement, &UCMovementComponent::SetFalseOnMovePressing);
 		input->BindAction(IA_TurnHor, ETriggerEvent::Triggered, Movement, &UCMovementComponent::OnHorizontalLook);
 		input->BindAction(IA_TurnVer, ETriggerEvent::Triggered, Movement, &UCMovementComponent::OnVerticalLook);
 		input->BindAction(IA_Sprint, ETriggerEvent::Started, Movement, &UCMovementComponent::SprintStart);
@@ -265,7 +266,21 @@ void ADDTPlayer::OnStateTypeChanged(EStateType InPrevType, EStateType InNewType)
 
 void ADDTPlayer::OnAvoid()
 {
-	CheckFalse(State->IsIdleMode());
+	/*CheckFalse(State->IsIdleMode());
+	
+	CheckTrue(State->IsDeadMode());
+	CheckTrue(State->IsHittedMode());
+	CheckTrue(State->IsEquipMode());*/
+
+	if (!(State->GetType() == EStateType::Idle ||
+		State->GetType() == EStateType::RifleReload ||
+		State->GetType() == EStateType::Action
+		))
+	{
+		CLog::Log("ADDTPlayer) Not Idle or Reload" );
+		return;
+	}
+	
 	//CheckTrue(State->IsRollingMode());
 	//CheckTrue(State->IsReloadMode());
 	CheckFalse(Movement->CanMove());
@@ -275,7 +290,8 @@ void ADDTPlayer::OnAvoid()
 		CLog::Log("Not Enough Stamina to roll");
 		return;
 	}
-
+	State->SetRollingMode();
+	
 	// 현재 입력 방향 가져오기
 	FVector InputDirection = GetCharacterMovement()->GetLastInputVector();
 	InputDirection.Z = 0.f;
@@ -294,7 +310,6 @@ void ADDTPlayer::OnAvoid()
 	}
 	StaminaComp->ConsumeStamina(StaminaComp->RollingStamina);
 
-	State->SetRollingMode();
 }
 
 void ADDTPlayer::Roll()
@@ -315,14 +330,20 @@ void ADDTPlayer::Dead()
 
 void ADDTPlayer::Reload()
 {
-	CheckTrue(State->IsRollingMode());
+	//CheckTrue(State->IsRollingMode());
+	if (State->IsRollingMode())
+	{
+		State->SetIdleMode();
+		return;
+	}
 	MagazineComp->Reloading();
 }
 
 
 void ADDTPlayer::Heal()
 {
-	CheckTrue(State->IsRollingMode());
+	CLog::Log("ADDTPlayer) " + State->GetTypeString() );
+	
 	if (Status->GetHealItemCount() > 0)
 	{
 		Montages->PlayHealingMode();
