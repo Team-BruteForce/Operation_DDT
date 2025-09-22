@@ -51,6 +51,8 @@ ACSkeletonEnemy::ACSkeletonEnemy()
 	MeleeAttackCollisionR->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
 	MeleeAttackCollisionR->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
 	MeleeAttackCollisionR->SetBoxExtent(FVector(20.0f, 5.0f, 7.0f));
+	MeleeAttackCollisionR->OnComponentBeginOverlap.AddDynamic(this, &ACSkeletonEnemy::OnMeleeAttackOverlap);
+
 
 	// 왼손 콜리전 (Hand_L_Collision)
 	MeleeAttackCollisionL = CreateDefaultSubobject<UBoxComponent>(TEXT("MeleeAttackCollisionL"));
@@ -60,6 +62,7 @@ ACSkeletonEnemy::ACSkeletonEnemy()
 	MeleeAttackCollisionL->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
 	MeleeAttackCollisionL->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
 	MeleeAttackCollisionL->SetBoxExtent(FVector(20.0f, 5.0f, 7.0f));
+	MeleeAttackCollisionL->OnComponentBeginOverlap.AddDynamic(this, &ACSkeletonEnemy::OnMeleeAttackOverlap);
 
 	// 콤보 공격 마지막 콜리전
 	ComboAttackLastCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("ComboAttackLastCollision"));
@@ -71,7 +74,7 @@ ACSkeletonEnemy::ACSkeletonEnemy()
 	ComboAttackLastCollision->SetBoxExtent(FVector(25.0f, 8.0f, 10.0f));
 	ComboAttackLastCollision->SetRelativeLocation(FVector::ZeroVector); // 메쉬 중심에 위치
 	ComboAttackLastCollision->ComponentTags.Add(TEXT("ComboLast"));
-
+	ComboAttackLastCollision->OnComponentBeginOverlap.AddDynamic(this, &ACSkeletonEnemy::OnMeleeAttackOverlap);
 }
 
 // Called when the game starts or when spawned
@@ -119,33 +122,9 @@ void ACSkeletonEnemy::BeginPlay()
             }
         }
     }
-	// 근접 공격 컴포넌트의 히트 이벤트에 바인딩
-	if (MeleeAttackComponent)
-	{
-		MeleeAttackComponent->OnMeleeAttackHit.AddDynamic(this, &ACSkeletonEnemy::OnMeleeAttackHit);
-	}
 
-	// 소켓 콜리전 오버랩 이벤트 바인딩
-//	if (WeakPointCollision)
-//	{
-//		WeakPointCollision->OnComponentBeginOverlap.AddDynamic(this, &ACSkeletonEnemy::OnWeakPointOverlap);
-//	}
-	if (MeleeAttackCollisionR)
-	{
-		MeleeAttackCollisionR->OnComponentBeginOverlap.AddDynamic(this, &ACSkeletonEnemy::OnMeleeAttackOverlap);
-	}
-	if (MeleeAttackCollisionL)
-	{
-		MeleeAttackCollisionL->OnComponentBeginOverlap.AddDynamic(this, &ACSkeletonEnemy::OnMeleeAttackOverlap);
-	}
-	if (ComboAttackLastCollision)
-	{
-		ComboAttackLastCollision->OnComponentBeginOverlap.AddDynamic(this, &ACSkeletonEnemy::OnMeleeAttackOverlap);
-	}
-
-
-
-	// 낙하/회전 연출은 사용하지 않음
+	//공격 콜리전 비활성화
+	DisableAllCollisions();
 }
 
 void ACSkeletonEnemy::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -525,12 +504,6 @@ void ACSkeletonEnemy::EnableComboLCollision()
 
 void ACSkeletonEnemy::DisableAllCollisions()
 {
-	// 약점 콜리전 비활성화
-//	if (WeakPointCollision)
-//	{
-//		WeakPointCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-//	}
-	
 	// 공격 콜리전 비활성화
 	if (MeleeAttackCollisionR)
 	{
@@ -543,11 +516,6 @@ void ACSkeletonEnemy::DisableAllCollisions()
 	if (ComboAttackLastCollision)
 	{
 		ComboAttackLastCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	}
-	// 디버그 출력
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Orange, TEXT("All Collisions Disabled"));
 	}
 }
 

@@ -36,6 +36,20 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Item Drop Object")
     void RespawnObject();
 
+    // 메쉬 컴포넌트 설정 함수들
+    UFUNCTION(BlueprintCallable, Category = "Item Drop Object")
+    void SetHitMeshComponent1(UStaticMeshComponent* MeshComp);
+
+    UFUNCTION(BlueprintCallable, Category = "Item Drop Object")
+    void SetHitMeshComponent2(UStaticMeshComponent* MeshComp);
+
+    UFUNCTION(BlueprintCallable, Category = "Item Drop Object")
+    void SetMeshComponent(UStaticMeshComponent* MeshComp);
+
+    // 리스폰 가능 여부
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Respawn")
+    bool IsRespawn = true;
+
     // 현재 체력 확인
     UFUNCTION(BlueprintCallable, Category = "Item Drop Object")
     float GetCurrentHealth() const { return CurrentHealth; }
@@ -104,8 +118,14 @@ private:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
     UCItemDropComponent* ItemDropComponent;
 
-    // Mesh 컴포넌트 참조
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
+    // Mesh 컴포넌트 참조들
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components", meta = (AllowPrivateAccess = "true"))
+    UStaticMeshComponent* HitMeshComponent1;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components", meta = (AllowPrivateAccess = "true"))
+    UStaticMeshComponent* HitMeshComponent2;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components", meta = (AllowPrivateAccess = "true"))
     UStaticMeshComponent* MeshComponent;
 
     // 충돌 감지 설정
