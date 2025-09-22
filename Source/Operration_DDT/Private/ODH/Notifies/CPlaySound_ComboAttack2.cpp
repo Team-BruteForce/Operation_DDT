@@ -1,7 +1,7 @@
-#include "ODH/Notifies/CPlaySound_ComboAttack.h"
+#include "ODH/Notifies/CPlaySound_ComboAttack2.h"
 #include "ODH/Component/CSoundCollectionComponent.h"
 
-void UCPlaySound_ComboAttack::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation)
+void UCPlaySound_ComboAttack2::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation)
 {
 	Super::Notify(MeshComp, Animation);
 
@@ -12,7 +12,6 @@ void UCPlaySound_ComboAttack::Notify(USkeletalMeshComponent* MeshComp, UAnimSequ
 	
 	if (SoundComponent)
 	{
-		SoundComponent->PlayComboAttackSound();
+		SoundComponent->PlayComboAttack2Sound();
 	}
 }
-

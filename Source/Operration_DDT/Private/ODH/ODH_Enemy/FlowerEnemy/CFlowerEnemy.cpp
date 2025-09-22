@@ -38,6 +38,9 @@ ACFlowerEnemy::ACFlowerEnemy()
 	// 근접 공격 컴포넌트 생성
 	MeleeAttackComponent = CreateDefaultSubobject<UCEnemyMeleeAttackComponent>(TEXT("MeleeAttackComponent"));
 
+	// 사운드 컬렉션 컴포넌트 생성
+	SoundCollectionComponent = CreateDefaultSubobject<UCSoundCollectionComponent>(TEXT("SoundCollectionComponent"));
+
 
 	// 애로우 컴포넌트 생성 (원거리 공격 발사 위치)
 	ProjectileSpawnArrow = CreateDefaultSubobject<UArrowComponent>(TEXT("ProjectileSpawnArrow"));
@@ -87,24 +90,6 @@ void ACFlowerEnemy::BeginPlay()
 		MeleeAttackComponent->OnMeleeAttackHit.AddDynamic(this, &ACFlowerEnemy::OnMeleeAttackHit);
 	}
 
-	// 낙하 타임라인 델리게이트 바인딩 (커브가 있는 경우에만 재생됨)
-	if (FallCurve)
-	{
-		FOnTimelineFloat UpdateDelegate;
-		UpdateDelegate.BindUFunction(this, FName("OnFallTimelineUpdate"));
-		FallTimeline.AddInterpFloat(FallCurve, UpdateDelegate);
-
-		FOnTimelineEvent FinishedDelegate;
-		FinishedDelegate.BindUFunction(this, FName("OnFallTimelineFinished"));
-		FallTimeline.SetTimelineFinishedFunc(FinishedDelegate);
-
-		// 커브 X축이 0..1이라고 가정하고 Duration에 맞추어 재생 속도를 설정
-		if (FallDuration > 0.0f)
-		{
-			FallTimeline.SetPlayRate(1.0f / FallDuration);
-		}
-	}
-
 	// 헤드 콜리전 초기 상태 동기화
 	UpdateHeadCollisions();
 
@@ -112,6 +97,13 @@ void ACFlowerEnemy::BeginPlay()
 	StartAutoHeadOpening();
 
 	//공격 콜리전 비활성화
+
+	// 사운드 상태 초기화
+	bIsAttacking = false;
+	bIsDead = false;
+	
+	// 초기 사운드 상태 설정
+	UpdateSoundState();
 	DisableDashAttackCollision();
 	DisableHandLAttackCollision();
 	DisableHandRAttackCollision();
@@ -141,18 +133,9 @@ void ACFlowerEnemy::EndPlay(const EEndPlayReason::Type EndPlayReason)
 void ACFlowerEnemy::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	if (bIsFalling)
-	{
-		if (FallCurve)
-		{
-			FallTimeline.TickTimeline(DeltaTime);
-		}
-		else
-		{
-			UpdateFallingAnimation(DeltaTime);
-		}
-	}
+	
+	// 사운드 상태 업데이트 (매 프레임마다 블랙보드 체크)
+	UpdateSoundState();
 }
 
 // Called to bind functionality to input
@@ -350,6 +333,9 @@ void ACFlowerEnemy::PlayRangedAttack()
 	bIsComboAttacking = false; // 다른 공격 상태 초기화
 	bIsDashAttacking = false; // 다른 공격 상태 초기화
 	
+	// 사운드 상태: 공격 중
+	bIsAttacking = true;
+	
 	// 다른 공격 콜리전들 비활성화
 	DisableHandLAttackCollision();
 	DisableHandRAttackCollision();
@@ -381,6 +367,9 @@ void ACFlowerEnemy::PlayComboAttack()
 		bIsDashAttacking = false; // 다른 공격 상태 초기화
 		bIsRangedAttacking = false; // 다른 공격 상태 초기화
 		
+		// 사운드 상태: 공격 중
+		bIsAttacking = true;
+		
 		// 다른 공격 콜리전들 비활성화
 		DisableHandLAttackCollision();
 		DisableHandRAttackCollision();
@@ -402,6 +391,9 @@ void ACFlowerEnemy::PlayDashAttack()
 		bIsDashAttacking = true;
 		bIsComboAttacking = false; // 다른 공격 상태 초기화
 		bIsRangedAttacking = false; // 다른 공격 상태 초기화
+		
+		// 사운드 상태: 공격 중
+		bIsAttacking = true;
 		
 		// 다른 공격 콜리전들 비활성화
 		DisableHandLAttackCollision();
@@ -435,6 +427,9 @@ void ACFlowerEnemy::NotifyComboAttackCompleted()
 				// 콤보 공격 상태 초기화
 				bIsComboAttacking = false;
 				
+				// 사운드 상태: 공격 완료
+				OnAttackCompleted();
+				
 				// 디버그 출력
 				if (GEngine)
 				{
@@ -459,6 +454,9 @@ void ACFlowerEnemy::NotifyDashAttackCompleted()
 				
 				// 대시 공격 상태 초기화
 				bIsDashAttacking = false;
+				
+				// 사운드 상태: 공격 완료
+				OnAttackCompleted();
 				
 				// 디버그 출력
 				if (GEngine)
@@ -485,6 +483,9 @@ void ACFlowerEnemy::NotifyRangedAttackCompleted()
 				// 원거리 공격 상태 초기화
 				bIsRangedAttacking = false;
 				
+				// 사운드 상태: 공격 완료
+				OnAttackCompleted();
+				
 				// 디버그 출력
 				if (GEngine)
 				{
@@ -498,6 +499,12 @@ void ACFlowerEnemy::NotifyRangedAttackCompleted()
 // 머리 상태 변경 함수들
 void ACFlowerEnemy::SetHeadOpen(bool bOpen)
 {
+	// 사망 시 머리 상태 변경 금지
+	if (StatusComponent && StatusComponent->IsDead())
+	{
+		return;
+	}
+
 	bIsHeadOpen = bOpen;
 	UpdateHeadCollisions();
 	
@@ -512,6 +519,12 @@ void ACFlowerEnemy::SetHeadOpen(bool bOpen)
 
 void ACFlowerEnemy::OpenHeadWithTimer()
 {
+	// 사망 시 동작 금지
+	if (StatusComponent && StatusComponent->IsDead())
+	{
+		return;
+	}
+
 	// 머리를 열기
 	SetHeadOpen(true);
 	
@@ -532,6 +545,13 @@ void ACFlowerEnemy::OpenHeadWithTimer()
 
 void ACFlowerEnemy::CloseHeadAutomatically()
 {
+	// 사망 시 더 이상 토글/스케줄 금지
+	if (StatusComponent && StatusComponent->IsDead())
+	{
+		HeadCloseTimerHandle.Invalidate();
+		return;
+	}
+
 	// 머리를 닫기
 	SetHeadOpen(false);
 	
@@ -570,6 +590,12 @@ void ACFlowerEnemy::UpdateHeadCollisions()
 
 void ACFlowerEnemy::StartAutoHeadOpening()
 {
+	// 사망 시 자동 열기 스케줄 금지
+	if (StatusComponent && StatusComponent->IsDead())
+	{
+		return;
+	}
+
 	// 기존 자동 머리 열기 타이머가 있다면 클리어
 	GetWorldTimerManager().ClearTimer(HeadAutoOpenTimerHandle);
 	
@@ -587,6 +613,12 @@ void ACFlowerEnemy::StartAutoHeadOpening()
 
 void ACFlowerEnemy::OpenHeadAutomatically()
 {
+	// 사망 시 동작 금지
+	if (StatusComponent && StatusComponent->IsDead())
+	{
+		return;
+	}
+
 	// 머리가 이미 열려있지 않을 때만 자동 열기
 	if (!bIsHeadOpen)
 	{
@@ -876,6 +908,9 @@ void ACFlowerEnemy::OnDeath()
 		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Flower Enemy Died! Will be removed in 3 seconds..."));
 	}
 
+	// 사운드 상태: 사망
+	bIsDead = true;
+
 	// 돌진 이동 정지
 	bIsDashMoving = false;
 
@@ -900,6 +935,9 @@ void ACFlowerEnemy::OnDeath()
 	
 	// 기존 타이머가 있다면 클리어
 	GetWorldTimerManager().ClearTimer(DeathTimerHandle);
+	// 헤드 관련 타이머도 즉시 정리하여 사망 후 토글 방지
+	GetWorldTimerManager().ClearTimer(HeadCloseTimerHandle);
+	GetWorldTimerManager().ClearTimer(HeadAutoOpenTimerHandle);
 	
 	FTimerDelegate DestroySelf;
 	DestroySelf.BindLambda([this]()
@@ -925,10 +963,6 @@ void ACFlowerEnemy::OnDeath()
 	// 사망 애니메이션 재생, 사망 효과 등 추가 가능
 	// 예: PlayDeathAnimation();
 
-	// 낙하 연출 시작
-	StartFallingAnimation();
-
-
 	// 소켓 기반 데미지 콜리전 비활성화
 	DisableDamageCollisions();
 
@@ -950,89 +984,6 @@ void ACFlowerEnemy::OnMeleeAttackHit(AActor* HitActor)
 		// 예: HitActor->TakeDamage(MeleeAttackComponent->GetMeleeDamage());
 	}
 }
-
-
-void ACFlowerEnemy::StartFallingAnimation()
-{
-	if (!GetMesh())
-		return;
-
-	bIsFalling = true;
-
-	// 시작 위치/높이 기록 (현재 메시 상대 위치 기준)
-	OriginalMeshLocation = GetMesh()->GetRelativeLocation();
-	FallStartZ = OriginalMeshLocation.Z;
-	FallStartRotation = GetMesh()->GetRelativeRotation();
-
-	FallStartTime = 0.0f;
-
-	if (FallCurve)
-	{
-		FallTimeline.PlayFromStart();
-	}
-}
-
-void ACFlowerEnemy::UpdateFallingAnimation(float DeltaTime)
-{
-	if (!GetMesh())
-		return;
-
-	if (FallDuration <= 0.0f)
-	{
-		FVector FinalLoc = OriginalMeshLocation;
-		FinalLoc.Z = FallEndHeight;
-		GetMesh()->SetRelativeLocation(FinalLoc);
-		bIsFalling = false;
-		return;
-	}
-
-	FallStartTime += DeltaTime;
-	float Alpha = FMath::Clamp(FallStartTime / FallDuration, 0.0f, 1.0f);
-
-	float NewZ = FMath::Lerp(FallStartZ, FallEndHeight, Alpha);
-	FVector NewLoc = OriginalMeshLocation;
-	NewLoc.Z = NewZ;
-	GetMesh()->SetRelativeLocation(NewLoc);
-
-	const FQuat StartQ = FallStartRotation.Quaternion();
-	const FQuat EndQ = FallEndRotation.Quaternion();
-	const FQuat Slerped = FQuat::Slerp(StartQ, EndQ, Alpha);
-	GetMesh()->SetRelativeRotation(Slerped);
-
-	if (Alpha >= 1.0f)
-	{
-		bIsFalling = false;
-	}
-}
-
-void ACFlowerEnemy::OnFallTimelineUpdate(float Value)
-{
-	if (!GetMesh())
-		return;
-
-	float NewZ = FMath::Lerp(FallStartZ, FallEndHeight, Value);
-	FVector NewLoc = OriginalMeshLocation;
-	NewLoc.Z = NewZ;
-	GetMesh()->SetRelativeLocation(NewLoc);
-
-	const FQuat StartQ = FallStartRotation.Quaternion();
-	const FQuat EndQ = FallEndRotation.Quaternion();
-	const FQuat Slerped = FQuat::Slerp(StartQ, EndQ, Value);
-	GetMesh()->SetRelativeRotation(Slerped);
-}
-
-void ACFlowerEnemy::OnFallTimelineFinished()
-{
-	if (!GetMesh())
-		return;
-
-	FVector FinalLoc = OriginalMeshLocation;
-	FinalLoc.Z = FallEndHeight;
-	GetMesh()->SetRelativeLocation(FinalLoc);
-	GetMesh()->SetRelativeRotation(FallEndRotation);
-	bIsFalling = false;
-}
-
 
 // 돌진 공격 이동 함수들
 void ACFlowerEnemy::StartDashMovementToPlayer()
@@ -1265,6 +1216,58 @@ void ACFlowerEnemy::OnAttackCollisionOverlap(UPrimitiveComponent* OverlappedComp
         /*FString DebugMessage = FString::Printf(TEXT("Flower Enemy %s Attack Hit Player! Damage: %.1f"), AttackType, DamageAmount);*/
         /*GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, DebugMessage);*/
     }
+}
+
+// 사운드 상태 업데이트 함수
+void ACFlowerEnemy::UpdateSoundState()
+{
+	if (!SoundCollectionComponent)
+		return;
+
+	// 조건 4: 사망 시 모든 사운드 정지
+	if (bIsDead)
+	{
+		SoundCollectionComponent->StopAllSoundLoops();
+		return;
+	}
+
+	// 조건 3: 공격 중일 때 모든 사운드 정지
+	if (bIsAttacking)
+	{
+		SoundCollectionComponent->StopAllSoundLoops();
+		return;
+	}
+
+	// 블랙보드에서 IsInCombat 상태 체크
+	AAIController* AIController = Cast<AAIController>(GetController());
+	if (AIController)
+	{
+		UBlackboardComponent* BlackboardComponent = AIController->GetBlackboardComponent();
+		if (BlackboardComponent)
+		{
+			bool IsInCombat = BlackboardComponent->GetValueAsBool(TEXT("IsInCombat"));
+
+			// 조건 1: 전투 상태가 아닐 때 Idle 사운드
+			if (!IsInCombat)
+			{
+				SoundCollectionComponent->StartIdleSoundLoop();
+				SoundCollectionComponent->StopRunSoundLoop();
+			}
+			// 조건 2: 전투 상태일 때 Run 사운드
+			else
+			{
+				SoundCollectionComponent->StartRunSoundLoop();
+				SoundCollectionComponent->StopIdleSoundLoop();
+			}
+		}
+	}
+}
+
+// 공격 완료 콜백 함수
+void ACFlowerEnemy::OnAttackCompleted()
+{
+	bIsAttacking = false;
+	// UpdateSoundState는 Tick에서 자동으로 호출됨
 }
 
 

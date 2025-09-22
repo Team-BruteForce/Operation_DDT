@@ -7,6 +7,7 @@
 #include "ODH/ODH_Enemy/Interface/IDamageable.h"
 #include "ODH/ODH_Enemy/Component/CEnemyStatusComponent.h"
 #include "ODH/ODH_Enemy/Component/CEnemyMeleeAttackComponent.h"
+#include "ODH/Component/CSoundCollectionComponent.h"
 #include "GenericTeamAgentInterface.h"
 #include "Components/TimelineComponent.h"
 #include "Components/ArrowComponent.h"
@@ -245,47 +246,26 @@ public:
 	float MaxHP = 1130.0f;
 
 public:
-	// 떨어지는 연출 관련 변수들
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Death Animation")
-	bool bIsFalling = false;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Death Animation")
-	float FallDuration = 2.0f; // 떨어지는 시간 (초)
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Death Animation")
-	float FallEndHeight = -50.0f; // 떨어지기 끝나는 높이
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Death Animation")
-	UCurveFloat* FallCurve = nullptr; // 떨어지는 곡선 (선택사항)
-
-	// 회전 연출: 끝 회전값 (기본: Pitch=0, Yaw=180, Roll=0)
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Death Animation")
-	FRotator FallEndRotation = FRotator(0.0f, 180.0f, 0.0f);
-
-private:
-	// 떨어지는 연출 함수
-	UFUNCTION()
-	void StartFallingAnimation();
-
-	UFUNCTION()
-	void UpdateFallingAnimation(float DeltaTime);
-
-	UFUNCTION()
-	void OnFallTimelineUpdate(float Value);
-
-	UFUNCTION()
-	void OnFallTimelineFinished();
-
-public:
 	// 블루프린트에서 구현될 흡수 애니메이션 함수
 	UFUNCTION(BlueprintImplementableEvent, Category = "Animation")
 	void StartAbsorbAnimation();
 
-private:
-	// 떨어지는 연출용 변수들
-	float FallStartTime = 0.0f;
-	FVector OriginalMeshLocation;
-	FRotator FallStartRotation;
-	float FallStartZ = 0.0f;
-	FTimeline FallTimeline;
+	// 사운드 관련 컴포넌트
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Sound")
+	UCSoundCollectionComponent* SoundCollectionComponent;
+
+	// 사운드 상태 관리 변수들
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Sound")
+	bool bIsAttacking = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Sound")
+	bool bIsDead = false;
+
+	// 사운드 상태 업데이트 함수
+	UFUNCTION()
+	void UpdateSoundState();
+
+	// 공격 완료 콜백 함수
+	UFUNCTION()
+	void OnAttackCompleted();
 };
