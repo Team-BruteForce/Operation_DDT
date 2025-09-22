@@ -177,18 +177,52 @@ void ACFlowerProjectile::CalculateTrajectory()
 	float HorizontalDistance = FVector(ToTarget.X, ToTarget.Y, 0.0f).Size();
 	float VerticalDistance = ToTarget.Z;
 
-	// 고정된 발사각과 속도 사용
-	const float AngleDeg = 45.0f; // 45도 고정
-	const float InitialSpeed = ProjectileSpeed; // 설정된 속도 그대로 사용
+	// 거리에 따른 발사각 조절 + 높이 제한
+	float AngleDeg;
+	if (HorizontalDistance < 500.0f) // 가까운 거리
+	{
+		AngleDeg = 30.0f; // 낮은 각도
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, 
+				FString::Printf(TEXT("FlowerProjectile: 가까운 거리 (%.0fcm) - 각도: %.1f도"), HorizontalDistance, AngleDeg));
+		}
+	}
+	else if (HorizontalDistance < 1000.0f) // 중간 거리
+	{
+		AngleDeg = 45.0f; // 기본 각도
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, 
+				FString::Printf(TEXT("FlowerProjectile: 중간 거리 (%.0fcm) - 각도: %.1f도"), HorizontalDistance, AngleDeg));
+		}
+	}
+	else // 먼 거리
+	{
+		// 먼 거리에서도 최대 높이 50cm로 제한
+		float MaxHeight = 50.0f;
+		float MaxAngle = FMath::RadiansToDegrees(FMath::Atan(MaxHeight / HorizontalDistance));
+		AngleDeg = FMath::Clamp(MaxAngle, 30.0f, 45.0f); // 최소 30도, 최대 45도로 줄임
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, 
+				FString::Printf(TEXT("FlowerProjectile: 먼 거리 (%.0fcm) - 계산된각도: %.1f도, 최종각도: %.1f도, 최대높이: %.0fcm"), 
+					HorizontalDistance, MaxAngle, AngleDeg, MaxHeight));
+		}
+	}
+
+	// 거리에 따른 속도 조절
+	float DistanceMultiplier = FMath::Clamp(HorizontalDistance / 800.0f, 0.7f, 1.3f);
+	float AdjustedSpeed = ProjectileSpeed * DistanceMultiplier;
 
 	const float AngleRad = FMath::DegreesToRadians(AngleDeg);
 
 	// 초기 속도 벡터 계산 (수평방향 + 상승 성분)
 	FVector HorizontalDirection = FVector(ToTarget.X, ToTarget.Y, 0.0f).GetSafeNormal();
-	InitialVelocity = HorizontalDirection * (InitialSpeed * FMath::Cos(AngleRad)) + FVector(0, 0, InitialSpeed * FMath::Sin(AngleRad));
+	InitialVelocity = HorizontalDirection * (AdjustedSpeed * FMath::Cos(AngleRad)) + FVector(0, 0, AdjustedSpeed * FMath::Sin(AngleRad));
 
 	// 예상 도달 시간: 수평 성분 기준
-	float HorizontalSpeed = InitialSpeed * FMath::Cos(AngleRad);
+	float HorizontalSpeed = AdjustedSpeed * FMath::Cos(AngleRad);
 	float TimeToTarget = (HorizontalSpeed > KINDA_SMALL_NUMBER) ? (HorizontalDistance / HorizontalSpeed) : 0.25f;
 
 	// 비행 시간 상한 설정: 예상시간 + 0.5초 여유, MaxFlightTime와 비교해 더 작은 값 사용

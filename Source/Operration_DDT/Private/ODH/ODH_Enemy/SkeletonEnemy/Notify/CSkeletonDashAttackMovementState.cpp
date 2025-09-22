@@ -14,7 +14,7 @@ void UCSkeletonDashAttackMovementState::NotifyBegin(USkeletalMeshComponent* Mesh
 {
 	Super::NotifyBegin(MeshComp, Animation, TotalDuration, EventReference);
 
-	// 메시 컴포넌트의 소유자가 스켈레톤 에너미인지 확인
+	// 메시 컴포넌트의 소유자가 SkeletonEnemy인지 확인
 	if (ACSkeletonEnemy* SkeletonEnemy = Cast<ACSkeletonEnemy>(MeshComp->GetOwner()))
 	{
 		// 플레이어 위치를 저장하고 이동 시작
@@ -24,7 +24,7 @@ void UCSkeletonDashAttackMovementState::NotifyBegin(USkeletalMeshComponent* Mesh
 		// 디버그 출력
 		if (GEngine)
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, TEXT("Dash Movement Started - Player Position Captured"));
+			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, TEXT("Skeleton Enemy Dash Movement Started - Player Position Captured"));
 		}
 	}
 	else
@@ -45,11 +45,11 @@ void UCSkeletonDashAttackMovementState::NotifyTick(USkeletalMeshComponent* MeshC
 	if (!bIsMoving)
 		return;
 
-	// 메시 컴포넌트의 소유자가 스켈레톤 에너미인지 확인
+	// 메시 컴포넌트의 소유자가 SkeletonEnemy인지 확인
 	if (ACSkeletonEnemy* SkeletonEnemy = Cast<ACSkeletonEnemy>(MeshComp->GetOwner()))
 	{
-		// 저장된 플레이어 위치를 향해 이동
-		SkeletonEnemy->UpdateDashMovementToPlayer(FrameDeltaTime, MovementSpeed);
+		// 저장된 플레이어 위치를 향해 이동 (시간 기반)
+		SkeletonEnemy->UpdateDashMovementToPlayer(FrameDeltaTime, MovementDuration);
 	}
 }
 
@@ -57,7 +57,7 @@ void UCSkeletonDashAttackMovementState::NotifyEnd(USkeletalMeshComponent* MeshCo
 {
 	Super::NotifyEnd(MeshComp, Animation, EventReference);
 
-	// 메시 컴포넌트의 소유자가 스켈레톤 에너미인지 확인
+	// 메시 컴포넌트의 소유자가 SkeletonEnemy인지 확인
 	if (ACSkeletonEnemy* SkeletonEnemy = Cast<ACSkeletonEnemy>(MeshComp->GetOwner()))
 	{
 		// 이동 종료
@@ -67,7 +67,7 @@ void UCSkeletonDashAttackMovementState::NotifyEnd(USkeletalMeshComponent* MeshCo
 		// 디버그 출력
 		if (GEngine)
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Orange, TEXT("Dash Movement Ended"));
+			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Orange, TEXT("Skeleton Enemy Dash Movement Ended"));
 		}
 	}
 }

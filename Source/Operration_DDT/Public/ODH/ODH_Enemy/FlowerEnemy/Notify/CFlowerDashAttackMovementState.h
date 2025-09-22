@@ -27,11 +27,11 @@ public:
 	// 노티파이 종료 시 호출
 	virtual void NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference) override;
 
-private:
-	// 이동 속도 (설정 가능)
+	// 이동 시간 (설정 가능) - 애니메이션과 동기화
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement", meta = (AllowPrivateAccess = "true"))
-	float MovementSpeed = 1000.0f;
+	float MovementDuration = 2.0f;
 
+private:
 	// 이동 중인지 확인하는 플래그
 	bool bIsMoving = false;
 };
