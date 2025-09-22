@@ -12,6 +12,7 @@
 #include "Components/BoxComponent.h"
 #include "GameFramework/Character.h"
 #include "AIController.h"
+#include "Boss/Widget/BossStatusWidget.h"
 #include "Components/StateTreeAIComponent.h"
 #include "Engine/World.h"
 
@@ -44,23 +45,7 @@ void ABossManager::BeginPlay()
 void ABossManager::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	static int32 TickCount = 0;
-	TickCount++;
-	
-	// 5초마다 틱 로그 출력
-	if (TickCount % 300 == 0) // 60fps 기준 5초
-	{
-		UE_LOG(LogTemp, Warning, TEXT("🔄 BossManager Tick 작동 중 - SpawnedBoss: %s"), 
-			SpawnedBoss ? *SpawnedBoss->GetName() : TEXT("nullptr"));
-	}
-	
-	// 보스가 없으면 계속 찾기
-	if (!SpawnedBoss)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("🔍 보스 없음, 찾는 중..."));
-		FindBossInWorld();
-	}
+	FindBossInWorld();
 }
 
 /**
@@ -70,25 +55,8 @@ void ABossManager::Tick(float DeltaTime)
  */
 void ABossManager::ResetBossCompletely()
 {
-	if (!SpawnedBoss)
-	{
-		UE_LOG(LogTemp, Error, TEXT("BossManager: 스폰된 보스가 없습니다!"));
-		return;
-	}
 
-	UE_LOG(LogTemp, Warning, TEXT("=== 보스 완전 초기화 시작 ==="));
-	
-	// 보스 상태 확인
-	UE_LOG(LogTemp, Warning, TEXT("🔍 보스 상태 확인 - SpawnedBoss: %s"), 
-		SpawnedBoss ? *SpawnedBoss->GetName() : TEXT("nullptr"));
-	
-	if (SpawnedBoss)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("🔍 보스 컨트롤러 확인 - Controller: %s"), 
-			SpawnedBoss->GetController() ? *SpawnedBoss->GetController()->GetName() : TEXT("nullptr"));
-	}
-
-	UE_LOG(LogTemp, Warning, TEXT("⏰ 3초 후 보스 완전 초기화 시작 예약"));
+	SpawnedBoss->BossWidget->RemoveFromParent();
 
 	// 3초 후 모든 초기화 실행
 	FTimerHandle ResetTimer;
@@ -96,31 +64,20 @@ void ABossManager::ResetBossCompletely()
 	{
 		if (!SpawnedBoss || !IsValid(SpawnedBoss))
 		{
-			UE_LOG(LogTemp, Error, TEXT("❌ 3초 후 초기화 실행 시 보스가 유효하지 않음"));
 			return;
 		}
-
-		UE_LOG(LogTemp, Warning, TEXT("🚀 3초 후 보스 완전 초기화 실행 시작"));
-
 		// 1. 모든 컴포넌트 초기화
 		ResetAllBossComponents();
-		UE_LOG(LogTemp, Warning, TEXT("✅ 컴포넌트 초기화 완료"));
 
 		// 2. StateTree 완전 리스타트
 		ResetBossStateTree();
-		UE_LOG(LogTemp, Warning, TEXT("✅ StateTree 초기화 완료"));
 
 		// 3. 보스 위치 이동
 		FVector OldLocation = SpawnedBoss->GetActorLocation();
 		SpawnedBoss->SetActorLocation(BossInitialLocation);
-		UE_LOG(LogTemp, Warning, TEXT("✅ 보스 위치 이동 완료: %s → %s"), 
-			*OldLocation.ToString(), *BossInitialLocation.ToString());
 
 		// 4. 트리거 콜리전 다시 활성화 (재사용 가능)
 		TriggerBox->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-		UE_LOG(LogTemp, Warning, TEXT("🔓 트리거 콜리전 활성화 (재사용 가능)"));
-
-		UE_LOG(LogTemp, Warning, TEXT("=== 보스 완전 초기화 완료 ==="));
 
 	}, 3.0f, false);
 }
@@ -215,6 +172,8 @@ void ABossManager::OnTriggerBoxOverlapBegin(UPrimitiveComponent* OverlappedComp,
 		StateTreeComp->SendStateTreeEvent(BossStartEventTag);
 		UE_LOG(LogTemp, Warning, TEXT("BossManager: StateTree 이벤트 전송 완료: %s"), 
 			*BossStartEventTag.ToString());
+
+
 		
 		// 보스 시작 후 콜리전 비활성화 (중복 트리거 방지)
 		TriggerBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -224,6 +183,8 @@ void ABossManager::OnTriggerBoxOverlapBegin(UPrimitiveComponent* OverlappedComp,
 	{
 		UE_LOG(LogTemp, Error, TEXT("BossManager: BossStartEventTag가 설정되지 않았습니다!"));
 	}
+	SpawnedBoss->ShowBossStatusWidget();
+	SpawnedBoss->HPUpdate();
 }
 
 /**
