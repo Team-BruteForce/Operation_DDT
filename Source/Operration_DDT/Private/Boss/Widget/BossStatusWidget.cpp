@@ -21,18 +21,28 @@ void UBossStatusWidget::UpdateBossHP(float CurrentHPValue, float MaxHPValue)
 		CurrentHP->SetPercent(HPPercent);
 	}
 	
-	// DelayHP는 천천히 감소하도록 타이머 설정
+	// DelayHP는 부드럽게 감소하도록 설정
 	if (DelayHP && GetWorld())
 	{
+		// 기존 타이머들 정리
 		GetWorld()->GetTimerManager().ClearTimer(DelayHPTimer);
-		GetWorld()->GetTimerManager().SetTimer(DelayHPTimer, [this, CurrentHPValue, MaxHPValue]()
+		GetWorld()->GetTimerManager().ClearTimer(SmoothHPTimer);
+		
+		// 목표 HP 퍼센트 설정
+		TargetDelayHPPercent = MaxHPValue > 0 ? CurrentHPValue / MaxHPValue : 0.0f;
+		
+		// 현재 DelayHP 퍼센트를 현재 값으로 초기화 (처음 호출시)
+		if (CurrentDelayHPPercent == 0.0f)
 		{
-			if (DelayHP)
-			{
-				float DelayHPPercent = MaxHPValue > 0 ? CurrentHPValue / MaxHPValue : 0.0f;
-				DelayHP->SetPercent(DelayHPPercent);
-			}
-		}, 0.5f, false); // 0.5초 후에 DelayHP 업데이트
+			CurrentDelayHPPercent = TargetDelayHPPercent;
+		}
+		
+		// 0.3초 후에 부드러운 업데이트 시작
+		GetWorld()->GetTimerManager().SetTimer(DelayHPTimer, [this]()
+		{
+			// 부드러운 업데이트 시작 (0.02초마다 호출)
+			GetWorld()->GetTimerManager().SetTimer(SmoothHPTimer, this, &UBossStatusWidget::SmoothUpdateDelayHP, 0.02f, true);
+		}, 0.3f, false);
 	}
 }
 
@@ -61,5 +71,26 @@ void UBossStatusWidget::FadeOutHandler()
 void UBossStatusWidget::EndWidget()
 {
 	RemoveFromParent();
+}
+
+void UBossStatusWidget::SmoothUpdateDelayHP()
+{
+	if (!DelayHP) return;
+	
+	// 현재 값과 목표 값의 차이 계산
+	float Difference = TargetDelayHPPercent - CurrentDelayHPPercent;
+	
+	// 차이가 매우 작으면 목표값으로 설정하고 타이머 정지
+	if (FMath::Abs(Difference) < 0.001f)
+	{
+		CurrentDelayHPPercent = TargetDelayHPPercent;
+		DelayHP->SetPercent(CurrentDelayHPPercent);
+		GetWorld()->GetTimerManager().ClearTimer(SmoothHPTimer);
+		return;
+	}
+	
+	// 부드럽게 목표값으로 이동 (Lerp 사용)
+	CurrentDelayHPPercent = FMath::FInterpTo(CurrentDelayHPPercent, TargetDelayHPPercent, 0.02f, 3.0f);
+	DelayHP->SetPercent(CurrentDelayHPPercent);
 }
 

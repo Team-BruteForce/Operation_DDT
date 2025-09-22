@@ -59,6 +59,11 @@ void UFlyingComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 		{
 			UpdateDistanceMaintenance(DeltaTime);
 		}
+		// 스플라인 거리 유지 이동 업데이트
+		else if (bIsSplineDistanceMaintaining)
+		{
+			UpdateSplineDistanceMaintenance(DeltaTime);
+		}
 		// 호버링 모드 업데이트 (호버링 중에는 고도 변화 중지)
 		else if (bIsHovering)
 		{
@@ -85,6 +90,9 @@ void UFlyingComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 
 void UFlyingComponent::StartTakeoff(float TargetHeight, float Speed)
 {
+	CLog::Log(FString::Printf(TEXT("StartTakeoff 호출 - bCanTakeoff: %s, bIsFlying: %s"), 
+		bCanTakeoff ? TEXT("true") : TEXT("false"), bIsFlying ? TEXT("true") : TEXT("false")));
+	
 	if (!OwnerCharacter || bIsFlying) return;
 	
 	bIsTakingOff = true;
@@ -112,6 +120,9 @@ void UFlyingComponent::StartTakeoff(float TargetHeight, float Speed)
 
 void UFlyingComponent::StartLanding(FVector LandLocation)
 {
+	CLog::Log(FString::Printf(TEXT("StartLanding 호출 - bCanLanding: %s, bIsFlying: %s"), 
+		bCanLanding ? TEXT("true") : TEXT("false"), bIsFlying ? TEXT("true") : TEXT("false")));
+	
 	if (!OwnerCharacter || !bIsFlying) return;
 	
 	bIsLanding = true;
@@ -184,6 +195,7 @@ void UFlyingComponent::UpdateTakeoff(float DeltaTime)
 		// 이륙 완료 후 착륙 쿨타임 시작
 		bCanLanding = false;
 		LandingCooldownTimer = LandingCooldownTime;
+		CLog::Log(FString::Printf(TEXT("=== 이륙 완료 - 착륙 쿨타임 시작: %.1f초 ==="), LandingCooldownTime));
 		
 		// 이륙 완료 대기 중인 호버링이 있으면 시작
 		if (bWaitingForTakeoffCompletion)
@@ -278,6 +290,7 @@ void UFlyingComponent::UpdateLanding(float DeltaTime)
 		// 착륙 완료 후 이륙 쿨타임 시작
 		bCanTakeoff = false;
 		TakeoffCooldownTimer = TakeoffCooldownTime;
+		CLog::Log(FString::Printf(TEXT("=== 착륙 완료 - 이륙 쿨타임 시작: %.1f초 ==="), TakeoffCooldownTime));
 		
 		// StateTree에 착륙 완료 이벤트 전송
 		if (OwnerCharacter && OwnerCharacter->GetController())
@@ -814,6 +827,30 @@ void UFlyingComponent::UpdateCooldowns(float DeltaTime)
 		{
 			bCanTakeoff = true;
 			TakeoffCooldownTimer = 0.0f;
+			CLog::Log("=== 이륙 쿨타임 완료 - 이륙 가능 ===");
+		}
+		else
+		{
+			// 1초마다 쿨타임 남은 시간 로그
+			static float TakeoffLogTimer = 0.0f;
+			TakeoffLogTimer += DeltaTime;
+			if (TakeoffLogTimer >= 1.0f)
+			{
+				CLog::Log(FString::Printf(TEXT("이륙 쿨타임 진행 중: %.1f초 남음 (전체: %.1f초)"), 
+					TakeoffCooldownTimer, TakeoffCooldownTime));
+				TakeoffLogTimer = 0.0f;
+			}
+		}
+	}
+	else
+	{
+		// 이륙 가능 상태일 때 주기적으로 로그
+		static float TakeoffAvailableLogTimer = 0.0f;
+		TakeoffAvailableLogTimer += DeltaTime;
+		if (TakeoffAvailableLogTimer >= 5.0f) // 5초마다
+		{
+			CLog::Log("이륙 가능 상태 - 쿨타임 없음");
+			TakeoffAvailableLogTimer = 0.0f;
 		}
 	}
 	
@@ -825,6 +862,30 @@ void UFlyingComponent::UpdateCooldowns(float DeltaTime)
 		{
 			bCanLanding = true;
 			LandingCooldownTimer = 0.0f;
+			CLog::Log("=== 착륙 쿨타임 완료 - 착륙 가능 ===");
+		}
+		else
+		{
+			// 1초마다 쿨타임 남은 시간 로그
+			static float LandingLogTimer = 0.0f;
+			LandingLogTimer += DeltaTime;
+			if (LandingLogTimer >= 1.0f)
+			{
+				CLog::Log(FString::Printf(TEXT("착륙 쿨타임 진행 중: %.1f초 남음 (전체: %.1f초)"), 
+					LandingCooldownTimer, LandingCooldownTime));
+				LandingLogTimer = 0.0f;
+			}
+		}
+	}
+	else
+	{
+		// 착륙 가능 상태일 때 주기적으로 로그
+		static float LandingAvailableLogTimer = 0.0f;
+		LandingAvailableLogTimer += DeltaTime;
+		if (LandingAvailableLogTimer >= 5.0f) // 5초마다
+		{
+			CLog::Log("착륙 가능 상태 - 쿨타임 없음");
+			LandingAvailableLogTimer = 0.0f;
 		}
 	}
 }
@@ -844,6 +905,8 @@ void UFlyingComponent::ResetFlyingSystem()
 	bIsOrbiting = false;
 	bIsHovering = false;
 	bIsOrbitingWithSpline = false;
+	bIsDistanceMaintaining = false;
+	bIsSplineDistanceMaintaining = false;
 
 	// 3. 위치 및 타겟 초기화
 	if (OwnerCharacter)
@@ -863,6 +926,8 @@ void UFlyingComponent::ResetFlyingSystem()
 	LandingLocation = FVector::ZeroVector;
 	HoveringLocation = FVector::ZeroVector;
 	CurrentRandomOffset = FVector::ZeroVector;
+	DistanceMaintenanceTarget = FVector::ZeroVector;
+	SplineDistanceMaintenanceTarget = FVector::ZeroVector;
 
 	// 5. 프로그레스 및 타이머 초기화
 	TakeoffProgress = 0.0f;
@@ -1359,7 +1424,7 @@ void UFlyingComponent::UpdateNaturalMovement(float DeltaTime)
 	}
 	
 	// 6. 타겟 바라보기 (이동 중) - Turn 상태가 아니고 거리 유지 중이 아닐 때만
-	if (CurrentVelocity.Size() > 0.0f && CurrentFlyingState != EFlyingState::Turn && !bIsDistanceMaintaining)
+	if (CurrentVelocity.Size() > 0.0f && CurrentFlyingState != EFlyingState::Turn && !bIsDistanceMaintaining && !bIsSplineDistanceMaintaining)
 	{
 		// 플레이어 찾기
 		APawn* TargetPawn = nullptr;
@@ -1561,6 +1626,161 @@ void UFlyingComponent::UpdateDistanceMaintenance(float DeltaTime)
 	}
 }
 
+void UFlyingComponent::StartSplineDistanceMaintenance(float TargetDistance)
+{
+	if (!OwnerCharacter || !bIsFlying) return;
+	
+	// 다른 비행 모드들 중지
+	bIsHovering = false;
+	bIsOrbiting = false;
+	bIsOrbitingWithSpline = false;
+	bIsDistanceMaintaining = false; // 기존 거리 유지도 중지
+	
+	// 스플라인 거리 유지 시작
+	bIsSplineDistanceMaintaining = true;
+	
+	// 상태 머신을 Turn 상태로 변경
+	ChangeState(EFlyingState::Turn);
+	TargetDistanceFromPlayer = TargetDistance;
+	
+	// 가장 먼 스플라인 위치 찾기
+	FVector TargetPosition = FindFarthestSplinePosition(TargetDistance);
+	
+	if (TargetPosition == FVector::ZeroVector)
+	{
+		CLog::Log("스플라인 거리 유지 - 가장 먼 스플라인 위치를 찾을 수 없음");
+		StopSplineDistanceMaintenance();
+		return;
+	}
+	
+	SplineDistanceMaintenanceTarget = TargetPosition;
+	
+	// 자연스러운 이동 초기화
+	CurrentSpeed = 0.0f; // 속도 초기화
+	
+	CLog::Log(FString::Printf(TEXT("스플라인 거리 유지 시작 - 목표거리: %f, 목표위치: %s"), 
+		TargetDistance, *TargetPosition.ToString()));
+}
+
+void UFlyingComponent::StopSplineDistanceMaintenance()
+{
+	if (!bIsSplineDistanceMaintaining) return;
+	
+	bIsSplineDistanceMaintaining = false;
+	SplineDistanceMaintenanceTarget = FVector::ZeroVector;
+	
+	// 자연스러운 이동 초기화
+	CurrentSpeed = 0.0f;
+	
+	CLog::Log("스플라인 거리 유지 이동 중지");
+}
+
+FVector UFlyingComponent::FindFarthestSplinePosition(float TargetDistance) const
+{
+	if (!SpawnedSplineActor)
+	{
+		CLog::Log("스플라인 거리 유지 - 스폰된 스플라인 액터가 없습니다");
+		return FVector::ZeroVector;
+	}
+	
+	// 플레이어 찾기
+	APawn* PlayerPawn = nullptr;
+	for (FConstPlayerControllerIterator Iterator = GetWorld()->GetPlayerControllerIterator(); Iterator; ++Iterator)
+	{
+		APlayerController* PC = Iterator->Get();
+		if (PC && PC->GetPawn())
+		{
+			PlayerPawn = PC->GetPawn();
+			break;
+		}
+	}
+	
+	if (!PlayerPawn)
+	{
+		CLog::Log("스플라인 거리 유지 - 플레이어를 찾을 수 없습니다");
+		return FVector::ZeroVector;
+	}
+	
+	FVector PlayerLocation = PlayerPawn->GetActorLocation();
+	TArray<USplineComponent*> Splines = SpawnedSplineActor->GetHorizontalSplines();
+	
+	if (Splines.Num() == 0)
+	{
+		CLog::Log("스플라인 거리 유지 - 스플라인이 없습니다");
+		return FVector::ZeroVector;
+	}
+	
+	// 모든 스플라인 포인트 중에서 플레이어로부터 가장 먼 위치 찾기
+	FVector FarthestPosition = FVector::ZeroVector;
+	float MaxDistance = 0.0f;
+	
+	for (int32 SplineIndex = 0; SplineIndex < Splines.Num(); SplineIndex++)
+	{
+		USplineComponent* CurrentSpline = Splines[SplineIndex];
+		if (!CurrentSpline) continue;
+		
+		int32 NumPoints = CurrentSpline->GetNumberOfSplinePoints();
+		
+		// 각 스플라인의 모든 포인트를 체크
+		for (int32 PointIndex = 0; PointIndex < NumPoints; PointIndex++)
+		{
+			FVector SplinePoint = CurrentSpline->GetLocationAtSplinePoint(PointIndex, ESplineCoordinateSpace::World);
+			
+			// 플레이어로부터의 거리 계산
+			float DistanceToPlayer = FVector::Dist(PlayerLocation, SplinePoint);
+			
+			// 목표 거리 이상이면서 가장 먼 위치 찾기
+			if (DistanceToPlayer >= TargetDistance && DistanceToPlayer > MaxDistance)
+			{
+				// 라인트레이스로 장애물 확인
+				FHitResult HitResult;
+				FVector Start = PlayerLocation + FVector(0, 0, 100); // 플레이어 눈 높이
+				FVector End = SplinePoint;
+				
+				bool bHit = GetWorld()->LineTraceSingleByChannel(
+					HitResult,
+					Start,
+					End,
+					ECC_Visibility
+				);
+				
+				// 장애물이 없으면 해당 위치를 후보로 선택
+				if (!bHit)
+				{
+					FarthestPosition = SplinePoint;
+					MaxDistance = DistanceToPlayer;
+				}
+			}
+		}
+	}
+	
+	if (FarthestPosition != FVector::ZeroVector)
+	{
+		CLog::Log(FString::Printf(TEXT("스플라인 거리 유지 - 가장 먼 위치 발견: %s (거리: %f)"), 
+			*FarthestPosition.ToString(), MaxDistance));
+	}
+	else
+	{
+		CLog::Log("스플라인 거리 유지 - 목표 거리 이상의 접근 가능한 스플라인 위치를 찾을 수 없음");
+	}
+	
+	return FarthestPosition;
+}
+
+void UFlyingComponent::UpdateSplineDistanceMaintenance(float DeltaTime)
+{
+	if (!OwnerCharacter || !bIsSplineDistanceMaintaining) return;
+	
+	// 상태 머신이 모든 로직을 처리하므로 여기서는 디버그 시각화만 수행
+	// 디버그 시각화
+	if (GetWorld())
+	{
+		FVector CurrentLocation = OwnerCharacter->GetActorLocation();
+		DrawDebugLine(GetWorld(), CurrentLocation, SplineDistanceMaintenanceTarget, FColor::Magenta, false, 0.1f, 0, 2.0f);
+		DrawDebugSphere(GetWorld(), SplineDistanceMaintenanceTarget, 50.0f, 12, FColor::Magenta, false, 0.1f, 0, 3.0f);
+	}
+}
+
 // ===== 상태 머신 관련 함수들 =====
 
 
@@ -1614,6 +1834,26 @@ void UFlyingComponent::UpdateStateMachine(float DeltaTime)
 		else if (CurrentFlyingState == EFlyingState::FlyStop)
 		{
 			UpdateFlyStopState(DeltaTime);
+		}
+	}
+	else if (bIsSplineDistanceMaintaining)
+	{
+		// 스플라인 거리 유지 이동 중일 때 회전 처리
+		if (CurrentFlyingState == EFlyingState::Idle)
+		{
+			ChangeState(EFlyingState::Turn);
+		}
+		else if (CurrentFlyingState == EFlyingState::Turn)
+		{
+			UpdateSplineTurnState(DeltaTime);
+		}
+		else if (CurrentFlyingState == EFlyingState::Fly)
+		{
+			UpdateSplineFlyState(DeltaTime);
+		}
+		else if (CurrentFlyingState == EFlyingState::FlyStop)
+		{
+			UpdateSplineFlyStopState(DeltaTime);
 		}
 	}
 	else
@@ -1749,4 +1989,141 @@ void UFlyingComponent::UpdateFlyStopState(float DeltaTime)
 		ChangeState(EFlyingState::Idle);
 	}
 	
+}
+
+void UFlyingComponent::UpdateSplineTurnState(float DeltaTime)
+{
+	if (!OwnerCharacter) return;
+	
+	// Turn 상태에서는 이동하지 않음 (속도 0으로 설정)
+	CurrentVelocity = FVector::ZeroVector;
+	TargetVelocity = FVector::ZeroVector;
+	if (CharacterMovement)
+	{
+		CharacterMovement->Velocity = FVector::ZeroVector;
+	}
+	
+	// 스플라인 거리 유지 이동의 목표 방향으로 회전
+	FVector CurrentForward = OwnerCharacter->GetActorForwardVector();
+	FVector TargetForward = (SplineDistanceMaintenanceTarget - OwnerCharacter->GetActorLocation()).GetSafeNormal();
+	
+	// 회전 각도 계산
+	float DotProduct = FVector::DotProduct(CurrentForward, TargetForward);
+	float Angle = FMath::Acos(FMath::Clamp(DotProduct, -1.0f, 1.0f)) * 180.0f / PI;
+	
+	// 회전 완료 체크 (15도 이내면 완료로 간주)
+	if (Angle < 15.0f)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Spline Turn Complete: Angle=%.2f"), Angle);
+		ChangeState(EFlyingState::Fly);
+		return;
+	}
+	
+	// 매우 부드러운 회전 (180도를 12초로 기준)
+	float SlowRotationSpeed = 5.0f; // 15도/초 (180도 회전 시 12초 소요, 매우 부드럽게)
+	FRotator CurrentRotation = OwnerCharacter->GetActorRotation();
+	FRotator TargetRotation = FRotationMatrix::MakeFromX(TargetForward).Rotator();
+	
+	// 매우 부드러운 회전을 위해 낮은 속도로 보간
+	FRotator NewRotation = FMath::RInterpTo(CurrentRotation, TargetRotation, DeltaTime, SlowRotationSpeed);
+	
+	// 회전을 더 부드럽게 하기 위해 추가 보간
+	FRotator FinalRotation = FMath::Lerp(CurrentRotation, NewRotation, 0.5f);
+	OwnerCharacter->SetActorRotation(FinalRotation);
+	
+	UE_LOG(LogTemp, Warning, TEXT("Spline Turn State: Angle=%.2f, Rotating to target"), Angle);
+}
+
+void UFlyingComponent::UpdateSplineFlyState(float DeltaTime)
+{
+	if (!OwnerCharacter || !bIsSplineDistanceMaintaining) return;
+	
+	// Fly 상태에서는 목표 위치로 이동하면서 목표를 바라보기
+	bool bReached = MoveToLocation(SplineDistanceMaintenanceTarget, FlyingSpeed * 2.0f, 100.0f);
+	
+	// 이동 중에는 목표 위치를 바라보도록 회전
+	if (!bReached)
+	{
+		FVector CurrentLocation = OwnerCharacter->GetActorLocation();
+		FVector LookDirection = (SplineDistanceMaintenanceTarget - CurrentLocation).GetSafeNormal();
+		
+		// 목표 방향으로 회전
+		FRotator TargetRotation = FRotationMatrix::MakeFromX(LookDirection).Rotator();
+		TargetRotation.Pitch = 0.0f; // Pitch는 0으로 고정
+		TargetRotation.Roll = 0.0f;  // Roll은 0으로 고정
+		
+		// 부드러운 회전
+		FRotator CurrentRotation = OwnerCharacter->GetActorRotation();
+		FRotator NewRotation = FMath::RInterpTo(CurrentRotation, TargetRotation, DeltaTime, RotationSpeed);
+		OwnerCharacter->SetActorRotation(NewRotation);
+	}
+	
+	if (bReached)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Spline Movement Complete: Reached target location"));
+		
+		// 스플라인 거리 유지 중지
+		StopSplineDistanceMaintenance();
+		
+		// 도착하면 바로 이벤트 전송
+		if (OwnerCharacter && OwnerCharacter->GetController())
+		{ 
+			UStateTreeComponent* StateTreeComp = OwnerCharacter->GetController()->FindComponentByClass<UStateTreeComponent>();
+			if (StateTreeComp)
+			{
+				StateTreeComp->SendStateTreeEvent(FGameplayTag::RequestGameplayTag("BOSS.Event.Interrupt"));
+				UE_LOG(LogTemp, Warning, TEXT("Spline Fly: Event sent immediately on arrival"));
+			}
+		}
+		
+		// FlyStop 상태로 전환 (1초 대기 후 이벤트 전송)
+		ChangeState(EFlyingState::FlyStop);
+	}
+}
+
+void UFlyingComponent::UpdateSplineFlyStopState(float DeltaTime)
+{
+	if (!OwnerCharacter) return;
+	
+	// FlyStop 상태 진입 시 타이머 초기화
+	if (!bFlyStopTimerStarted)
+	{
+		FlyStopEventTimer = 0.0f;
+		bFlyStopEventSent = false;
+		bFlyStopTimerStarted = true;
+		UE_LOG(LogTemp, Warning, TEXT("Spline FlyStop: Starting 1 second timer"));
+	}
+	
+	// 1초 후 이벤트 전송
+	FlyStopEventTimer += DeltaTime;
+	UE_LOG(LogTemp, Warning, TEXT("Spline FlyStop: Timer=%.3f, EventSent=%s"), FlyStopEventTimer, bFlyStopEventSent ? TEXT("true") : TEXT("false"));
+	
+	if (FlyStopEventTimer >= 1.0f && !bFlyStopEventSent)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Spline FlyStop: Sending event after 1 second"));
+		
+		// StateTree에 이동 완료 이벤트 전송
+		if (OwnerCharacter && OwnerCharacter->GetController())
+		{ 
+			UStateTreeComponent* StateTreeComp = OwnerCharacter->GetController()->FindComponentByClass<UStateTreeComponent>();
+			if (StateTreeComp)
+			{
+				StateTreeComp->SendStateTreeEvent(FGameplayTag::RequestGameplayTag("BOSS.Event.Interrupt"));
+				UE_LOG(LogTemp, Warning, TEXT("Spline FlyStop: Event sent successfully"));
+			}
+			else
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Spline FlyStop: StateTreeComponent not found"));
+			}
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Spline FlyStop: OwnerCharacter or Controller not found"));
+		}
+		
+		bFlyStopEventSent = true;
+		
+		// 이벤트 전송 후 Idle로 전환
+		ChangeState(EFlyingState::Idle);
+	}
 }

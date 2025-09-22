@@ -47,6 +47,15 @@ public:
 	UPROPERTY()
 	FTimerHandle DelayHPTimer;
 
+	UPROPERTY()
+	float TargetDelayHPPercent;
+
+	UPROPERTY()
+	float CurrentDelayHPPercent;
+
+	UPROPERTY()
+	FTimerHandle SmoothHPTimer;
+
 	virtual void NativeConstruct() override;
 
 	UFUNCTION()
@@ -65,5 +74,8 @@ public:
 	void FadeOutHandler();
 	UFUNCTION()
 	void EndWidget();
+
+	UFUNCTION()
+	void SmoothUpdateDelayHP();
 
 };

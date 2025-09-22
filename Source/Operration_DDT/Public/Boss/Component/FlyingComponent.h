@@ -84,6 +84,18 @@ public:
 	bool IsLanding() const { return bIsLanding; }
 	
 	/**
+	 * @brief 이륙 가능한지 확인 (쿨타임 체크)
+	 */
+	UFUNCTION(BlueprintPure, Category = "Flying")
+	bool CanTakeoff() const { return bCanTakeoff; }
+	
+	/**
+	 * @brief 착륙 가능한지 확인 (쿨타임 체크)
+	 */
+	UFUNCTION(BlueprintPure, Category = "Flying")
+	bool CanLanding() const { return bCanLanding; }
+	
+	/**
 	 * @brief 이륙이 완료되었는지 확인 (몽타주와 동기화용)
 	 */
 	UFUNCTION(BlueprintPure, Category = "Flying")
@@ -197,6 +209,25 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Distance Maintenance")
 	bool IsDistanceMaintaining() const { return bIsDistanceMaintaining; }
 	
+	/**
+	 * @brief 가장 먼 스플라인으로 이동 시작 (StateTree용)
+	 * @param TargetDistance 목표 거리 (기본값: 1500)
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Spline Distance")
+	void StartSplineDistanceMaintenance(float TargetDistance = 1500.0f);
+	
+	/**
+	 * @brief 가장 먼 스플라인으로 이동 중지 (StateTree용)
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Spline Distance")
+	void StopSplineDistanceMaintenance();
+	
+	/**
+	 * @brief 가장 먼 스플라인으로 이동 중인지 확인 (StateTree용)
+	 */
+	UFUNCTION(BlueprintPure, Category = "Spline Distance")
+	bool IsSplineDistanceMaintaining() const { return bIsSplineDistanceMaintaining; }
+	
 
 	/**
 	 * @brief 비행 시스템 완전 초기화 (매니저용)
@@ -276,6 +307,24 @@ public:
 	 * @param DeltaTime 델타 타임
 	 */
 	void UpdateFlyStopState(float DeltaTime);
+	
+	/**
+	 * @brief 스플라인 Turn 상태 업데이트
+	 * @param DeltaTime 델타 타임
+	 */
+	void UpdateSplineTurnState(float DeltaTime);
+	
+	/**
+	 * @brief 스플라인 Fly 상태 업데이트
+	 * @param DeltaTime 델타 타임
+	 */
+	void UpdateSplineFlyState(float DeltaTime);
+	
+	/**
+	 * @brief 스플라인 FlyStop 상태 업데이트
+	 * @param DeltaTime 델타 타임
+	 */
+	void UpdateSplineFlyStopState(float DeltaTime);
 	
 	
 	
@@ -423,6 +472,12 @@ protected:
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Distance Maintenance")
 	bool bFlyStopTimerStarted = false;  // FlyStop 타이머 시작 여부
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spline Distance")
+	bool bIsSplineDistanceMaintaining = false;  // 스플라인 거리 유지 중
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spline Distance")
+	FVector SplineDistanceMaintenanceTarget = FVector::ZeroVector;  // 스플라인 거리 유지 목표 위치
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Natural Movement")
 	float AccelerationRate = 500.0f;  // 가속률
@@ -590,6 +645,19 @@ protected:
 	void UpdateDistanceMaintenance(float DeltaTime);
 	
 	/**
+	 * @brief 스플라인 거리 유지 이동 업데이트
+	 * @param DeltaTime 델타 타임
+	 */
+	void UpdateSplineDistanceMaintenance(float DeltaTime);
+	
+	/**
+	 * @brief 가장 먼 스플라인 위치 찾기
+	 * @param TargetDistance 목표 거리
+	 * @return 가장 먼 스플라인 위치
+	 */
+	FVector FindFarthestSplinePosition(float TargetDistance) const;
+	
+	/**
 	 * @brief 현재 고도 계산
 	 */
 	float GetCurrentAltitude() const;
@@ -613,10 +681,10 @@ public:
 	bool bCanLanding = true;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flight Cooldown")
-	float TakeoffCooldownTime = 10.0f;
+	float TakeoffCooldownTime = 20.0f;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flight Cooldown")
-	float LandingCooldownTime = 10.0f;
+	float LandingCooldownTime = 8.0f;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Flight Cooldown")
 	float TakeoffCooldownTimer = 0.0f;

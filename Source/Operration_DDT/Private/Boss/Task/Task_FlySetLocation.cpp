@@ -9,8 +9,7 @@ EStateTreeRunStatus UTask_FlySetLocation::EnterState(FStateTreeExecutionContext&
 	if(bStarted) return EStateTreeRunStatus::Running;
 	bStarted=true;
 	UFlyingComponent* FlyingComponent=CHelpers::GetComponent<UFlyingComponent>(Boss);
-	FlyingComponent->StartHovering();
-	FlyingComponent->StartRandomMovementFromStateTree();
+	FlyingComponent->StartSplineDistanceMaintenance(1500.0f);
 	return EStateTreeRunStatus::Running;
 }
 

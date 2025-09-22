@@ -28,10 +28,26 @@ public:
 	UPROPERTY()
 	class UCPlayerUI* playerUI;
 
+	//메인 ui
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<class UUserWidget> MainUIClass;
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	class UDDTMainThemeWidget* MainUI;
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<class UUserWidget> LoadingUIClass;
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	class UDDTLoadingWidget* LoadingUI;
+
 	// 드랍 아이템 이펙트 풀 매니저
 	UPROPERTY()
 	class ACDropItemEffectPoolManager* DropItemEffectPoolManager;
 
 	void test();
+
+	UFUNCTION()
+	void LinkedMaintoLoading();
 	
 };

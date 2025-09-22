@@ -32,6 +32,7 @@ namespace AssetPaths
     constexpr const TCHAR* IA_Roll = TEXT("/Script/EnhancedInput.InputAction'/Game/MW/Input/IA_Roll.IA_Roll'");
 #pragma endregion
     
+    
 
 #pragma region BossAsset
     constexpr const TCHAR* Boss_MESH = TEXT ( "/Script/Engine.SkeletalMesh'/Game/LHW/Asset/AngelOfDeath/Mesh/SK_AngelOfDeath.SK_AngelOfDeath'" );
@@ -47,4 +48,6 @@ namespace AssetPaths
     constexpr const TCHAR* Boss_FlySpline = TEXT("/Script/Engine.Blueprint'/Game/LHW/Blueprint/Actor/BP_FlySpline.BP_FlySpline_C'");
 
 #pragma endregion BossAsset
+    constexpr const TCHAR* UI_Main = TEXT("/Script/UMGEditor.WidgetBlueprint'/Game/LHW/Widget/WBP/WBP_MainTheme.WBP_MainTheme_C'");
+    constexpr const TCHAR* UI_Loading = TEXT("/Script/UMGEditor.WidgetBlueprint'/Game/LHW/Widget/WBP/WBP_Loading.WBP_Loading_C'");
 }
