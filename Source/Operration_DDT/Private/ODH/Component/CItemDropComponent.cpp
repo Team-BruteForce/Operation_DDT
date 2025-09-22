@@ -75,4 +75,26 @@ void UCItemDropComponent::SpawnItem(TSubclassOf<AActor> ItemClass)
     Pool->AcquireItem(ItemClass, SpawnLocation, SpawnRotation);
 }
 
+void UCItemDropComponent::ForceDropItem()
+{
+    TryDropItem();
+}
+
+void UCItemDropComponent::SpawnItemAtLocation(TSubclassOf<AActor> ItemClass, const FVector& Location, const FRotator& Rotation)
+{
+    if (!GetWorld() || !*ItemClass) return;
+
+    // 풀 매니저 찾기
+    AItemPoolManager* Pool = Cast<AItemPoolManager>(UGameplayStatics::GetActorOfClass(GetWorld(), AItemPoolManager::StaticClass()));
+    if (!Pool)
+    {
+        // 풀이 없으면 직접 스폰
+        GetWorld()->SpawnActor(ItemClass, &Location, &Rotation);
+        return;
+    }
+
+    // 풀에서 아이템 획득
+    Pool->AcquireItem(ItemClass, Location, Rotation);
+}
+
 

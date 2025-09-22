@@ -30,11 +30,6 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "State")
 	bool bIsDashAttack = false;
 
-	// 대쉬 러닝(돌진 준비) 상태
-	// 대쉬 공격 전환 트리거 (거리 임계 도달)
-	UPROPERTY(BlueprintReadOnly, Category = "State")
-	bool bDashAttackTrigger = false;
-
 	UPROPERTY(BlueprintReadOnly, Category = "State")
 	bool bIsRangedAttack = false;
 

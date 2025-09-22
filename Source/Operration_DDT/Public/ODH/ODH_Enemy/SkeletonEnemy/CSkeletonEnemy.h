@@ -81,7 +81,7 @@ public:
 	void StartDashMovementToPlayer();
 
 	UFUNCTION(BlueprintCallable, Category = "Dash Movement")
-	void UpdateDashMovementToPlayer(float DeltaTime, float Speed);
+	void UpdateDashMovementToPlayer(float DeltaTime, float TotalTime);
 
 	UFUNCTION(BlueprintCallable, Category = "Dash Movement")
 	void EndDashMovementToPlayer();
@@ -180,9 +180,20 @@ private:
 	bool bIsComboAttacking = false;
 	bool bIsDashAttacking = false;
 
+	// 공격별 1회 타격 보장 가드
+	bool bComboRHasHit = false;
+	bool bComboLHasHit = false;
+	bool bComboLastHasHit = false;
+	bool bDashHasHit = false;
+
 	// 돌진 공격 이동 관련 변수들
 	FVector CachedPlayerLocation = FVector::ZeroVector;
 	bool bIsDashMoving = false;
+	
+	// 시간 기반 이동을 위한 변수들
+	FVector DashStartLocation = FVector::ZeroVector;
+	float DashElapsedTime = 0.0f;
+	float DashTotalTime = 0.0f;
 
 	// 콤보 공격 이동 관련 변수들
 	FVector ComboMovementDirection = FVector::ZeroVector;
@@ -210,5 +221,10 @@ private:
 
 public:
 	// 사망 연출은 애니메이션에서 처리
+	
+	// 블루프린트에서 구현될 흡수 애니메이션 함수
+	UFUNCTION(BlueprintImplementableEvent, Category = "Animation")
+	void StartAbsorbAnimation();
+
 private:
 };

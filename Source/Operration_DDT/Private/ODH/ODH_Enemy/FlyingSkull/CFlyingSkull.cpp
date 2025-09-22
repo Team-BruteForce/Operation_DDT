@@ -20,6 +20,7 @@
 #include "ODH/ODH_Enemy/CCombatEncounterManager.h"
 #include "../../AIModule/Classes/BehaviorTree/BlackboardComponent.h"
 #include "ODH/ODH_Enemy/Component/CEnemyHealthBarComponent.h"
+#include "../../UMG/Public/Components/WidgetComponent.h"
 
 // Sets default values
 ACFlyingSkull::ACFlyingSkull()
@@ -240,6 +241,19 @@ float ACFlyingSkull::TakeDamage(float DamageAmount, struct FDamageEvent const& D
 	// IDamageable 인터페이스의 TakeDamage_Implementation 호출
 	TakeDamage_Implementation(DamageAmount);
 
+	if (UWidgetComponent* WC = Cast<UWidgetComponent>(
+		GetComponentByClass(UWidgetComponent::StaticClass())))
+	{
+		const bool bShown = WC->IsVisible(); // 월드 컴포넌트 가시성
+		if (!bShown)
+		{
+			if (UCEnemyHealthBarComponent* HB = FindComponentByClass<UCEnemyHealthBarComponent>())
+			{
+				HB->ShowHealthBar();
+			}
+		}
+	}
+
 	// 약점 본 피격 시 즉시 피격 상태 진입 (그로기 누적은 하지 않음)
 	if (const FPointDamageEvent* PointEvt = static_cast<const FPointDamageEvent*>(DamageEvent.GetTypeID() == FPointDamageEvent::ClassID ? &DamageEvent : nullptr))
 	{
@@ -280,11 +294,11 @@ float ACFlyingSkull::TakeDamage(float DamageAmount, struct FDamageEvent const& D
 					{
                         BB->SetValueAsObject(KeyTargetPlayer, TargetObj);
                         BB->SetValueAsBool(KeyIsInCombat, true);
-                        // 전투 돌입: 체력바 표시
-                        if (UCEnemyHealthBarComponent* HB = FindComponentByClass<UCEnemyHealthBarComponent>())
-                        {
-                            HB->ShowHealthBar();
-                        }
+//                         // 전투 돌입: 체력바 표시
+//                         if (UCEnemyHealthBarComponent* HB = FindComponentByClass<UCEnemyHealthBarComponent>())
+//                         {
+//                             HB->ShowHealthBar();
+//                         }
 					}
 				}
 			}
@@ -552,13 +566,12 @@ void ACFlyingSkull::OnDeath()
 			{
 				GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("Flying Skull removed from game!"));
 			}
-			// 비활성화 처리: 보이지 않음, 충돌 비활성화, 틱 중지
-			SetActorHiddenInGame(true);
+			// 블루프린트에서 구현된 흡수 애니메이션 실행
+			StartAbsorbAnimation();
 			SetActorEnableCollision(false);
 			SetActorTickEnabled(false);
 			if (USkeletalMeshComponent* MeshComp = GetMesh())
 			{
-				MeshComp->SetVisibility(false, true);
 				MeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 			}
 		}
@@ -570,31 +583,9 @@ void ACFlyingSkull::OnDeath()
 
 	// 낙하 연출 시작
 	StartFallingAnimation();
-
-	// 진행 중이던 시각 이동 종료 및 원복
-	EndMeleeVisualMove(true);
-
-	// 소켓 기반 데미지 콜리전 비활성화
-	DisableDamageCollisions();
-
-    // Encounter Manager 해제(사망 즉시)
-    if (HasAuthority())
-    {
-        UWorld* World = GetWorld();
-        if (World)
-        {
-            TArray<AActor*> Found;
-            UGameplayStatics::GetAllActorsOfClass(World, ACCombatEncounterManager::StaticClass(), Found);
-            if (Found.Num() > 0)
-            {
-                if (ACCombatEncounterManager* Mgr = Cast<ACCombatEncounterManager>(Found[0]))
-                {
-                    Mgr->UnregisterEnemy(this);
-                }
-            }
-        }
-    }
 }
+
+
 
 void ACFlyingSkull::OnMeleeAttackHit(AActor* HitActor)
 {

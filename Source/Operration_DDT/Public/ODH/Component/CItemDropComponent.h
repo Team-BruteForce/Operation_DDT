@@ -29,6 +29,15 @@ private:
     void SpawnItem(TSubclassOf<AActor> ItemClass);
 
 public:
+    // 외부에서 직접 아이템 드랍을 시도할 수 있는 public 함수
+    UFUNCTION(BlueprintCallable, Category = "Item Drop")
+    void ForceDropItem();
+
+    // 특정 위치에 아이템을 스폰하는 함수
+    UFUNCTION(BlueprintCallable, Category = "Item Drop")
+    void SpawnItemAtLocation(TSubclassOf<AActor> ItemClass, const FVector& Location, const FRotator& Rotation = FRotator::ZeroRotator);
+
+public:
     // 사망 시 드랍할 확률 (0~1)
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Drop")
     float DropChance = 0.7f;
