@@ -55,7 +55,7 @@ ACBoss::ACBoss()
 	CHelpers::CreateActorComponent<UMotionWarpingComponent>(this,&BossMotionWarping,"MotionWarpComp");
 	CHelpers::CreateActorComponent<UBossProjectileComponent>(this,&ProjectileComp,"ProjectileComp");
 	CHelpers::CreateActorComponent<UCBossTargetingComponent>(this,&TargetingComp,"TargetingComp");
-	CHelpers::CreateActorComponent<UBossDebugComponent>(this,&DebugComp,"DebugComp");
+	// CHelpers::CreateActorComponent<UBossDebugComponent>(this,&DebugComp,"DebugComp");
 	CHelpers::CreateActorComponent<UBossEffectComponent>(this,&EffectComponent,"EffectComp");
 	CHelpers::CreateActorComponent<UFlyingComponent>(this,&FlyingComponent,"FlyingComponent");
 
@@ -139,6 +139,203 @@ float ACBoss::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEv
 void ACBoss::BeginPlay()
 {
 	Super::BeginPlay();
+	
+	// 보스 초기 위치 저장 (레벨에 배치된 위치)
+	InitialLocation = GetActorLocation();
+	UE_LOG(LogTemp, Warning, TEXT("CBoss: 초기 위치 저장 완료 - %s"), 
+		*InitialLocation.ToString());
+}
+
+/**
+ * @brief 듀얼 레이어 디졸브 시작
+ */
+void ACBoss::StartDualLayerDissolve()
+{
+	if (bIsTransforming)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("이미 변신 중입니다!"));
+		return;
+	}
+
+	// 기존 타이머 정리
+	if (DissolveTimerHandle.IsValid())
+	{
+		GetWorld()->GetTimerManager().ClearTimer(DissolveTimerHandle);
+		UE_LOG(LogTemp, Warning, TEXT("기존 디졸브 타이머 정리"));
+	}
+
+	// 디졸브 메테리얼 배열 확인
+	if (MetalDissolveMaterials.Num() < 4 || GoldenDissolveMaterials.Num() < 4)
+	{
+		UE_LOG(LogTemp, Error, TEXT("디졸브 메테리얼이 설정되지 않았습니다! (Metal: %d, Golden: %d)"), 
+			MetalDissolveMaterials.Num(), GoldenDissolveMaterials.Num());
+		return;
+	}
+
+	bIsTransforming = true;
+	UE_LOG(LogTemp, Warning, TEXT("🎨 듀얼 레이어 디졸브 시작: Metal → Golden"));
+
+	// 원본 메테리얼 백업
+	OriginalMaterials.Empty();
+	DynamicMaterials.Empty();
+
+	// 변경할 Element 인덱스들 (0,1,2,6)
+	TArray<int32> TargetElements = {0, 1, 2, 6};
+
+	for (int32 i = 0; i < TargetElements.Num(); i++)
+	{
+		int32 ElementIndex = TargetElements[i];
+		
+		// 원본 메테리얼 백업
+		OriginalMaterials.Add(GetMesh()->GetMaterial(ElementIndex));
+
+		// Metal Dissolve 메테리얼로 교체
+		if (MetalDissolveMaterials[i])
+		{
+			UMaterialInstanceDynamic* DynMat = UMaterialInstanceDynamic::Create(MetalDissolveMaterials[i], this);
+			DynamicMaterials.Add(DynMat);
+			GetMesh()->SetMaterial(ElementIndex, DynMat);
+			
+			// 초기 디졸브 값 설정 (완전 보임)
+			DynMat->SetScalarParameterValue(TEXT("DissolveOut"), 0.0f);
+		}
+	}
+
+	// 10초간 부드러운 디졸브 (100번 업데이트)
+	DissolveProgress = 0.0f;
+	
+	GetWorld()->GetTimerManager().SetTimer(DissolveTimerHandle, [this]()
+	{
+		DissolveProgress += 0.01f; // 1% 증가
+		UpdateDualDissolve(DissolveProgress);
+		
+		if (DissolveProgress >= 1.0f)
+		{
+			// 완료되면 타이머 자동 정지 (더 이상 실행 안됨)
+			GetWorld()->GetTimerManager().ClearTimer(DissolveTimerHandle);
+			bIsTransforming = false;
+			RestoreToOriginalMaterials();
+			UE_LOG(LogTemp, Warning, TEXT("✅ 10초 디졸브 완료!"));
+		}
+		
+	}, 0.1f, true); // 0.1초마다 반복, 하지만 1.0f 되면 자동 정지
+}
+
+/**
+ * @brief 듀얼 디졸브 진행 상황 업데이트 (완전 동시 진행)
+ */
+void ACBoss::UpdateDualDissolve(float Progress)
+{
+	// 변경할 Element 인덱스들 (0,1,2,6)
+	TArray<int32> TargetElements = {0, 1, 2, 6};
+	
+	// 각 Element별로 Metal과 Golden을 동시에 처리
+	for (int32 i = 0; i < TargetElements.Num(); i++)
+	{
+		int32 ElementIndex = TargetElements[i];
+		
+		// Metal 레이어 업데이트 (사라짐)
+		if (i < DynamicMaterials.Num() && DynamicMaterials[i])
+		{
+			DynamicMaterials[i]->SetScalarParameterValue(TEXT("DissolveOut"), Progress);
+		}
+		
+		// Golden 레이어 동시 시작 (처음부터!)
+		if (Progress >= 0.0f && GoldenDissolveMaterials[i])
+		{
+			// Golden 메테리얼로 교체 (한 번만)
+			if (bGoldenApplied.Num() < 4)
+			{
+				bGoldenApplied = {false, false, false, false};
+			}
+			
+			if (!bGoldenApplied[i])
+			{
+				UMaterialInstanceDynamic* GoldenDynMat = UMaterialInstanceDynamic::Create(GoldenDissolveMaterials[i], this);
+				GetMesh()->SetMaterial(ElementIndex, GoldenDynMat);
+				
+				// Golden 초기값 (완전 투명)
+				GoldenDynMat->SetScalarParameterValue(TEXT("DissolveIn"), 0.0f);
+				GoldenDynMat->SetScalarParameterValue(TEXT("EmissiveStrength"), 0.0f);
+				
+				bGoldenApplied[i] = true;
+			}
+			
+			// Golden 디졸브 진행 (처음부터 동시 진행!)
+			float GoldenProgress = Progress; // 0.0~1.0 (Metal과 동일한 진행도)
+			
+			// Golden 메테리얼 업데이트
+			UMaterialInstanceDynamic* GoldenDynMat = Cast<UMaterialInstanceDynamic>(GetMesh()->GetMaterial(ElementIndex));
+			if (GoldenDynMat)
+			{
+				GoldenDynMat->SetScalarParameterValue(TEXT("DissolveIn"), GoldenProgress);
+				
+				// 빛나는 효과
+				float EmissiveStrength = GoldenProgress * 3.0f;
+				GoldenDynMat->SetScalarParameterValue(TEXT("EmissiveStrength"), EmissiveStrength);
+			}
+		}
+	}
+	
+	// 완료 시 배열 리셋
+	if (Progress >= 1.0f)
+	{
+		for (int32 i = 0; i < bGoldenApplied.Num(); i++)
+		{
+			bGoldenApplied[i] = false;
+		}
+	}
+	
+	UE_LOG(LogTemp, Log, TEXT("듀얼 디졸브: %.1f%% (Metal 사라짐, Golden 나타남)"), Progress * 100.0f);
+}
+
+/**
+ * @brief 기존 메테리얼로 복구 (Golden 버전)
+ */
+void ACBoss::RestoreToOriginalMaterials()
+{
+	// 변경할 Element 인덱스들 (0,1,2,6)
+	TArray<int32> TargetElements = {0, 1, 2, 6};
+	
+	// Golden 기본 메테리얼로 복구
+	TArray<FString> GoldenMaterialPaths = {
+		TEXT("/Game/LHW/Asset/AngelOfDeath/Materials/M_AngelOfDeath_Head_Golden"),    // Element 0
+		TEXT("/Game/LHW/Asset/AngelOfDeath/Materials/M_AngelOfDeath_Head_Golden"),    // Element 1  
+		TEXT("/Game/LHW/Asset/AngelOfDeath/Materials/M_AngelOfDeath_Armor_Golden"),   // Element 2
+		TEXT("/Game/LHW/Asset/AngelOfDeath/Materials/M_AngelOfDeath_Cloth_Golden")    // Element 6
+	};
+	
+	for (int32 i = 0; i < TargetElements.Num(); i++)
+	{
+		int32 ElementIndex = TargetElements[i];
+		
+		// 기존 Golden 메테리얼 로드
+		UMaterialInterface* OriginalMaterial = LoadObject<UMaterialInterface>(nullptr, *GoldenMaterialPaths[i]);
+		
+		if (OriginalMaterial)
+		{
+			GetMesh()->SetMaterial(ElementIndex, OriginalMaterial);
+			UE_LOG(LogTemp, Log, TEXT("Element %d를 기존 Golden 메테리얼로 복구: %s"), 
+				ElementIndex, *GoldenMaterialPaths[i]);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Element %d 복구 실패: %s 로드 불가"), 
+				ElementIndex, *GoldenMaterialPaths[i]);
+		}
+	}
+	
+	// 정리
+	DynamicMaterials.Empty();
+	OriginalMaterials.Empty();
+	
+	// 멤버 배열 리셋
+	for (int32 i = 0; i < bGoldenApplied.Num(); i++)
+	{
+		bGoldenApplied[i] = false;
+	}
+	
+	UE_LOG(LogTemp, Warning, TEXT("🔄 모든 메테리얼을 기존 Golden 버전으로 복구 완료"));
 }
 
 void ACBoss::PlayHitMotion(FName BoneName)

@@ -176,7 +176,25 @@ public:
 	 * @brief 그로기 게이지 초기화
 	 */
 	void ResetGroggyGauge();
-	
+
+	/**
+	 * @brief 보스 스탯 완전 초기화 (매니저용)
+	 * 
+	 * @details
+	 * 모든 스탯을 데이터 테이블 기본값으로 초기화합니다.
+	 * 보스 매니저에서 보스 리셋 시 사용됩니다.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Boss Reset")
+	void ResetAllStats();
+
+private:
+	/**
+	 * @brief AI 컴포넌트들 안전 초기화
+	 * 
+	 * AI 컨트롤러가 준비되었을 때 안전하게 초기화합니다.
+	 */
+	void InitializeAIComponents();
+public:
 	/**
 	 * @brief 보스 스탯 데이터 테이블
 	 */

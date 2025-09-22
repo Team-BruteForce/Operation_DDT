@@ -60,12 +60,48 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Attack")
 	void EnableLastComboCollision();
 
+	// 돌진 공격 콜리전 제어
+	UFUNCTION(BlueprintCallable, Category = "Attack")
+	void EnableDashCollision();
+
+	// 콤보 공격 시 전방 이동 함수 제거 (애니메이션에서 처리)
+
+	// 돌진 공격 이동 함수들 (애니메이션 노티파이 스테이트용)
+	UFUNCTION(BlueprintCallable, Category = "Dash Movement")
+	void StartDashMovementToPlayer();
+
+	UFUNCTION(BlueprintCallable, Category = "Dash Movement")
+	void UpdateDashMovementToPlayer(float DeltaTime, float Speed);
+
+	UFUNCTION(BlueprintCallable, Category = "Dash Movement")
+	void EndDashMovementToPlayer();
+
+	// 콤보 공격 이동 함수들 (애니메이션 노티파이 스테이트용)
+	UFUNCTION(BlueprintCallable, Category = "Combo Movement")
+	void StartComboAttackMovement();
+
+	UFUNCTION(BlueprintCallable, Category = "Combo Movement")
+	void UpdateComboAttackMovement(float DeltaTime, float Speed, float Distance);
+
+	UFUNCTION(BlueprintCallable, Category = "Combo Movement")
+	void EndComboAttackMovement();
+
+	// 블랙보드 업데이트 함수들
+	UFUNCTION(BlueprintCallable, Category = "AI")
+	void NotifyComboAttackCompleted();
+
+	UFUNCTION(BlueprintCallable, Category = "AI")
+	void NotifyDashAttackCompleted();
+
 	// 근접 공격 이동 연출은 애니메이션에서 처리
 
 	// 공격 상태 플래그
 public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "State")
-	bool GetIsMeleeAttacking() const { return bIsMeleeAttacking; }
+	bool GetIsComboAttacking() const { return bIsComboAttacking; }
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "State")
+	bool GetIsDashAttacking() const { return bIsDashAttacking; }
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
@@ -146,12 +182,25 @@ private:
 	FTimerHandle MeleeAttackTimerHandle;
 
 	// 내부 상태 플래그
-	bool bIsMeleeAttacking = false;
+	bool bIsComboAttacking = false;
+	bool bIsDashAttacking = false;
+
+	// 돌진 공격 이동 관련 변수들
+	FVector CachedPlayerLocation = FVector::ZeroVector;
+	bool bIsDashMoving = false;
+
+	// 콤보 공격 이동 관련 변수들
+	FVector ComboMovementDirection = FVector::ZeroVector;
+	FVector ComboMovementStartLocation = FVector::ZeroVector;
+	bool bIsComboMoving = false;
+	float ComboMovementProgress = 0.0f;
 
 public:
 	// 공격 쿨다운 시스템
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attack")
 	float AttackCooldown = 0.5f; // 공격 쿨다운 시간
+
+	// 공격 이동 관련 변수들 제거됨 - 애니메이션에서 처리
 
 private:
 	float LastHitTime = 0.0f; // 마지막 히트 시간

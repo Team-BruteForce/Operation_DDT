@@ -43,6 +43,15 @@ private:
     bool bCanBePickedUp = false;
 
 public:
+    // 자동 반환 타이머
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Drop|Timer")
+    float AutoReturnTime = 10.0f; // 10초 후 자동 반환
+
+private:
+    UPROPERTY()
+    FTimerHandle AutoReturnTimerHandle;
+
+public:
     // 나이아가라 이펙트
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Drop|Effect")
     class UNiagaraSystem* PickupEffect;

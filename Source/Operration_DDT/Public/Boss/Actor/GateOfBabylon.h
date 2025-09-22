@@ -82,5 +82,8 @@ private:
 	
 	// 프로젝타일 스폰 함수
 	void SpawnProjectile();
+	
+	// 플레이어를 바라보도록 회전 업데이트
+	void UpdateLookAtPlayer();
 
 };

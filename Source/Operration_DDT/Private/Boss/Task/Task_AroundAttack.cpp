@@ -13,7 +13,7 @@ EStateTreeRunStatus UTask_AroundAttack::EnterState(FStateTreeExecutionContext& C
 	UBossProjectileComponent* Projectile=CHelpers::GetComponent<UBossProjectileComponent>(Boss);
 	Projectile->SpawnProjectileContinuously(0.5f);
 	FlyingComponent->StartSplineSemicircleMovement();
-	return Super::EnterState(Context, Transition);
+	return EStateTreeRunStatus::Running;
 }
 
 void UTask_AroundAttack::ExitState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition)

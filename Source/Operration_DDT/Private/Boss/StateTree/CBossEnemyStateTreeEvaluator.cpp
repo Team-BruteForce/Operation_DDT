@@ -58,6 +58,8 @@ void UCBossEnemyStateTreeEvaluator::Tick(FStateTreeExecutionContext& Context, co
 	CurrentTag = State->GetStateTag();
 	IsFly=FlyingComponent->IsFlying();
 	CurrentPaseState=WeaponComponent->GetCurrentWeaponMode();
+	CanTakeoff = FlyingComponent->bCanTakeoff;
+	CanLanding = FlyingComponent->bCanLanding;
 	// 디버그 출력
 	CLog::Print(State->GetStateTag().ToString(), 1);
 	CLog::Print(FString::Printf(TEXT("Distance : %f"), player_ai_dist), 2);
@@ -65,18 +67,18 @@ void UCBossEnemyStateTreeEvaluator::Tick(FStateTreeExecutionContext& Context, co
 	CLog::Print(Status->BossCurrentStats.CurrentAP, 4);
 	CLog::Print("Current Range Tag: " + CurrentRangeTag.ToString(), 5);
 	CLog::Print("Current Pase Tag: " + WeaponComponent->GetCurrentWeaponMode().ToString(), 6);
-	CLog::Print(FString::Printf(TEXT("CurrentHP : %d"), Status->BossCurrentStats.CurrentHP), 7);
-
-	CurrentChangeTime += DeltaTime;
-	
-	if (CurrentChangeTime>=MaxChangeTime){
-		IsArrowChange=true;
-		CurrentChangeTime=0;
-	}
-	else
+	// 보스 머리 위에 HP 표시
+	if (GetWorld())
 	{
-		IsArrowChange=false;
+		FVector BossLocation = Boss->GetActorLocation();
+		BossLocation.Z += 200.0f; // 머리 위 200 유닛
+		
+		DrawDebugString(GetWorld(), BossLocation, 
+			FString::Printf(TEXT("HP: %d"), Status->BossCurrentStats.CurrentHP), 
+			nullptr, FColor::Red, 0.0f, true, 2.0f);
 	}
+
+	
 }
 
 void UCBossEnemyStateTreeEvaluator::TreeStart(FStateTreeExecutionContext& Context)

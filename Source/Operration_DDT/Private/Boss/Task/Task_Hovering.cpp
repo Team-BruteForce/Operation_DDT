@@ -12,7 +12,7 @@ EStateTreeRunStatus UTask_Hovering::EnterState(FStateTreeExecutionContext& Conte
 	UFlyingComponent* FlyingComponent=CHelpers::GetComponent<UFlyingComponent>(Boss);
 	if (!FlyingComponent)	return EStateTreeRunStatus::Failed;
 	FlyingComponent->StartHovering();
-	return Super::EnterState(Context, Transition);
+	return EStateTreeRunStatus::Running;
 }
 
 void UTask_Hovering::ExitState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition)
