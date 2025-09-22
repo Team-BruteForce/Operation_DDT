@@ -26,7 +26,7 @@ void UCItemDropObjectComponent::BeginPlay()
         ItemDropComponent = Owner->FindComponentByClass<UCItemDropComponent>();
         
         // MeshComponent 찾기 (StaticMeshComponent 또는 SkeletalMeshComponent)
-        MeshComponent = Owner->FindComponentByClass<UStaticMeshComponent>();
+        /*MeshComponent = Owner->FindComponentByClass<UStaticMeshComponent>();*/
         
         // ItemDropComponent가 없으면 경고
         if (!ItemDropComponent)
@@ -35,20 +35,8 @@ void UCItemDropObjectComponent::BeginPlay()
                    *Owner->GetName());
         }
         
-        // MeshComponent가 없으면 경고
-        if (!MeshComponent)
-        {
-            UE_LOG(LogTemp, Warning, TEXT("UCItemDropObjectComponent: MeshComponent not found on owner %s"), 
-                   *Owner->GetName());
-        }
-        else
-        {
-            // 충돌 이벤트 바인딩
-            if (bEnableCollisionDamage)
-            {
-                MeshComponent->OnComponentHit.AddDynamic(this, &UCItemDropObjectComponent::OnHit);
-            }
-        }
+        UE_LOG(LogTemp, Log, TEXT("UCItemDropObjectComponent: BeginPlay completed - %s"), 
+               *Owner->GetName());
     }
     
     // 초기 체력을 최대 체력으로 설정
@@ -99,6 +87,14 @@ void UCItemDropObjectComponent::TakeDamage(float DamageAmount)
 
 void UCItemDropObjectComponent::RespawnObject()
 {
+    // IsRespawn이 false이면 리스폰하지 않음
+    if (!IsRespawn)
+    {
+        UE_LOG(LogTemp, Log, TEXT("UCItemDropObjectComponent: Respawn disabled, not respawning - %s"), 
+               *GetOwner()->GetName());
+        return;
+    }
+    
     // 체력을 최대치로 복구
     CurrentHealth = MaxHealth;
     
@@ -144,6 +140,12 @@ void UCItemDropObjectComponent::HandleObjectDestroyed()
 
 void UCItemDropObjectComponent::UpdateRespawnTimer(float DeltaTime)
 {
+    // IsRespawn이 false이면 리스폰 타이머 업데이트 안함
+    if (!IsRespawn)
+    {
+        return;
+    }
+    
     // 리스폰 타이머 감소
     CurrentRespawnTimer -= DeltaTime;
     
@@ -158,12 +160,28 @@ void UCItemDropObjectComponent::UpdateRespawnTimer(float DeltaTime)
 
 void UCItemDropObjectComponent::SetMeshVisibility(bool bVisible)
 {
+    // HitMeshComponent1 가시성 설정
+    if (HitMeshComponent1)
+    {
+        HitMeshComponent1->SetVisibility(bVisible);
+        
+        // 충돌도 함께 설정 (보이지 않을 때는 충돌 비활성화)
+        HitMeshComponent1->SetCollisionEnabled(bVisible ? ECollisionEnabled::QueryAndPhysics : ECollisionEnabled::NoCollision);
+    }
+
+    // HitMeshComponent2 가시성 설정
+    if (HitMeshComponent2)
+    {
+        HitMeshComponent2->SetVisibility(bVisible);
+        
+        // 충돌도 함께 설정 (보이지 않을 때는 충돌 비활성화)
+        HitMeshComponent2->SetCollisionEnabled(bVisible ? ECollisionEnabled::QueryAndPhysics : ECollisionEnabled::NoCollision);
+    }
+
+    // MeshComponent 가시성 설정 (충돌 없음)
     if (MeshComponent)
     {
         MeshComponent->SetVisibility(bVisible);
-        
-        // 충돌도 함께 설정 (보이지 않을 때는 충돌 비활성화)
-        MeshComponent->SetCollisionEnabled(bVisible ? ECollisionEnabled::QueryAndPhysics : ECollisionEnabled::NoCollision);
     }
 }
 
@@ -214,9 +232,6 @@ void UCItemDropObjectComponent::DelayedDestroy()
     // Mesh 숨기기
     SetMeshVisibility(false);
     
-    // 리스폰 타이머 시작
-    CurrentRespawnTimer = RespawnTime;
-
     // 파괴 상태로 설정
     bIsDestroyed = true;
 
@@ -226,8 +241,36 @@ void UCItemDropObjectComponent::DelayedDestroy()
     // 파괴 이벤트 브로드캐스트
     OnObjectDestroyed.Broadcast();
     
-    UE_LOG(LogTemp, Log, TEXT("UCItemDropObjectComponent: Mesh hidden, respawn timer started (%f seconds) - %s"), 
-           RespawnTime, *GetOwner()->GetName());
+    // IsRespawn이 true일 때만 리스폰 타이머 시작
+    if (IsRespawn)
+    {
+        CurrentRespawnTimer = RespawnTime;
+        UE_LOG(LogTemp, Log, TEXT("UCItemDropObjectComponent: Mesh hidden, respawn timer started (%f seconds) - %s"), 
+               RespawnTime, *GetOwner()->GetName());
+    }
+    else
+    {
+        CurrentRespawnTimer = 0.0f; // 리스폰 안함
+        UE_LOG(LogTemp, Log, TEXT("UCItemDropObjectComponent: Mesh hidden, respawn disabled - %s"), 
+               *GetOwner()->GetName());
+    }
+}
+
+void UCItemDropObjectComponent::SetHitMeshComponent1(UStaticMeshComponent* MeshComp)
+{
+    HitMeshComponent1 = MeshComp;
+    HitMeshComponent1->OnComponentHit.AddDynamic(this, &UCItemDropObjectComponent::OnHit);
+}
+
+void UCItemDropObjectComponent::SetHitMeshComponent2(UStaticMeshComponent* MeshComp)
+{
+    HitMeshComponent2 = MeshComp;
+    HitMeshComponent2->OnComponentHit.AddDynamic(this, &UCItemDropObjectComponent::OnHit);
+}
+
+void UCItemDropObjectComponent::SetMeshComponent(UStaticMeshComponent* MeshComp)
+{
+    MeshComponent = MeshComp;
 }
 
 void UCItemDropObjectComponent::TestTakeDamage()
