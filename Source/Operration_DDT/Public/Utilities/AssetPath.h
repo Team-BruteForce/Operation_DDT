@@ -32,6 +32,7 @@ namespace AssetPaths
     constexpr const TCHAR* IA_Roll = TEXT("/Script/EnhancedInput.InputAction'/Game/MW/Input/IA_Roll.IA_Roll'");
 #pragma endregion
     
+    
 
 #pragma region BossAsset
     constexpr const TCHAR* Boss_MESH = TEXT ( "/Script/Engine.SkeletalMesh'/Game/LHW/Asset/AngelOfDeath/Mesh/SK_AngelOfDeath.SK_AngelOfDeath'" );
@@ -42,9 +43,11 @@ namespace AssetPaths
     constexpr const TCHAR* Boss_StatsDataTable = TEXT ("/Script/Engine.DataTable'/Game/LHW/BossData/DT_BossStats.DT_BossStats'");
     constexpr const TCHAR* Boss_Projectile = TEXT ("/Script/Engine.Blueprint'/Game/LHW/Blueprint/Actor/BP_Projectile.BP_Projectile_C'");
     constexpr const TCHAR* Boss_Orb = TEXT ("/Script/Engine.Blueprint'/Game/LHW/Blueprint/Actor/BP_Orb.BP_Orb_C'");
-
+    constexpr const TCHAR* Boss_Widget = TEXT ("/Script/UMGEditor.WidgetBlueprint'/Game/LHW/Widget/WBP/WBP_BossStatus.WBP_BossStatus_C'");
     constexpr const TCHAR* Boss_Dissolve = TEXT ("/Script/Engine.Blueprint'/Game/LHW/Asset/AbsorbVFX/ExampleBlueprints/BP_Absorb_SK_7.BP_Absorb_SK_7_C'");
     constexpr const TCHAR* Boss_FlySpline = TEXT("/Script/Engine.Blueprint'/Game/LHW/Blueprint/Actor/BP_FlySpline.BP_FlySpline_C'");
 
 #pragma endregion BossAsset
+    constexpr const TCHAR* UI_Main = TEXT("/Script/UMGEditor.WidgetBlueprint'/Game/LHW/Widget/WBP/WBP_MainTheme.WBP_MainTheme_C'");
+    constexpr const TCHAR* UI_Loading = TEXT("/Script/UMGEditor.WidgetBlueprint'/Game/LHW/Widget/WBP/WBP_Loading.WBP_Loading_C'");
 }

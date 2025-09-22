@@ -12,9 +12,9 @@
 
 #include "Boss/CBoss.h"
 #include "Global.h"
-#include "Boss/CBossAIC.h" 
 #include "Boss/Component/CBossWeaponComponent.h"
 #include "MotionWarpingComponent.h"
+#include "Blueprint/UserWidget.h"
 #include "Boss/Component/BossEffectComponent.h"
 #include "Boss/Component/CBossStatusComponent.h"
 #include "Boss/Component/FlyingComponent.h"
@@ -27,6 +27,7 @@
 #include "Boss/Component/BossProjectileComponent.h"
 #include "Boss/Component/CBossTargetingComponent.h"
 #include "Boss/Component/BossDebugComponent.h"
+#include "Boss/Widget/BossStatusWidget.h"
 
 /**
  * @brief 보스 캐릭터 생성자
@@ -45,17 +46,13 @@ ACBoss::ACBoss()
 
 
 	// 애님 인스턴스 클래스 에셋 로드 및 설정
-	TSubclassOf<UAnimInstance> Anim;
+	// TSubclassOf<UAnimInstance> Anim;
 	// CHelpers::GetClass<UAnimInstance>(&Anim, AssetPaths::Boss_ANIM);
-	GetMesh()->SetAnimInstanceClass(Anim);
+	// if (Anim)
+	// {
+	// 	GetMesh()->SetAnimInstanceClass(Anim);
+	// }
 
-	// AI 컨트롤러 클래스 에셋 로드 및 설정
-	// TSubclassOf<ACBossAIC> AIC;
-	// CHelpers::GetClass<ACBossAIC>(&AIC, AssetPaths::Boss_AIC);
-	// AIControllerClass = AIC;
-
-	//CHelpers::GetClass<ABossDissolve>(&BossDissolveClass, AssetPaths::Boss_Dissolve);
-	
 
 	CHelpers::CreateActorComponent<UBossStateComponent>(this,&BossStateComponent,"StateComp");
 	CHelpers::CreateActorComponent<UCBossMovementComponent>(this,&BossMovementComponent,"MovementComp");
@@ -68,6 +65,11 @@ ACBoss::ACBoss()
 	CHelpers::CreateActorComponent<UBossEffectComponent>(this,&EffectComponent,"EffectComp");
 	CHelpers::CreateActorComponent<UFlyingComponent>(this,&FlyingComponent,"FlyingComponent");
 
+/**
+ *보스 위젯 가져오기
+ **/
+	CHelpers::GetClass<UUserWidget>(&BossWidgetClass, AssetPaths::Boss_Widget);
+	
 	// USkeletalMesh* WingsMesh;
 	// CHelpers::GetAsset<USkeletalMesh>(&WingsMesh, AssetPaths::Boss_Wings);
 	// CHelpers::CreateComponent<USkeletalMeshComponent>(this,&WingMeshComp,"WingMeshComp");
@@ -82,22 +84,33 @@ ACBoss::ACBoss()
 void ACBoss::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
-	if (BossStatusComponent->BossCurrentStats.CurrentHP<=0)
+	
+	// 1순위: 죽음 체크
+	if (BossStatusComponent->BossCurrentStats.CurrentHP <= 0)
 	{
 		UStateTreeComponent* StateTreeComp = GetController()->FindComponentByClass<UStateTreeComponent>();
 		StateTreeComp->SendStateTreeEvent(FGameplayTag::RequestGameplayTag("BOSS.State.Dead"));
-		BossStatusComponent->BossCurrentStats.CurrentHP=1;
+		BossStatusComponent->BossCurrentStats.CurrentHP = 1;
+		BossWidget->SwitchBossCompleteUI();
+		return; // 죽음 처리 후 다른 로직 실행 안함
 	}
-	if (BossStatusComponent->BossCurrentStats.CurrentHP <= 1200 && BossWeaponComponent->GetCurrentWeaponMode()==FGameplayTag::RequestGameplayTag("BOSS.Pase.One"))
+	
+	// 2순위: 페이즈 전환 체크 (스턴보다 우선)
+	if (BossStatusComponent->BossCurrentStats.CurrentHP <= 1200 && 
+		BossWeaponComponent->GetCurrentWeaponMode() == FGameplayTag::RequestGameplayTag("BOSS.Pase.One"))
 	{
 		UStateTreeComponent* StateTreeComp = GetController()->FindComponentByClass<UStateTreeComponent>();
 		StateTreeComp->SendStateTreeEvent(FGameplayTag::RequestGameplayTag("BOSS.Event.ChangePase"));
+		return; // 페이즈 전환 처리 후 스턴 로직 실행 안함
 	}
-	else if (BossStatusComponent->BossCurrentStats.CurrentGroggyGauge >= BossStatusComponent->BossCurrentStats.MaxGroggyGauge)
+	
+	// 3순위: 스턴 체크 (페이즈 전환 후에만)
+	if (BossStatusComponent->BossCurrentStats.CurrentGroggyGauge >= BossStatusComponent->BossCurrentStats.MaxGroggyGauge)
 	{
-		if (BossStatusComponent->GetIsPaseChange())return;
+		if (BossStatusComponent->GetIsPaseChange()) return;
+		
 		// 현재 스턴 상태가 아닐 때만 스턴 상태로 전환
-		if (!BossStatusComponent->IsGroggy) // 또는 적절한 스턴 상태 체크
+		if (!BossStatusComponent->IsGroggy)
 		{
 			UStateTreeComponent* StateTreeComp = GetController()->FindComponentByClass<UStateTreeComponent>();
 			StateTreeComp->SendStateTreeEvent(FGameplayTag::RequestGameplayTag("BOSS.State.Stunned"));
@@ -134,6 +147,7 @@ float ACBoss::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEv
 		BossStatusComponent->IncreaseGroggyGauge(DamageAmount);
 		PlayHitMotion(HitBone);
 	}
+	HPUpdate();
 
 
 	return DamageAmount;
@@ -151,8 +165,6 @@ void ACBoss::BeginPlay()
 	
 	// 보스 초기 위치 저장 (레벨에 배치된 위치)
 	InitialLocation = GetActorLocation();
-	UE_LOG(LogTemp, Warning, TEXT("CBoss: 초기 위치 저장 완료 - %s"), 
-		*InitialLocation.ToString());
 
 	FActorSpawnParameters Parameters;
 	Parameters.Owner=this;
@@ -160,9 +172,20 @@ void ACBoss::BeginPlay()
 	{
 		BossDissolve=GetWorld()->SpawnActor<ABossDissolve>(BossDissolveClass,FVector::ZeroVector,FRotator::ZeroRotator,Parameters);
 	}
+	if (BossWidgetClass)
+	{
+		BossWidget=CreateWidget<UBossStatusWidget>(GetWorld(),BossWidgetClass);
+		BossWidget->Owner=this;
+		
+		// 초기 체력 UI 업데이트
+		BossWidget->UpdateBossHP(
+			BossStatusComponent->BossCurrentStats.CurrentHP,
+			BossStatusComponent->BossCurrentStats.MaxHP
+		);
+	}
 }
 
-void ACBoss::PlayHitMotion(FName BoneName)
+void ACBoss::PlayHitMotion(FName BoneName="spine_03")
 {
 	GetMesh()->SetAllBodiesBelowSimulatePhysics(FName("spine_03"), true, true);
 	// 일정 시간 후 복구
@@ -172,4 +195,21 @@ void ACBoss::PlayHitMotion(FName BoneName)
 		GetMesh()->SetSimulatePhysics(false);
 		GetMesh()->AttachToComponent(GetCapsuleComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 	}, 0.05f, false);
+}
+
+void ACBoss::ShowBossStatusWidget()
+{
+	BossWidget->AddToViewport();
+}
+
+void ACBoss::HPUpdate()
+{
+	// UI 업데이트
+	if (BossWidget)
+	{
+		BossWidget->UpdateBossHP(
+			BossStatusComponent->BossCurrentStats.CurrentHP,
+			BossStatusComponent->BossCurrentStats.MaxHP
+		);
+	}
 }

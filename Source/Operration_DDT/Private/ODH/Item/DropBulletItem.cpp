@@ -138,6 +138,15 @@ void ADropBulletItem::EnablePickup()
     GetWorld()->GetTimerManager().SetTimer(AutoReturnTimerHandle, this, &ADropBulletItem::ReturnToPool, AutoReturnTime, false);
 }
 
+void ADropBulletItem::EnablePickupWithoutEffect()
+{
+    bCanBePickedUp = true;
+    Collision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+    
+    // 이펙트 없이 상호작용만 활성화 (레벨 배치된 아이템용)
+    // 자동 반환 타이머는 시작하지 않음 (레벨 배치된 아이템은 영구적)
+}
+
 void ADropBulletItem::BeginPlay()
 {
     Super::BeginPlay();
@@ -145,11 +154,16 @@ void ADropBulletItem::BeginPlay()
     {
         Collision->OnComponentBeginOverlap.AddDynamic(this, &ADropBulletItem::OnOverlapBegin);
     }
+    
+    // 레벨에 직접 배치된 아이템의 경우 즉시 상호작용 가능하게 설정 (이펙트 없이)
+    if (!bFalling && !bCanBePickedUp)
+    {
+        StartLocation = GetActorLocation();
+        EnablePickupWithoutEffect();
+    }
 }
 
-void ADropBulletItem::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
-                                     UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
-                                     bool bFromSweep, const FHitResult& SweepResult)
+void ADropBulletItem::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
     if (!OtherActor || !bCanBePickedUp) return;
 
@@ -181,6 +195,7 @@ void ADropBulletItem::ReturnToPool()
     }
     else
     {
+        // 레벨에 직접 배치된 아이템의 경우 단순히 비활성화만 처리
         SetActorHiddenInGame(true);
         SetActorEnableCollision(false);
         SetActorTickEnabled(false);

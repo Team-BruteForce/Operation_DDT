@@ -48,8 +48,8 @@ void UCFlowerDashAttackMovementState::NotifyTick(USkeletalMeshComponent* MeshCom
 	// 메시 컴포넌트의 소유자가 FlowerEnemy인지 확인
 	if (ACFlowerEnemy* FlowerEnemy = Cast<ACFlowerEnemy>(MeshComp->GetOwner()))
 	{
-		// 저장된 플레이어 위치를 향해 이동
-		FlowerEnemy->UpdateDashMovementToPlayer(FrameDeltaTime, MovementSpeed);
+		// 저장된 플레이어 위치를 향해 이동 (시간 기반)
+		FlowerEnemy->UpdateDashMovementToPlayer(FrameDeltaTime, MovementDuration);
 	}
 }
 

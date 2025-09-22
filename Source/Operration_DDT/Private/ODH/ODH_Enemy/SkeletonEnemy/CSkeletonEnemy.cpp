@@ -16,6 +16,7 @@
 #include "Player/DDTPlayer.h"
 #include "ODH/ODH_Enemy/CCombatEncounterManager.h"
 #include "ODH/ODH_Enemy/Component/CEnemyHealthBarComponent.h"
+#include "../../UMG/Public/Components/WidgetComponent.h"
 
 // Sets default values
 ACSkeletonEnemy::ACSkeletonEnemy()
@@ -260,6 +261,19 @@ float ACSkeletonEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const&
 	// IDamageable 인터페이스의 TakeDamage_Implementation 호출
 	TakeDamage_Implementation(DamageAmount);
 
+	if (UWidgetComponent* WC = Cast<UWidgetComponent>(
+		GetComponentByClass(UWidgetComponent::StaticClass())))
+	{
+		const bool bShown = WC->IsVisible(); // 월드 컴포넌트 가시성
+		if (!bShown)
+		{
+			if (UCEnemyHealthBarComponent* HB = FindComponentByClass<UCEnemyHealthBarComponent>())
+			{
+				HB->ShowHealthBar();
+			}
+		}
+	}
+
 	// 약점(헤드 등) 피격 시 즉시 그로기 100 누적
 	bool bWeakSpotHit = false;
 	if (const FPointDamageEvent* PointEvt = static_cast<const FPointDamageEvent*>(DamageEvent.GetTypeID() == FPointDamageEvent::ClassID ? &DamageEvent : nullptr))
@@ -317,11 +331,11 @@ float ACSkeletonEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const&
 					{
                         BB->SetValueAsObject(KeyTargetPlayer, TargetObj);
                         BB->SetValueAsBool(KeyIsInCombat, true);
-                        // 전투 돌입: 체력바 표시
-                        if (UCEnemyHealthBarComponent* HB = FindComponentByClass<UCEnemyHealthBarComponent>())
-                        {
-                            HB->ShowHealthBar();
-                        }
+//                         // 전투 돌입: 체력바 표시
+//                         if (UCEnemyHealthBarComponent* HB = FindComponentByClass<UCEnemyHealthBarComponent>())
+//                         {
+//                             HB->ShowHealthBar();
+//                         }
 					}
 				}
 			}
@@ -384,6 +398,9 @@ void ACSkeletonEnemy::PlayComboAttack()
 		bIsComboAttacking = true;
 		bIsDashAttacking = false; // 다른 공격 상태 초기화
 		
+		// 다른 공격 콜리전들 비활성화
+		DisableComboCollisions();
+		
 		// 콤보 공격 쿨다운 설정 (빠른 연속 공격)
 		AttackCooldown = 0.3f;
 		
@@ -414,25 +431,17 @@ void ACSkeletonEnemy::PlayDashAttack()
 		bIsDashAttacking = true;
 		bIsComboAttacking = false; // 다른 공격 상태 초기화
 		
+		// 다른 공격 콜리전들 비활성화
+		DisableComboCollisions();
+		
 		// 돌진 공격 쿨다운 설정 (강력한 단발 공격)
 		AttackCooldown = 0.6f;
-		
-// 		기존 타이머 클리어 후 재설정
-// 				GetWorldTimerManager().ClearTimer(MeleeAttackTimerHandle);
-// 				FTimerDelegate ClearDash;
-// 				ClearDash.BindLambda([this]()
-// 				{
-// 					bIsDashAttacking = false;
-// 				});
-// 				GetWorldTimerManager().SetTimer(MeleeAttackTimerHandle, ClearDash, 0.6f, false);
 		
 		// 디버그 출력
 		if (GEngine)
 		{
 			GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Cyan, TEXT("Skeleton Enemy Dash Attack!"));
 		}
-
-		// 콜리전 활성화/비활성화는 애니메이션 노티파이로 처리
 	}
 }
 
@@ -461,14 +470,20 @@ void ACSkeletonEnemy::DisableComboCollisions()
 	if (MeleeAttackCollisionR)
 	{
 		MeleeAttackCollisionR->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		// ComboR 공격 플래그 리셋 (다음 공격을 위해)
+		bComboRHasHit = false;
 	}
 	if (MeleeAttackCollisionL)
 	{
 		MeleeAttackCollisionL->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		// ComboL 공격 플래그 리셋 (다음 공격을 위해)
+		bComboLHasHit = false;
 	}
 	if (ComboAttackLastCollision)
 	{
 		ComboAttackLastCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		// ComboLast 공격 플래그 리셋 (다음 공격을 위해)
+		bComboLastHasHit = false;
 	}
 	
 	// 쿨다운 초기화 (다음 공격을 위해)
@@ -486,6 +501,8 @@ void ACSkeletonEnemy::EnableComboRCollision()
 	if (MeleeAttackCollisionR)
 	{
 		MeleeAttackCollisionR->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+		// ComboR 공격 1회 타격 가드 초기화
+		bComboRHasHit = false;
 	}
 }
 
@@ -494,6 +511,8 @@ void ACSkeletonEnemy::EnableComboLCollision()
 	if (MeleeAttackCollisionL)
 	{
 		MeleeAttackCollisionL->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+		// ComboL 공격 1회 타격 가드 초기화
+		bComboLHasHit = false;
 	}
 }
 
@@ -530,6 +549,8 @@ void ACSkeletonEnemy::EnableLastComboCollision()
 	if (ComboAttackLastCollision)
 	{
 		ComboAttackLastCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+		// ComboLast 공격 1회 타격 가드 초기화
+		bComboLastHasHit = false;
 	}
 	
 	// 마지막 콤보 공격 시 전방 이동 제거 (애니메이션에서 처리)
@@ -573,6 +594,8 @@ void ACSkeletonEnemy::EnableDashCollision()
 	if (ComboAttackLastCollision)
 	{
 		ComboAttackLastCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+		// Dash 공격 1회 타격 가드 초기화
+		bDashHasHit = false;
 	}
 	
 	// 돌진 공격은 전방 이동 효과 없음 (애니메이션에서 처리)
@@ -608,12 +631,18 @@ void ACSkeletonEnemy::StartDashMovementToPlayer()
 		
 		// 플레이어 정면 앞 70cm 지점 계산
 		CachedPlayerLocation = PlayerLocation + (PlayerForward * 70.0f);
+		
+		// 시간 기반 이동 초기화
+		DashStartLocation = GetActorLocation();
+		DashElapsedTime = 0.0f;
+		// DashTotalTime은 애니메이션 노티파이에서 설정됨
+		
 		bIsDashMoving = true;
 		
 		// 디버그 출력
 		if (GEngine)
 		{
-			FString DebugMessage = FString::Printf(TEXT("Target Location (70cm in front of player): %s"), *CachedPlayerLocation.ToString());
+			FString DebugMessage = FString::Printf(TEXT("Skeleton Enemy Target Location (70cm in front of player): %s"), *CachedPlayerLocation.ToString());
 			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Blue, DebugMessage);
 		}
 	}
@@ -628,7 +657,7 @@ void ACSkeletonEnemy::StartDashMovementToPlayer()
 	}
 }
 
-void ACSkeletonEnemy::UpdateDashMovementToPlayer(float DeltaTime, float Speed)
+void ACSkeletonEnemy::UpdateDashMovementToPlayer(float DeltaTime, float TotalTime)
 {
 	// 이동 중이 아니면 리턴
 	if (!bIsDashMoving)
@@ -641,39 +670,44 @@ void ACSkeletonEnemy::UpdateDashMovementToPlayer(float DeltaTime, float Speed)
 		return;
 	}
 
-	// 캐릭터 이동 컴포넌트 가져오기
-	UCharacterMovementComponent* MoveComp = GetCharacterMovement();
-	if (!MoveComp)
+	// 총 이동 시간 설정 (첫 번째 호출 시)
+	if (DashTotalTime <= 0.0f)
 	{
-		bIsDashMoving = false;
-		return;
+		DashTotalTime = TotalTime;
 	}
 
-	// 현재 위치에서 저장된 플레이어 위치로의 방향 계산
-	FVector CurrentLocation = GetActorLocation();
-	FVector Direction = (CachedPlayerLocation - CurrentLocation).GetSafeNormal();
+	// 경과 시간 업데이트
+	DashElapsedTime += DeltaTime;
+
+	// 시간 기반 이동 계산 (0.0 ~ 1.0)
+	float Alpha = FMath::Clamp(DashElapsedTime / DashTotalTime, 0.0f, 1.0f);
 	
-	// Yaw 회전만 사용 (Z축 회전은 제외)
+	// EaseInOut 곡선 적용 (부드러운 가속/감속)
+	float SmoothAlpha = FMath::InterpEaseInOut(0.0f, 1.0f, Alpha, 2.0f);
+	
+	// 시작 위치에서 목표 위치로 보간
+	FVector NewLocation = FMath::Lerp(DashStartLocation, CachedPlayerLocation, SmoothAlpha);
+	
+	// 목표 방향으로 회전 (Yaw만 사용)
+	FVector Direction = (CachedPlayerLocation - DashStartLocation).GetSafeNormal();
 	FRotator TargetRotation = FRotationMatrix::MakeFromX(Direction).Rotator();
 	TargetRotation.Pitch = 0.0f;
 	TargetRotation.Roll = 0.0f;
-	
-	// 캐릭터를 목표 방향으로 회전
 	SetActorRotation(TargetRotation);
 	
-	// 목표 방향으로 이동 (SetActorLocation 사용)
-	FVector Movement = Direction * Speed * DeltaTime;
-	FVector NewLocation = CurrentLocation + Movement;
+	// 위치 설정
 	SetActorLocation(NewLocation);
 	
-	// 목표 지점에 도달했는지 확인 (거리 체크)
-	float DistanceToTarget = FVector::Dist(CurrentLocation, CachedPlayerLocation);
-	if (DistanceToTarget < 70.0f) // 70cm 이내에 도달하면 이동 종료
+	// 시간이 다 되면 이동 완료
+	if (Alpha >= 1.0f)
 	{
+		// 정확히 목표 위치에 도달
+		SetActorLocation(CachedPlayerLocation);
 		bIsDashMoving = false;
+		
 		if (GEngine)
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Green, TEXT("Reached target location (70cm in front of player)"));
+			GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Green, TEXT("Skeleton Enemy reached target location in time!"));
 		}
 	}
 }
@@ -859,6 +893,7 @@ void ACSkeletonEnemy::OnDeath()
 	
 	// 모든 이동 상태 초기화
 	bIsLastComboMoving = false;
+	bIsDashMoving = false;
 	if (AController* C = GetController())
 	{
 		if (AAIController* AI = Cast<AAIController>(C))
@@ -883,13 +918,12 @@ void ACSkeletonEnemy::OnDeath()
 			{
 				GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("Skeleton Enemy removed from game!"));
 			}
-			// 비활성화 처리: 보이지 않음, 충돌 비활성화, 틱 중지
-			SetActorHiddenInGame(true);
+			// 블루프린트에서 구현된 흡수 애니메이션 실행
+			StartAbsorbAnimation();
 			SetActorEnableCollision(false);
 			SetActorTickEnabled(false);
 			if (USkeletalMeshComponent* MeshComp = GetMesh())
 			{
-				MeshComp->SetVisibility(false, true);
 				MeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 			}
 		}
@@ -932,6 +966,26 @@ void ACSkeletonEnemy::OnMeleeAttackOverlap(UPrimitiveComponent* OverlappedCompon
 	float CurrentTime = GetWorld()->GetTimeSeconds();
 	if (CurrentTime - LastHitTime < AttackCooldown)
 		return;
+
+	// 공격별 중복 타격 방지
+	if (OverlappedComponent == MeleeAttackCollisionR)
+	{
+		if (bComboRHasHit)
+			return;
+		bComboRHasHit = true;
+	}
+	else if (OverlappedComponent == MeleeAttackCollisionL)
+	{
+		if (bComboLHasHit)
+			return;
+		bComboLHasHit = true;
+	}
+	else if (OverlappedComponent == ComboAttackLastCollision)
+	{
+		if (bComboLastHasHit)
+			return;
+		bComboLastHasHit = true;
+	}
 
 	// 플레이어인지 확인
 	if (OtherActor->IsA<ADDTPlayer>())

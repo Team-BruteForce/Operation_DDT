@@ -15,9 +15,5 @@ class OPERRATION_DDT_API UCFlowerHandLAttackCollisionNotify : public UAnimNotify
 public:
 	UCFlowerHandLAttackCollisionNotify();
 
-	// 콜리전 활성화 여부
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Attack")
-	bool bEnableCollision = true;
-
 	virtual void Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference) override;
 };

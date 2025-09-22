@@ -92,6 +92,7 @@ public:
 
 private:
     void EnablePickup();
+    void EnablePickupWithoutEffect(); // 이펙트 없이 상호작용만 활성화
 
 private:
     // (지연 스냅 제거)

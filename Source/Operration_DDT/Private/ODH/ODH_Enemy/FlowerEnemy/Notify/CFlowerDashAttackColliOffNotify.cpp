@@ -16,7 +16,7 @@ void UCFlowerDashAttackColliOffNotify::Notify(USkeletalMeshComponent* MeshComp, 
 	// 메시 컴포넌트의 소유자가 플라워 에너미인지 확인
 	if (ACFlowerEnemy* FlowerEnemy = Cast<ACFlowerEnemy>(MeshComp->GetOwner()))
 	{
-		FlowerEnemy->DisableHandRAttackCollision();
+		FlowerEnemy->DisableDashAttackCollision();
 
 		// 디버그 출력
 		if (GEngine)
