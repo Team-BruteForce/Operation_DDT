@@ -16,6 +16,7 @@
 #include "Boss/Data/TBossStats.h"
 #include "Global.h"
 #include "Components/StateTreeAIComponent.h"
+#include "Player/DDTGameMode.h"
 
 /**
  * @brief 보스 스탯 컴포넌트 생성자
@@ -108,14 +109,23 @@ void UCBossStatusComponent::IncreaseAP(float AP)
 		BossCurrentStats.CurrentAP += AP;
 }
 
-void UCBossStatusComponent::SetDamage(float Damage)
+void UCBossStatusComponent::SetDamage(float Damage, bool isCritical)
 {
+	float finalDamage = Damage;
 	if (!GetIsGroggy())
-		BossCurrentStats.CurrentHP-=Damage-BossCurrentStats.CurrentDEF;
+	{
+		finalDamage = Damage-BossCurrentStats.CurrentDEF;
+		BossCurrentStats.CurrentHP -= finalDamage;
+	}
 		
 		// BossCurrentStats.CurrentHP-=Damage-BossCurrentStats.CurrentDEF;
 	else
-		BossCurrentStats.CurrentHP-=Damage;
+		BossCurrentStats.CurrentHP -= finalDamage;
+
+	if (ADDTGameMode* GM = GetWorld()->GetAuthGameMode<ADDTGameMode>())
+	{
+		GM->BroadCastDamage(finalDamage, isCritical, GetIsGroggy());
+	}
 }
 
 void UCBossStatusComponent::ResetAp()

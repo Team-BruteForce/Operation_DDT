@@ -119,7 +119,8 @@ private:
 
 	bool bCanMove = false;
 	FVector TargetPoint;
-
+	class UCBulletObjectPoolComponent* BulletPool;
+	class UCDamageUIManageComponent* DamageUIManager;
 	
 
 };

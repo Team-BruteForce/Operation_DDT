@@ -3,8 +3,10 @@
 
 #include "Player/Components/CBulletObjectPoolComponent.h"
 #include "Global.h"
+#include "Blueprint/UserWidget.h"
 #include "Player/CPlayerBullet.h"
 #include "Player/DDTPlayer.h"
+#include "Player/Widget/CNormalDamageUIActor.h"
 
 // Sets default values for this component's properties
 UCBulletObjectPoolComponent::UCBulletObjectPoolComponent()
@@ -36,8 +38,12 @@ void UCBulletObjectPoolComponent::BeginPlay()
 		ACPlayerBullet* vfx = CreateBulletVFXForPool();
 		if(vfx)
 			VFXPool.Add(vfx);
+
+		ACNormalDamageUIActor* ui = CreateDamageUIForPool();
+		if (ui)
+			DamageUIPool.Add(ui);
 	}
-	CurrentPoolIndex = 0;
+
 	
 }
 
@@ -100,19 +106,35 @@ ACPlayerBullet* UCBulletObjectPoolComponent::CreateBulletVFXForPool()
 	return bullet;
 }
 
+ACNormalDamageUIActor* UCBulletObjectPoolComponent::CreateDamageUIForPool()
+{
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	//FVector DamageLocation = Boss->GetMesh()->GetComponentLocation();
+	//DamageLocation.Z += 325.f;
+		
+	ACNormalDamageUIActor* DamageActor = GetWorld()->SpawnActor<ACNormalDamageUIActor>(
+		DamageActorClass, SpawnParams);
+
+	if (!DamageActor) return nullptr;
+
+	DamageActor->SetActive(false);
+	return DamageActor;
+}
+
 ACPlayerBullet* UCBulletObjectPoolComponent::GetInactiveBullet()
 {
 	// 순환 방식으로 비활성화된 총알 찾기
 	for (int32 i = 0; i < MagazinePool.Num(); i++)
 	{
-		int32 index = (CurrentPoolIndex + i) % MagazinePool.Num();
+		int32 index = (CurrentBulletPoolIndex + i) % MagazinePool.Num();
 		ACPlayerBullet* bullet = MagazinePool[index];
 		
 		// 더 엄격한 체크 - 사용 중이 아닌 총알만 반환
 		if (!bullet->IsActive() && !bullet->GetIsInUse())
 		{
-			CurrentPoolIndex = (index + 1) % MagazinePool.Num();
-			CLog::Log("Pool) Return Bullet : " + FString::FromInt(CurrentPoolIndex));
+			CurrentBulletPoolIndex = (index + 1) % MagazinePool.Num();
+			CLog::Log("Pool) Return Bullet : " + FString::FromInt(CurrentBulletPoolIndex));
 			return bullet;
 		}
 	}
@@ -129,14 +151,14 @@ ACPlayerBullet* UCBulletObjectPoolComponent::GetInactiveVFX()
 	// 순환 방식으로 비활성화된 총알 찾기
 	for (int32 i = 0; i < VFXPool.Num(); i++)
 	{
-		int32 index = (CurrentPoolIndex + i) % VFXPool.Num();
+		int32 index = (CurrentVFXPoolIndex + i) % VFXPool.Num();
 		ACPlayerBullet* bullet = VFXPool[i];
 		
 		// 더 엄격한 체크 - 사용 중이 아닌 총알만 반환
 		if (!bullet->IsActive() && !bullet->GetIsInUse())
 		{
-			CurrentPoolIndex = (index + 1) % VFXPool.Num();
-			CLog::Log("Pool) Return VFX Bullet : " + FString::FromInt(CurrentPoolIndex));
+			CurrentVFXPoolIndex = (index + 1) % VFXPool.Num();
+			CLog::Log("Pool) Return VFX Bullet : " + FString::FromInt(CurrentVFXPoolIndex));
 			return bullet;
 		}
 	}
@@ -146,5 +168,28 @@ ACPlayerBullet* UCBulletObjectPoolComponent::GetInactiveVFX()
 	VFXPool.Add(newbullet);
 	
 	return newbullet;// 모든 총알이 활성화된 상태
+}
+
+ACNormalDamageUIActor* UCBulletObjectPoolComponent::GetInactiveDamageUI()
+{
+	// 순환 방식으로 비활성화된 총알 찾기
+	for (int32 i = 0; i < DamageUIPool.Num(); i++)
+	{
+		int32 index = (CurrentDamageUIPoolIndex + i) % DamageUIPool.Num();
+		ACNormalDamageUIActor* damageUI = DamageUIPool[i];
+		
+		// 더 엄격한 체크 - 사용 중이 아닌 총알만 반환
+		if (!damageUI->IsActive())
+		{
+			CurrentDamageUIPoolIndex = (index + 1) % DamageUIPool.Num();
+			CLog::Log("Pool) Return UI : " + FString::FromInt(CurrentDamageUIPoolIndex));
+			return damageUI;
+		}
+	}
+	
+	ACNormalDamageUIActor* newUI = CreateDamageUIForPool();
+	//MaxMagazinePool++;
+	DamageUIPool.Add(newUI);
+	return newUI;
 }
 

@@ -93,6 +93,7 @@ public:
 	void SprintEnd();
 
 	FORCEINLINE void SetFalseOnMovePressing(){ bOnMovePressing = false; }
+	FORCEINLINE bool GetOnMovePressing() { return bOnMovePressing; }
 
 private:
 	void SetSpeed(ESpeedType InType);

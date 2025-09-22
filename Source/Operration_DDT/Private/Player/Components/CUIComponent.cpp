@@ -26,8 +26,9 @@ UCUIComponent::UCUIComponent()
 void UCUIComponent::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	InitUIWidget();
+
+	playerUI = Cast<UCPlayerUI>(CreateWidget(GetWorld(),UCPlayerUIWidget));
+	//InitUIWidget();
 	// ...
 	OwnerCharater = Cast<ADDTPlayer>(GetOwner());
 	StaminaComp = CHelpers::GetComponent<UCStaminaComponent>(OwnerCharater);
@@ -78,7 +79,7 @@ void UCUIComponent::InitUIWidget()
 {
 	if (UCPlayerUIWidget)
 	{
-		playerUI = Cast<UCPlayerUI>(CreateWidget(GetWorld(),UCPlayerUIWidget));
+		
 		playerUI->AddToViewport();
 		playerUI->ShowCrosshair(false);
 	}

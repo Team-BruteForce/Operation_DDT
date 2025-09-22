@@ -27,4 +27,5 @@ public:
 
 	UFUNCTION()
 	void EndLoading();
+	
 };

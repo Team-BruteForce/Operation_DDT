@@ -63,6 +63,7 @@ void UCMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 	{
 		OnRun();
 	}
+	
 
 }
 

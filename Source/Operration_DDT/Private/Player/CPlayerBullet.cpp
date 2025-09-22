@@ -10,6 +10,10 @@
 #include "NiagaraSystem.h"
 #include "NiagaraComponent.h"
 #include "Boss/CBoss.h"
+#include "Player/DDTGameMode.h"
+#include "Player/Components/CBulletObjectPoolComponent.h"
+#include "Player/Components/CDamageUIManageComponent.h"
+#include "Player/Widget/CDamageWidget_Normal.h"
 #include "Player/Widget/CNormalDamageUIActor.h"
 
 // Sets default values
@@ -40,6 +44,8 @@ void ACPlayerBullet::BeginPlay()
 	Super::BeginPlay();
 	// SetLifeSpan 제거 - 오브젝트 풀에서 관리
 	OwnerCharacter = Cast<ADDTPlayer>(GetOwner());
+	BulletPool = CHelpers::GetComponent<UCBulletObjectPoolComponent>(OwnerCharacter);
+	DamageUIManager = CHelpers::GetComponent<UCDamageUIManageComponent>(OwnerCharacter);
 	bIsActive = false;  // 초기에는 비활성화
 	
 	// 랜덤 데미지 설정
@@ -175,18 +181,20 @@ void ACPlayerBullet::OnBulletHit(UPrimitiveComponent* HitComponent, AActor* Othe
 	ACBoss* Boss = Cast<ACBoss>(OtherActor);
 	if (Boss)
 	{
-		CLog::Log("PlayerBullet) Boss Cast");
-		FActorSpawnParameters SpawnParams;
-		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-    
-		ACNormalDamageUIActor* DamageActor = GetWorld()->SpawnActor<ACNormalDamageUIActor>(
-			UIWidgetClass,
-			Boss->GetMesh()->GetComponentLocation(),
-			FRotator::ZeroRotator,
-			SpawnParams
-		);
-	
-		//DamageActor->AttachToComponent(Boss->GetMesh (), FAttachmentTransformRules::KeepRelativeTransform, FName("DamageSocket"));
+		/*FVector DamageLocation = Boss->GetMesh()->GetComponentLocation();
+		DamageLocation.Z += 325.f;
+
+		ACNormalDamageUIActor* DamageUIActor = BulletPool->GetInactiveDamageUI();
+		DamageUIActor->SetActorLocation(DamageLocation);
+		DamageUIActor->SetActive(true);*/
+
+		/*UCDamageWidget_Normal* DamageUI = DamageUIManager->GetInactiveUI();
+		DamageUI->SetActive(true);*/
+		/*ADDTGameMode* GM = GetWorld()->GetAuthGameMode<ADDTGameMode>();
+		if (GM)
+		{
+			UCDamageWidget_Normal* DamageUI = GM->DamageUI;			
+		}*/
 
 	}
 	

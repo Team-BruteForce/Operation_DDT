@@ -125,6 +125,7 @@ float ACBoss::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEv
 	const FPointDamageEvent* PointDamageEvent = static_cast<const FPointDamageEvent*>(&DamageEvent);
 	FName HitBone = PointDamageEvent->HitInfo.BoneName;
 	FVector HitLocation = PointDamageEvent->HitInfo.ImpactPoint;
+	bool isCritical = false;
 	if (DamageEvent.IsOfType(FPointDamageEvent::ClassID))
 	{
 		if (PointDamageEvent)
@@ -135,6 +136,7 @@ float ACBoss::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEv
 			if (HitBone == FName("head") || HitBone == FName("Head") || HitBone.ToString().Contains("Head"))
 			{
 				DamageAmount *= 2.0f; // 데미지 배율
+				isCritical = true;
 			}
 		}
 	}
@@ -142,7 +144,7 @@ float ACBoss::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEv
 	// 기존 보스 상태 처리
 	if (!BossStatusComponent->GetIsPaseChange())
 	{
-		BossStatusComponent->SetDamage(DamageAmount);
+		BossStatusComponent->SetDamage(DamageAmount, isCritical);
 		BossStatusComponent->IncreaseAP(DamageAmount);
 		BossStatusComponent->IncreaseGroggyGauge(DamageAmount);
 		PlayHitMotion(HitBone);

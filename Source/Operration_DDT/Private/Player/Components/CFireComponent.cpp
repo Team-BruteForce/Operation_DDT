@@ -193,14 +193,14 @@ void UCFireComponent::Fire()
 	);
 	*/
 
-	#if WITH_EDITOR
+	/*#if WITH_EDITOR
 	{
 		const FColor DebugColor = bHit ? FColor::Yellow : FColor::Turquoise;
 		DrawDebugSphere(GetWorld(), TraceStart, SphereRadius, 12, DebugColor, false, 1.5f);
 		DrawDebugSphere(GetWorld(), bHit ? HitResult.ImpactPoint : TraceEnd, SphereRadius, 12, DebugColor, false, 10.f);
 		DrawDebugLine(GetWorld(), TraceStart, bHit ? HitResult.ImpactPoint : TraceEnd, DebugColor, false, 10.f, 0, 1.0f);
 	}
-	#endif
+	#endif*/
 	/*
 	// 총구에서 발사하는 라인트레이스 그리기 (녹색)
 	FVector MuzzleTraceEnd = MuzzleLocation + ((TargetPoint - MuzzleLocation).GetSafeNormal() * MaxTraceDistance);

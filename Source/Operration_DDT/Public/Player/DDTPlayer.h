@@ -114,6 +114,9 @@ public:
 	UPROPERTY(visibleAnywhere)
 	class UCUIComponent* UIComp;
 
+	UPROPERTY(VisibleAnywhere)
+	class UCDamageUIManageComponent* DamageUIManager;
+
 #pragma endregion
 	
 protected:

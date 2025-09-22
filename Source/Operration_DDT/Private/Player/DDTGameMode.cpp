@@ -11,6 +11,7 @@
 #include "Player/Widget/CPlayerUI.h"
 #include "Boss/Widget/DDTLoadingWidget.h"
 #include "Boss/Widget/DDTMainThemeWidget.h"
+#include "Player/Widget/CDamageWidget_Normal.h"
 
 
 ADDTGameMode::ADDTGameMode()
@@ -27,6 +28,10 @@ void ADDTGameMode::BeginPlay()
 	playerUI = CreateWidget<UCPlayerUI>(GetWorld(),UCPlayerUIWidget);
 	MainUI = CreateWidget<UDDTMainThemeWidget>(GetWorld(),MainUIClass);
 	LoadingUI = CreateWidget<UDDTLoadingWidget>(GetWorld(),LoadingUIClass);
+
+	DamageUI = CreateWidget<UCDamageWidget_Normal>(GetWorld(),DamageWidget);
+	DamageUI->OnDamageUIFinished.BindDynamic(this, &ADDTGameMode::DamageUIAnimationFinished);
+	DamageUI->BindToAnimationFinished(DamageUI->Damage_Origin, DamageUI->OnDamageUIFinished);
 
 	MainUI->AddToViewport();
 	
@@ -49,15 +54,21 @@ void ADDTGameMode::BeginPlay()
 	//playerUI->ShowCrosshair(false);
 }
 
-void ADDTGameMode::test()
-{
-	ACharacter* Character= Cast<ACharacter>(GetWorld()->GetFirstPlayerController()->GetOwner());
-	CHelpers::GetComponent<UCStateComponent>(Character);
-}
-
 void ADDTGameMode::LinkedMaintoLoading()
 {
 	MainUI->RemoveFromParent();
 	LoadingUI->AddToViewport();
 	LoadingUI->PlayLoadingAnimation();
+}
+
+void ADDTGameMode::BroadCastDamage(float inValue, bool bCritical, bool bGroggy)
+{
+	DamageUI->AddToViewport();
+	DamageUI->SetDamageText(inValue, bCritical, bGroggy);
+}
+
+void ADDTGameMode::DamageUIAnimationFinished()
+{
+	DamageUI->RemoveFromParent();
+	DamageUI->ResetTextPosition();
 }

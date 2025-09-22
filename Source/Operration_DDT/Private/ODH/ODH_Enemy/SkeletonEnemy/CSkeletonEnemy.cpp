@@ -17,6 +17,7 @@
 #include "ODH/ODH_Enemy/CCombatEncounterManager.h"
 #include "ODH/ODH_Enemy/Component/CEnemyHealthBarComponent.h"
 #include "../../UMG/Public/Components/WidgetComponent.h"
+#include "Player/DDTGameMode.h"
 
 // Sets default values
 ACSkeletonEnemy::ACSkeletonEnemy()
@@ -282,8 +283,14 @@ float ACSkeletonEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const&
 		// 총알의 배율 로직과 일치하도록 단순 본명 판정
 		if (HitBone == "head" || HitBone == "Head" || HitBone == "head_01" || HitBone == "Head_01" || HitBone == "skull" || HitBone == "Skull")
 		{
+			DamageAmount += DamageAmount;
 			bWeakSpotHit = true;
 		}
+	}
+
+	if (ADDTGameMode* GM = GetWorld()->GetAuthGameMode<ADDTGameMode>())
+	{
+		GM->BroadCastDamage(DamageAmount, bWeakSpotHit, false);
 	}
 
 	if (bWeakSpotHit)
