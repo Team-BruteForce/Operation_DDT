@@ -85,6 +85,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Sound Collection")
 	void PlayHeadCloseSound();
 
+	// FlyingSkull 전용 함수들 (노티파이로 호출)
+	UFUNCTION(BlueprintCallable, Category = "Sound Collection")
+	void PlayFlyingSkullIdleSound();
+
+	UFUNCTION(BlueprintCallable, Category = "Sound Collection")
+	void PlayFlyingSkullRunSound();
+
 	// 사운드 루프 관리 함수들
 	UFUNCTION(BlueprintCallable, Category = "Sound Collection")
 	void StartIdleSoundLoop();

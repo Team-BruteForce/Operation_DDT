@@ -21,7 +21,9 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "ODH/ODH_Enemy/Component/CEnemyHealthBarComponent.h"
 #include "Player/DDTPlayer.h"
+#include "ODH/ODH_Enemy/Component/CEnemyHealthBarComponent.h"
 #include "../../UMG/Public/Components/WidgetComponent.h"
+#include "ODH/ODH_Enemy/CCombatEncounterManager.h"
 #include "Player/DDTGameMode.h"
 
 // Sets default values
@@ -75,14 +77,6 @@ void ACFlowerEnemy::BeginPlay()
 		
 		// 사망 이벤트 바인딩
 		StatusComponent->OnDeath.AddDynamic(this, &ACFlowerEnemy::OnDeath);
-		
-		// 디버그 출력
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Green, 
-				FString::Printf(TEXT("Flower Enemy Spawned - Health: %.0f, Attack: %.0f"), 
-				StatusComponent->GetHealthPercent() * 100, StatusComponent->GetAttackPower()));
-		}
 	}
 	
 	// 근접 공격 컴포넌트의 히트 이벤트에 바인딩
@@ -97,17 +91,41 @@ void ACFlowerEnemy::BeginPlay()
 	// 자동 머리 열기 시스템 시작
 	StartAutoHeadOpening();
 
+	// Encounter Manager 등록
+	if (HasAuthority())
+	{
+		UWorld* World = GetWorld();
+		if (World)
+		{
+			TArray<AActor*> Found;
+			UGameplayStatics::GetAllActorsOfClass(World, ACCombatEncounterManager::StaticClass(), Found);
+			if (Found.Num() > 0)
+			{
+				if (ACCombatEncounterManager* Mgr = Cast<ACCombatEncounterManager>(Found[0]))
+				{
+					Mgr->RegisterEnemy(this);
+				}
+			}
+		}
+	}
+
 	//공격 콜리전 비활성화
+	DisableDashAttackCollision();
+	DisableHandLAttackCollision();
+	DisableHandRAttackCollision();
 
 	// 사운드 상태 초기화
 	bIsAttacking = false;
 	bIsDead = false;
 	
-	// 초기 사운드 상태 설정
+	// 이전 상태들을 현재 상태로 초기화
+	bPreviousIsInCombat = false;
+	bPreviousIsAttacking = false;
+	bPreviousIsDead = false;
+	bSoundStateInitialized = false;
+	
+	// 초기 사운드 상태 설정 (한 번만)
 	UpdateSoundState();
-	DisableDashAttackCollision();
-	DisableHandLAttackCollision();
-	DisableHandRAttackCollision();
 }
 
 void ACFlowerEnemy::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -125,6 +143,24 @@ void ACFlowerEnemy::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	if (GetWorldTimerManager().IsTimerActive(HeadAutoOpenTimerHandle))
 	{
 		GetWorldTimerManager().ClearTimer(HeadAutoOpenTimerHandle);
+	}
+	
+	// Encounter Manager 해제
+	if (HasAuthority())
+	{
+		UWorld* World = GetWorld();
+		if (World)
+		{
+			TArray<AActor*> Found;
+			UGameplayStatics::GetAllActorsOfClass(World, ACCombatEncounterManager::StaticClass(), Found);
+			if (Found.Num() > 0)
+			{
+				if (ACCombatEncounterManager* Mgr = Cast<ACCombatEncounterManager>(Found[0]))
+				{
+					Mgr->UnregisterEnemy(this);
+				}
+			}
+		}
 	}
 	
 	Super::EndPlay(EndPlayReason);
@@ -181,9 +217,6 @@ float ACFlowerEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const& D
 		return 0.0f;
 	}
 
-	// IDamageable 인터페이스의 TakeDamage_Implementation 호출
-	TakeDamage_Implementation(DamageAmount);
-
 	if (UWidgetComponent* WC = Cast<UWidgetComponent>(
 		GetComponentByClass(UWidgetComponent::StaticClass())))
 	{
@@ -206,15 +239,12 @@ float ACFlowerEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const& D
 		{
 			bWeakSpotHit = true;
 			DamageAmount += DamageAmount;
-
-			// 디버그 출력
-			if (GEngine)
-			{
-				GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Black, 
-				FString::Printf(TEXT("Flower Enemy Weak Spot Hit")));
-			}
 		}
 	}
+
+	// IDamageable 인터페이스의 TakeDamage_Implementation 호출
+	TakeDamage_Implementation(DamageAmount);
+
 	if (ADDTGameMode* GM = GetWorld()->GetAuthGameMode<ADDTGameMode>())
 	{
 		GM->BroadCastDamage(DamageAmount, bWeakSpotHit, false);
@@ -291,26 +321,7 @@ float ACFlowerEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const& D
 			
 			// 블랙보드에 새로운 값 설정
 			BlackboardComp->SetValueAsInt("IsRangedAttackGage", NewGage);
-			
-			// 디버그 출력
-			if (GEngine)
-			{
-				FString DebugMessage = FString::Printf(TEXT("Flower Enemy Ranged Attack Gage: %d (+%d) = %d"), 
-					CurrentGage, RandomValue, NewGage);
-				GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Magenta, DebugMessage);
-			}
 		}
-	}
-
-	// 디버그 출력
-	if (GEngine)
-	{
-		float CurrentHealth = StatusComponent ? StatusComponent->GetCurrentHealth() : 0.0f;
-		float HealthPercent = StatusComponent ? StatusComponent->GetHealthPercent() * 100.0f : 0.0f;
-		
-		FString DebugMessage = FString::Printf(TEXT("Flower Enemy took %.1f damage from %s! Health: %.1f (%.1f%%)"), 
-			DamageAmount, DamageCauser ? *DamageCauser->GetName() : TEXT("Unknown"), CurrentHealth, HealthPercent);
-		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Yellow, DebugMessage);
 	}
 
 	return DamageAmount;
@@ -342,6 +353,9 @@ void ACFlowerEnemy::PlayRangedAttack()
 	// 사운드 상태: 공격 중
 	bIsAttacking = true;
 	
+	// 상태 변경 시 즉시 사운드 상태 업데이트
+	UpdateSoundState();
+	
 	// 다른 공격 콜리전들 비활성화
 	DisableHandLAttackCollision();
 	DisableHandRAttackCollision();
@@ -355,13 +369,6 @@ void ACFlowerEnemy::PlayRangedAttack()
 	
 	// 3초 후 머리 자동 닫기
 	GetWorldTimerManager().SetTimer(HeadCloseTimerHandle, this, &ACFlowerEnemy::CloseHeadAutomatically, 3.0f, false);
-	
-	// 디버그 출력
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Cyan, TEXT("Flower Enemy Ranged Attack!"));
-		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Orange, TEXT("Flower Enemy Head (Ranged) will close in 3.0 seconds"));
-	}
 }
 
 void ACFlowerEnemy::PlayComboAttack()
@@ -376,16 +383,13 @@ void ACFlowerEnemy::PlayComboAttack()
 		// 사운드 상태: 공격 중
 		bIsAttacking = true;
 		
+		// 상태 변경 시 즉시 사운드 상태 업데이트
+		UpdateSoundState();
+		
 		// 다른 공격 콜리전들 비활성화
 		DisableHandLAttackCollision();
 		DisableHandRAttackCollision();
 		DisableDashAttackCollision();
-		
-		// 디버그 출력
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Yellow, TEXT("Flower Enemy Combo Attack!"));
-		}
 	}
 }
 
@@ -401,16 +405,13 @@ void ACFlowerEnemy::PlayDashAttack()
 		// 사운드 상태: 공격 중
 		bIsAttacking = true;
 		
+		// 상태 변경 시 즉시 사운드 상태 업데이트
+		UpdateSoundState();
+		
 		// 다른 공격 콜리전들 비활성화
 		DisableHandLAttackCollision();
 		DisableHandRAttackCollision();
 		DisableDashAttackCollision();
-		
-		// 디버그 출력
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Cyan, TEXT("Flower Enemy Dash Attack!"));
-		}
 
 		// SkeletonEnemy와 동일한 대쉬 이동 시스템 사용
 		StartDashMovementToPlayer();
@@ -435,12 +436,6 @@ void ACFlowerEnemy::NotifyComboAttackCompleted()
 				
 				// 사운드 상태: 공격 완료
 				OnAttackCompleted();
-				
-				// 디버그 출력
-				if (GEngine)
-				{
-					GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, TEXT("Flower Enemy Combo Attack Completed - Blackboard Updated"));
-				}
 			}
 		}
 	}
@@ -463,12 +458,6 @@ void ACFlowerEnemy::NotifyDashAttackCompleted()
 				
 				// 사운드 상태: 공격 완료
 				OnAttackCompleted();
-				
-				// 디버그 출력
-				if (GEngine)
-				{
-					GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Cyan, TEXT("Flower Enemy Dash Attack Completed - Blackboard Updated"));
-				}
 			}
 		}
 	}
@@ -491,12 +480,6 @@ void ACFlowerEnemy::NotifyRangedAttackCompleted()
 				
 				// 사운드 상태: 공격 완료
 				OnAttackCompleted();
-				
-				// 디버그 출력
-				if (GEngine)
-				{
-					GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Magenta, TEXT("Flower Enemy Ranged Attack Completed - Blackboard Updated"));
-				}
 			}
 		}
 	}
@@ -513,14 +496,6 @@ void ACFlowerEnemy::SetHeadOpen(bool bOpen)
 
 	bIsHeadOpen = bOpen;
 	UpdateHeadCollisions();
-	
-	// 디버그 출력
-	if (GEngine)
-	{
-		FString DebugMessage = bOpen ? TEXT("Flower Enemy Head Opened") : TEXT("Flower Enemy Head Closed");
-		FColor DebugColor = bOpen ? FColor::Orange : FColor::Blue;
-		GEngine->AddOnScreenDebugMessage(-1, 2.0f, DebugColor, DebugMessage);
-	}
 }
 
 void ACFlowerEnemy::OpenHeadWithTimer()
@@ -540,13 +515,6 @@ void ACFlowerEnemy::OpenHeadWithTimer()
 	// 4~6초 사이의 랜덤 시간 후 머리 자동 닫기
 	float RandomTime = FMath::RandRange(4.0f, 6.0f);
 	GetWorldTimerManager().SetTimer(HeadCloseTimerHandle, this, &ACFlowerEnemy::CloseHeadAutomatically, RandomTime, false);
-	
-	// 디버그 출력
-	if (GEngine)
-	{
-		FString DebugMessage = FString::Printf(TEXT("Flower Enemy Head (Damage) will close in %.1f seconds"), RandomTime);
-		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, DebugMessage);
-	}
 }
 
 void ACFlowerEnemy::CloseHeadAutomatically()
@@ -566,12 +534,6 @@ void ACFlowerEnemy::CloseHeadAutomatically()
 	
 	// 다음 자동 머리 열기 타이머 설정
 	StartAutoHeadOpening();
-	
-	// 디버그 출력
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Blue, TEXT("Flower Enemy Head automatically closed"));
-	}
 }
 
 void ACFlowerEnemy::UpdateHeadCollisions()
@@ -608,13 +570,6 @@ void ACFlowerEnemy::StartAutoHeadOpening()
 	// 12~15초 사이의 랜덤 시간 후 자동 머리 열기
 	float RandomTime = FMath::RandRange(12.0f, 15.0f);
 	GetWorldTimerManager().SetTimer(HeadAutoOpenTimerHandle, this, &ACFlowerEnemy::OpenHeadAutomatically, RandomTime, false);
-	
-	// 디버그 출력
-	if (GEngine)
-	{
-		FString DebugMessage = FString::Printf(TEXT("Flower Enemy Head will auto-open in %.1f seconds"), RandomTime);
-		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Cyan, DebugMessage);
-	}
 }
 
 void ACFlowerEnemy::OpenHeadAutomatically()
@@ -637,13 +592,6 @@ void ACFlowerEnemy::OpenHeadAutomatically()
 		// 3~5초 사이의 랜덤 시간 후 머리 자동 닫기
 		float RandomTime = FMath::RandRange(3.0f, 5.0f);
 		GetWorldTimerManager().SetTimer(HeadCloseTimerHandle, this, &ACFlowerEnemy::CloseHeadAutomatically, RandomTime, false);
-		
-		// 디버그 출력
-		if (GEngine)
-		{
-			FString DebugMessage = FString::Printf(TEXT("Flower Enemy Head (Auto) will close in %.1f seconds"), RandomTime);
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, DebugMessage);
-		}
 	}
 	else
 	{
@@ -754,12 +702,6 @@ void ACFlowerEnemy::DisableDamageCollisions()
 			Collision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		}
 	}
-
-	// 디버그 출력
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Orange, TEXT("Flower Enemy all collisions disabled"));
-	}
 }
 
 // 소켓 기반 데미지 콜리전 오버랩 이벤트 핸들러
@@ -800,24 +742,6 @@ void ACFlowerEnemy::OnDamageCollisionOverlap(UPrimitiveComponent* OverlappedComp
 	
 	// IDamageable 인터페이스의 TakeDamage_Implementation 호출
 	TakeDamage_Implementation(DamageAmount);
-
-	// 디버그 출력
-	if (GEngine)
-	{
-		FString CollisionName = OverlappedComponent ? OverlappedComponent->GetName() : TEXT("Unknown");
-		FString DebugMessage = FString::Printf(TEXT("Flower Enemy hit on %s by %s! Damage: %.1f"), 
-			*CollisionName, *OtherActor->GetName(), DamageAmount);
-		
-	//	// 헤드 약점 히트 시 다른 색상으로 표시
-	//	if (OverlappedComponent == HeadWeekPointCollision)
-	//	{
-	//		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, DebugMessage + TEXT(" (HEAD WEAK POINT!)"));
-	//	}
-	//	if
-	//	{
-	//		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, DebugMessage);
-	//	}
-	}
 }
 
 void ACFlowerEnemy::SpawnRangedProjectileAtLocation(AActor* TargetPlayer, FVector SpawnLocation, FRotator SpawnRotation)
@@ -858,12 +782,7 @@ void ACFlowerEnemy::SpawnRangedProjectileAtLocation(AActor* TargetPlayer, FVecto
 			// 프로젝타일 활성화 및 타겟 설정
 			FVector TargetLocation = TargetPlayer->GetActorLocation();
 			PooledProjectile->ActivateProjectile(SpawnLocation, TargetLocation, TargetPlayer);
-			
-			if (GEngine)
-			{
-				GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, 
-					FString::Printf(TEXT("Flower Enemy pooled projectile targeting %s"), *TargetPlayer->GetName()));
-			}
+
 			return;
 		}
 	}
@@ -884,20 +803,10 @@ void ACFlowerEnemy::SpawnRangedProjectileAtLocation(AActor* TargetPlayer, FVecto
 		// 프로젝타일 활성화 및 타겟 설정
 		FVector TargetLocation = TargetPlayer->GetActorLocation();
 		SpawnedProjectile->ActivateProjectile(SpawnLocation, TargetLocation, TargetPlayer);
-		
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, 
-				FString::Printf(TEXT("Flower Enemy spawned projectile targeting %s (fallback)"), *TargetPlayer->GetName()));
-		}
 	}
 	else
 	{
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, 
-				TEXT("Failed to spawn CFlowerProjectile!"));
-		}
+
 	}
 }
 
@@ -908,14 +817,18 @@ TSubclassOf<AActor> ACFlowerEnemy::GetProjectileClass() const
 
 void ACFlowerEnemy::OnDeath()
 {
+    // 사망 즉시 HP Bar 비표시
+    if (UCEnemyHealthBarComponent* HB = FindComponentByClass<UCEnemyHealthBarComponent>())
+    {
+        HB->HideHealthBar();
+    }
 	// 사망 시 처리 로직
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Flower Enemy Died! Will be removed in 3 seconds..."));
-	}
 
 	// 사운드 상태: 사망
 	bIsDead = true;
+	
+	// 상태 변경 시 즉시 사운드 상태 업데이트
+	UpdateSoundState();
 
 	// 돌진 이동 정지
 	bIsDashMoving = false;
@@ -972,6 +885,24 @@ void ACFlowerEnemy::OnDeath()
 	// 소켓 기반 데미지 콜리전 비활성화
 	DisableDamageCollisions();
 
+	// Encounter Manager 해제(사망 즉시)
+	if (HasAuthority())
+	{
+		UWorld* World = GetWorld();
+		if (World)
+		{
+			TArray<AActor*> Found;
+			UGameplayStatics::GetAllActorsOfClass(World, ACCombatEncounterManager::StaticClass(), Found);
+			if (Found.Num() > 0)
+			{
+				if (ACCombatEncounterManager* Mgr = Cast<ACCombatEncounterManager>(Found[0]))
+				{
+					Mgr->UnregisterEnemy(this);
+				}
+			}
+		}
+	}
+
 }
 
 void ACFlowerEnemy::OnMeleeAttackHit(AActor* HitActor)
@@ -982,8 +913,6 @@ void ACFlowerEnemy::OnMeleeAttackHit(AActor* HitActor)
 		if (GEngine)
 		{
 			float Damage = MeleeAttackComponent->GetMeleeDamage();
-			FString DebugMessage = FString::Printf(TEXT("Flower Enemy Melee Attack Hit: %s with %.1f damage!"), *HitActor->GetName(), Damage);
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Orange, DebugMessage);
 		}
 		
 		// 여기에 플레이어에게 데미지를 주는 로직 추가
@@ -1027,10 +956,6 @@ void ACFlowerEnemy::StartDashMovementToPlayer()
 	else
 	{
 		// 플레이어를 찾을 수 없는 경우
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("Player not found for dash movement!"));
-		}
 		bIsDashMoving = false;
 	}
 }
@@ -1201,27 +1126,6 @@ void ACFlowerEnemy::OnAttackCollisionOverlap(UPrimitiveComponent* OverlappedComp
     float DamageAmount = (OverlappedComponent == DashAttackCollision) ? 40.0f : 25.0f;
     AController* InstigatorController = GetInstigatorController();
     UGameplayStatics::ApplyDamage(HitPawn, DamageAmount, InstigatorController, this, nullptr);
-
-    // 디버그 출력
-    if (GEngine)
-    {
-        FString AttackType;
-        if (OverlappedComponent == HandLAttackCollision)
-        {
-            AttackType = TEXT("Left Hand");
-        }
-        else if (OverlappedComponent == HandRAttackCollision)
-        {
-            AttackType = TEXT("Right Hand");
-        }
-        else if (OverlappedComponent == DashAttackCollision)
-        {
-            AttackType = TEXT("Dash");
-        }
-        
-        /*FString DebugMessage = FString::Printf(TEXT("Flower Enemy %s Attack Hit Player! Damage: %.1f"), AttackType, DamageAmount);*/
-        /*GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, DebugMessage);*/
-    }
 }
 
 // 사운드 상태 업데이트 함수
@@ -1230,19 +1134,10 @@ void ACFlowerEnemy::UpdateSoundState()
 	if (!SoundCollectionComponent)
 		return;
 
-	// 조건 4: 사망 시 모든 사운드 정지
-	if (bIsDead)
-	{
-		SoundCollectionComponent->StopAllSoundLoops();
-		return;
-	}
-
-	// 조건 3: 공격 중일 때 모든 사운드 정지
-	if (bIsAttacking)
-	{
-		SoundCollectionComponent->StopAllSoundLoops();
-		return;
-	}
+	// 현재 상태들 가져오기
+	bool CurrentIsDead = bIsDead;
+	bool CurrentIsAttacking = bIsAttacking;
+	bool CurrentIsInCombat = false;
 
 	// 블랙보드에서 IsInCombat 상태 체크
 	AAIController* AIController = Cast<AAIController>(GetController());
@@ -1251,31 +1146,56 @@ void ACFlowerEnemy::UpdateSoundState()
 		UBlackboardComponent* BlackboardComponent = AIController->GetBlackboardComponent();
 		if (BlackboardComponent)
 		{
-			bool IsInCombat = BlackboardComponent->GetValueAsBool(TEXT("IsInCombat"));
-
-			// 조건 1: 전투 상태가 아닐 때 Idle 사운드
-			if (!IsInCombat)
-			{
-				SoundCollectionComponent->StartIdleSoundLoop();
-				SoundCollectionComponent->StopRunSoundLoop();
-			}
-			// 조건 2: 전투 상태일 때 Run 사운드
-			else
-			{
-				SoundCollectionComponent->StartRunSoundLoop();
-				SoundCollectionComponent->StopIdleSoundLoop();
-			}
+			CurrentIsInCombat = BlackboardComponent->GetValueAsBool(TEXT("IsInCombat"));
 		}
 	}
+
+	// 상태가 변경되었거나 초기화되지 않았을 때만 처리
+	bool bStateChanged = (CurrentIsDead != bPreviousIsDead) ||
+						(CurrentIsAttacking != bPreviousIsAttacking) ||
+						(CurrentIsInCombat != bPreviousIsInCombat) ||
+						!bSoundStateInitialized;
+
+	if (!bStateChanged)
+	{
+		return; // 상태가 변경되지 않았으면 아무것도 하지 않음
+	}
+
+	// 조건 4: 사망 시 모든 사운드 정지
+	if (CurrentIsDead)
+	{
+		SoundCollectionComponent->StopAllSoundLoops();
+	}
+	// 조건 3: 공격 중일 때 모든 사운드 정지
+	else if (CurrentIsAttacking)
+	{
+		SoundCollectionComponent->StopAllSoundLoops();
+	}
+	// 조건 1: 전투 상태가 아닐 때 Idle 사운드
+	else if (!CurrentIsInCombat)
+	{
+		SoundCollectionComponent->StartIdleSoundLoop();
+		SoundCollectionComponent->StopRunSoundLoop();
+	}
+	// 조건 2: 전투 상태일 때 Run 사운드
+	else
+	{
+		SoundCollectionComponent->StartRunSoundLoop();
+		SoundCollectionComponent->StopIdleSoundLoop();
+	}
+
+	// 이전 상태들 업데이트
+	bPreviousIsDead = CurrentIsDead;
+	bPreviousIsAttacking = CurrentIsAttacking;
+	bPreviousIsInCombat = CurrentIsInCombat;
+	bSoundStateInitialized = true;
 }
 
 // 공격 완료 콜백 함수
 void ACFlowerEnemy::OnAttackCompleted()
 {
 	bIsAttacking = false;
-	// UpdateSoundState는 Tick에서 자동으로 호출됨
+	
+	// 상태 변경 시 즉시 사운드 상태 업데이트
+	UpdateSoundState();
 }
-
-
-
-

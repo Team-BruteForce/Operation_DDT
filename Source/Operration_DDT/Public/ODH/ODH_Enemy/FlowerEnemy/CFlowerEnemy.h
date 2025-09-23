@@ -261,6 +261,20 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Sound")
 	bool bIsDead = false;
 
+	// 이전 상태 저장 변수들
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Sound")
+	bool bPreviousIsInCombat = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Sound")
+	bool bPreviousIsAttacking = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Sound")
+	bool bPreviousIsDead = false;
+
+	// 사운드 상태가 이미 설정되었는지 체크하는 변수
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Sound")
+	bool bSoundStateInitialized = false;
+
 	// 사운드 상태 업데이트 함수
 	UFUNCTION()
 	void UpdateSoundState();

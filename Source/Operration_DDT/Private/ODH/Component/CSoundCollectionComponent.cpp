@@ -74,6 +74,24 @@ void UCSoundCollectionComponent::PlayHeadCloseSound()
 	PlaySoundInternal(HeadCloseSound);
 }
 
+void UCSoundCollectionComponent::PlayFlyingSkullIdleSound()
+{
+	if (IdleSounds.Num() > 0)
+	{
+		int32 RandomIndex = FMath::RandRange(0, IdleSounds.Num() - 1);
+		PlaySoundInternal(IdleSounds[RandomIndex]);
+	}
+}
+
+void UCSoundCollectionComponent::PlayFlyingSkullRunSound()
+{
+	if (RunSounds.Num() > 0)
+	{
+		int32 RandomIndex = FMath::RandRange(0, RunSounds.Num() - 1);
+		PlaySoundInternal(RunSounds[RandomIndex]);
+	}
+}
+
 void UCSoundCollectionComponent::StartIdleSoundLoop()
 {
 	StopIdleSoundLoop(); // 기존 타이머 정지
