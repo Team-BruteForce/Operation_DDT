@@ -39,6 +39,9 @@ ACFlyingSkull::ACFlyingSkull()
 	// 근접 공격 컴포넌트 생성
 	MeleeAttackComponent = CreateDefaultSubobject<UCEnemyMeleeAttackComponent>(TEXT("MeleeAttackComponent"));
 
+	// 사운드 컬렉션 컴포넌트 생성
+	SoundCollectionComponent = CreateDefaultSubobject<UCSoundCollectionComponent>(TEXT("SoundCollectionComponent"));
+
 	// 근접 공격 콜리전 생성 (Mesh의 자식으로 설정)
 	MeleeAttackCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("MeleeAttackCollision"));
 	MeleeAttackCollision->SetupAttachment(GetMesh());
@@ -83,14 +86,6 @@ void ACFlyingSkull::BeginPlay()
 		
 		// 사망 이벤트 바인딩
 		StatusComponent->OnDeath.AddDynamic(this, &ACFlyingSkull::OnDeath);
-		
-		// 디버그 출력
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Green, 
-				FString::Printf(TEXT("Flying Skull Spawned - Health: %.0f, Attack: %.0f"), 
-				StatusComponent->GetHealthPercent() * 100, StatusComponent->GetAttackPower()));
-		}
 
     // Encounter Manager 등록
     if (HasAuthority())
@@ -142,6 +137,18 @@ void ACFlyingSkull::BeginPlay()
 			FallTimeline.SetPlayRate(1.0f / FallDuration);
 		}
 	}
+
+	// 사운드 상태 초기화 (FlyingSkull은 공격/사망 상태만 제어)
+	bIsAttacking = false;
+	bIsDead = false;
+	
+	// 이전 상태들을 현재 상태로 초기화
+	bPreviousIsAttacking = false;
+	bPreviousIsDead = false;
+	bSoundStateInitialized = false;
+	
+	// 초기 사운드 상태 설정 (한 번만)
+	UpdateSoundState();
 }
 
 void ACFlyingSkull::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -177,6 +184,9 @@ void ACFlyingSkull::EndPlay(const EEndPlayReason::Type EndPlayReason)
 void ACFlyingSkull::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	
+	// 사운드 상태 업데이트 (공격/사망 상태 변경 시에만 실제 처리됨)
+	UpdateSoundState();
 
 	if (bIsFalling)
 	{
@@ -210,6 +220,12 @@ void ACFlyingSkull::TakeDamage_Implementation(float DamageAmount)
 	if (StatusComponent)
 	{
 		StatusComponent->TakeDamage(DamageAmount);
+		
+		// GetHit 사운드 재생
+		if (SoundCollectionComponent)
+		{
+			SoundCollectionComponent->PlayGetHitSound();
+		}
 	}
 }
 
@@ -312,18 +328,6 @@ float ACFlyingSkull::TakeDamage(float DamageAmount, struct FDamageEvent const& D
 			}
 		}
 	}
-
-	// 디버그 출력
-	if (GEngine)
-	{
-		float CurrentHealth = StatusComponent ? StatusComponent->GetCurrentHealth() : 0.0f;
-		float HealthPercent = StatusComponent ? StatusComponent->GetHealthPercent() * 100.0f : 0.0f;
-		
-		FString DebugMessage = FString::Printf(TEXT("Flying Skull took %.1f damage from %s! Health: %.1f (%.1f%%)"), 
-			DamageAmount, DamageCauser ? *DamageCauser->GetName() : TEXT("Unknown"), CurrentHealth, HealthPercent);
-		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Yellow, DebugMessage);
-	}
-
 	return DamageAmount;
 }
 
@@ -350,6 +354,12 @@ void ACFlyingSkull::PlayMeleeAttack()
 		MeleeAttackComponent->ActivateMeleeAttack();
 		bIsMeleeAttacking = true;
 		
+		// MeleeAttack 사운드 재생
+		if (SoundCollectionComponent)
+		{
+			SoundCollectionComponent->PlayMeleeAttackSound();
+		}
+		
 		// 기존 타이머 클리어 후 재설정
 		GetWorldTimerManager().ClearTimer(MeleeAttackTimerHandle);
 		FTimerDelegate ClearMelee;
@@ -364,12 +374,6 @@ void ACFlyingSkull::PlayMeleeAttack()
 			}
 		});
 		GetWorldTimerManager().SetTimer(MeleeAttackTimerHandle, ClearMelee, 0.6f, false);
-		
-		// 디버그 출력
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Yellow, TEXT("Flying Skull Melee Attack!"));
-		}
 
 		// 근접 공격 콜리전 활성화
 		if (MeleeAttackCollision)
@@ -397,19 +401,28 @@ void ACFlyingSkull::PlayRangedAttack()
 	// 원거리 공격 로직
 	bIsRangedAttacking = true;
 	
+	// RangedAttack 사운드 재생
+	if (SoundCollectionComponent)
+	{
+		SoundCollectionComponent->PlayRangedAttackSound();
+	}
+	
+	// 사운드 상태: 공격 중
+	bIsAttacking = true;
+	
+	// 상태 변경 시 즉시 사운드 상태 업데이트
+	UpdateSoundState();
+	
 	GetWorldTimerManager().ClearTimer(RangedAttackTimerHandle);
 	FTimerDelegate ClearRanged;
 	ClearRanged.BindLambda([this]()
 	{
 		bIsRangedAttacking = false;
+		
+		// 사운드 상태: 공격 완료
+		OnAttackCompleted();
 	});
 	GetWorldTimerManager().SetTimer(RangedAttackTimerHandle, ClearRanged, 0.6f, false);
-	
-	// 디버그 출력
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Cyan, TEXT("Flying Skull Ranged Attack!"));
-	}
 }
 
 // 원거리 공격 오브젝트 소환 함수들
@@ -473,12 +486,6 @@ void ACFlyingSkull::SpawnRangedProjectileAtLocation(AActor* TargetPlayer, FVecto
 			{
 				ProjectileComponent->InitializeTarget(TargetPlayer);
 			}
-			
-			if (GEngine)
-			{
-				GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, 
-					FString::Printf(TEXT("Flying Skull pooled projectile targeting %s"), *TargetPlayer->GetName()));
-			}
 			return;
 		}
 	}
@@ -486,11 +493,6 @@ void ACFlyingSkull::SpawnRangedProjectileAtLocation(AActor* TargetPlayer, FVecto
 	// 풀을 사용하지 못하면 기존 스폰 방식으로 폴백
 	if (!ProjectileClassToUse)
 	{
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, 
-				TEXT("ProjectileClass not set in Flying Skull!"));
-		}
 		return;
 	}
 	
@@ -510,22 +512,10 @@ void ACFlyingSkull::SpawnRangedProjectileAtLocation(AActor* TargetPlayer, FVecto
 		if (UCEnemyProjectileComp* ProjectileComponent = SpawnedProjectile->FindComponentByClass<UCEnemyProjectileComp>())
 		{
 			ProjectileComponent->InitializeTarget(TargetPlayer);
-			
-			if (GEngine)
-			{
-				GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, 
-					FString::Printf(TEXT("Flying Skull spawned projectile targeting %s (fallback)"), *TargetPlayer->GetName()));
-			}
 		}
 		else
 		{
 			SpawnedProjectile->Destroy();
-			
-			if (GEngine)
-			{
-				GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, 
-					TEXT("Failed to find ProjectileComponent on spawned projectile (fallback)"));
-			}
 		}
 	}
 }
@@ -542,11 +532,12 @@ void ACFlyingSkull::OnDeath()
     {
         HB->HideHealthBar();
     }
-	// 사망 시 처리 로직
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Flying Skull Died! Will be removed in 3 seconds..."));
-	}
+
+	// 사운드 상태: 사망
+	bIsDead = true;
+	
+	// 상태 변경 시 즉시 사운드 상태 업데이트
+	UpdateSoundState();
 
 	// 이동/AI 즉시 정지
 	if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
@@ -575,10 +566,6 @@ void ACFlyingSkull::OnDeath()
 	{
 		if (IsValid(this))
 		{
-			if (GEngine)
-			{
-				GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("Flying Skull removed from game!"));
-			}
 			// 블루프린트에서 구현된 흡수 애니메이션 실행
 			StartAbsorbAnimation();
 			SetActorEnableCollision(false);
@@ -605,12 +592,7 @@ void ACFlyingSkull::OnMeleeAttackHit(AActor* HitActor)
 	// 근접 공격이 플레이어에게 히트했을 때의 처리
 	if (HitActor && HitActor->IsA<APawn>())
 	{
-		if (GEngine)
-		{
-			float Damage = MeleeAttackComponent->GetMeleeDamage();
-			FString DebugMessage = FString::Printf(TEXT("Flying Skull Melee Attack Hit: %s with %.1f damage!"), *HitActor->GetName(), Damage);
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Orange, DebugMessage);
-		}
+		float Damage = MeleeAttackComponent->GetMeleeDamage();
 		
 		// 여기에 플레이어에게 데미지를 주는 로직 추가
 		// 예: HitActor->TakeDamage(MeleeAttackComponent->GetMeleeDamage());
@@ -645,13 +627,6 @@ void ACFlyingSkull::OnMeleeAttackOverlap(UPrimitiveComponent* OverlappedComponen
 		
 		// 쿨다운 업데이트
 		LastAttackTime = CurrentTime;
-		
-		// 디버그 출력
-		if (GEngine)
-		{
-			FString DebugMessage = FString::Printf(TEXT("Flying Skull Melee Attack Hit: %s with %.1f damage!"), *OtherActor->GetName(), Damage);
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, DebugMessage);
-		}
 	}
 }
 
@@ -874,12 +849,6 @@ void ACFlyingSkull::DisableDamageCollisions()
 			Collision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		}
 	}
-
-	// 디버그 출력
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Orange, TEXT("Flying Skull all collisions disabled"));
-	}
 }
 
 // 소켓 기반 데미지 콜리전 오버랩 이벤트 핸들러
@@ -907,14 +876,52 @@ void ACFlyingSkull::OnDamageCollisionOverlap(UPrimitiveComponent* OverlappedComp
 	
 	// IDamageable 인터페이스의 TakeDamage_Implementation 호출
 	TakeDamage_Implementation(DamageAmount);
+}
 
-	// 디버그 출력
-	if (GEngine)
+// 사운드 상태 업데이트 함수 (FlyingSkull은 공격/사망 상태만 제어)
+void ACFlyingSkull::UpdateSoundState()
+{
+	if (!SoundCollectionComponent)
+		return;
+
+	// 현재 상태들 가져오기 (FlyingSkull은 공격/사망 상태만 체크)
+	bool CurrentIsDead = bIsDead;
+	bool CurrentIsAttacking = bIsAttacking;
+
+	// 상태가 변경되었거나 초기화되지 않았을 때만 처리
+	bool bStateChanged = (CurrentIsDead != bPreviousIsDead) ||
+						(CurrentIsAttacking != bPreviousIsAttacking) ||
+						!bSoundStateInitialized;
+
+	if (!bStateChanged)
 	{
-		FString CollisionName = OverlappedComponent ? OverlappedComponent->GetName() : TEXT("Unknown");
-		FString DebugMessage = FString::Printf(TEXT("Flying Skull hit on %s by %s! Damage: %.1f"), 
-			*CollisionName, *OtherActor->GetName(), DamageAmount);
-		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, DebugMessage);
+		return; // 상태가 변경되지 않았으면 아무것도 하지 않음
 	}
+
+	// 조건 2: 사망 시 모든 사운드 정지
+	if (CurrentIsDead)
+	{
+		SoundCollectionComponent->StopAllSoundLoops();
+	}
+	// 조건 1: 공격 중일 때 모든 사운드 정지
+	else if (CurrentIsAttacking)
+	{
+		SoundCollectionComponent->StopAllSoundLoops();
+	}
+	// 공격 중이 아니고 살아있을 때는 Idle/Run 사운드 노티파이가 처리
+
+	// 이전 상태들 업데이트
+	bPreviousIsDead = CurrentIsDead;
+	bPreviousIsAttacking = CurrentIsAttacking;
+	bSoundStateInitialized = true;
+}
+
+// 공격 완료 콜백 함수
+void ACFlyingSkull::OnAttackCompleted()
+{
+	bIsAttacking = false;
+	
+	// 상태 변경 시 즉시 사운드 상태 업데이트
+	UpdateSoundState();
 }
 
