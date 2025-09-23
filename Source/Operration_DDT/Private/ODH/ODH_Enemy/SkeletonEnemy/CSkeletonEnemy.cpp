@@ -16,6 +16,7 @@
 #include "Player/DDTPlayer.h"
 #include "ODH/ODH_Enemy/CCombatEncounterManager.h"
 #include "ODH/ODH_Enemy/Component/CEnemyHealthBarComponent.h"
+#include "ODH/ODH_Enemy/Component/CEnemyHealthBarComponent.h"
 #include "../../UMG/Public/Components/WidgetComponent.h"
 #include "Player/DDTGameMode.h"
 
@@ -33,6 +34,9 @@ ACSkeletonEnemy::ACSkeletonEnemy()
 	
 	// 근접 공격 컴포넌트 생성
 	MeleeAttackComponent = CreateDefaultSubobject<UCEnemyMeleeAttackComponent>(TEXT("MeleeAttackComponent"));
+
+	// 사운드 컬렉션 컴포넌트 생성
+	SoundCollectionComponent = CreateDefaultSubobject<UCSoundCollectionComponent>(TEXT("SoundCollectionComponent"));
 
 	// 약점 콜리전 (WeekPointSocket)
 //	WeakPointCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("WeakPointCollision"));
@@ -96,14 +100,6 @@ void ACSkeletonEnemy::BeginPlay()
 		
 		// 사망 이벤트 바인딩
 		StatusComponent->OnDeath.AddDynamic(this, &ACSkeletonEnemy::OnDeath);
-		
-		// 디버그 출력
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Green, 
-				FString::Printf(TEXT("Skeleton Enemy Spawned - Health: %.0f, Attack: %.0f"), 
-				StatusComponent->GetHealthPercent() * 100, StatusComponent->GetAttackPower()));
-		}
 	}
     // Encounter Manager 등록
     if (HasAuthority())
@@ -125,6 +121,19 @@ void ACSkeletonEnemy::BeginPlay()
 
 	//공격 콜리전 비활성화
 	DisableAllCollisions();
+
+	// 사운드 상태 초기화
+	bIsAttacking = false;
+	bIsDead = false;
+	
+	// 이전 상태들을 현재 상태로 초기화
+	bPreviousIsInCombat = false;
+	bPreviousIsAttacking = false;
+	bPreviousIsDead = false;
+	bSoundStateInitialized = false;
+	
+	// 초기 사운드 상태 설정 (한 번만)
+	UpdateSoundState();
 }
 
 void ACSkeletonEnemy::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -160,6 +169,9 @@ void ACSkeletonEnemy::EndPlay(const EEndPlayReason::Type EndPlayReason)
 void ACSkeletonEnemy::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	
+	// 사운드 상태 업데이트 (상태 변경 시에만 실제 처리됨)
+	UpdateSoundState();
 
 	// 마지막 콤보 공격 부드러운 이동 업데이트
 	if (bIsLastComboMoving)
@@ -178,11 +190,6 @@ void ACSkeletonEnemy::Tick(float DeltaTime)
 			// 목표 지점에 도달
 			SetActorLocation(LastComboTargetLocation);
 			bIsLastComboMoving = false;
-			
-			if (GEngine)
-			{
-				GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Green, TEXT("Last Combo Movement Completed"));
-			}
 		}
 		else
 		{
@@ -238,9 +245,6 @@ float ACSkeletonEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const&
 		return 0.0f;
 	}
 
-	// IDamageable 인터페이스의 TakeDamage_Implementation 호출
-	TakeDamage_Implementation(DamageAmount);
-
 	if (UWidgetComponent* WC = Cast<UWidgetComponent>(
 		GetComponentByClass(UWidgetComponent::StaticClass())))
 	{
@@ -266,6 +270,9 @@ float ACSkeletonEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const&
 			bWeakSpotHit = true;
 		}
 	}
+
+	// IDamageable 인터페이스의 TakeDamage_Implementation 호출
+	TakeDamage_Implementation(DamageAmount);
 
 	if (ADDTGameMode* GM = GetWorld()->GetAuthGameMode<ADDTGameMode>())
 	{
@@ -345,18 +352,6 @@ float ACSkeletonEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const&
 			}
 		}
 	}
-
-	// 디버그 출력
-	if (GEngine)
-	{
-		float CurrentHealth = StatusComponent ? StatusComponent->GetCurrentHealth() : 0.0f;
-		float HealthPercent = StatusComponent ? StatusComponent->GetHealthPercent() * 100.0f : 0.0f;
-		
-		FString DebugMessage = FString::Printf(TEXT("Skeleton Enemy took %.1f damage from %s! Health: %.1f (%.1f%%)"), 
-			DamageAmount, DamageCauser ? *DamageCauser->GetName() : TEXT("Unknown"), CurrentHealth, HealthPercent);
-		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Yellow, DebugMessage);
-	}
-
 	return DamageAmount;
 }
 
@@ -384,6 +379,12 @@ void ACSkeletonEnemy::PlayComboAttack()
 		bIsComboAttacking = true;
 		bIsDashAttacking = false; // 다른 공격 상태 초기화
 		
+		// 사운드 상태: 공격 중
+		bIsAttacking = true;
+		
+		// 상태 변경 시 즉시 사운드 상태 업데이트
+		UpdateSoundState();
+		
 		// 다른 공격 콜리전들 비활성화
 		DisableComboCollisions();
 		
@@ -398,12 +399,6 @@ void ACSkeletonEnemy::PlayComboAttack()
 // 			bIsComboAttacking = false;
 // 		});
 // 		GetWorldTimerManager().SetTimer(MeleeAttackTimerHandle, ClearCombo, 0.6f, false);
-		
-		// 디버그 출력
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Yellow, TEXT("Skeleton Enemy Combo Attack!"));
-		}
 
 		// 콜리전 활성화/비활성화는 애니메이션 노티파이로 처리
 	}
@@ -417,17 +412,17 @@ void ACSkeletonEnemy::PlayDashAttack()
 		bIsDashAttacking = true;
 		bIsComboAttacking = false; // 다른 공격 상태 초기화
 		
+		// 사운드 상태: 공격 중
+		bIsAttacking = true;
+		
+		// 상태 변경 시 즉시 사운드 상태 업데이트
+		UpdateSoundState();
+		
 		// 다른 공격 콜리전들 비활성화
 		DisableComboCollisions();
 		
 		// 돌진 공격 쿨다운 설정 (강력한 단발 공격)
 		AttackCooldown = 0.6f;
-		
-		// 디버그 출력
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Cyan, TEXT("Skeleton Enemy Dash Attack!"));
-		}
 	}
 }
 
@@ -443,12 +438,6 @@ void ACSkeletonEnemy::EnableComboCollisions()
 	}
 	
 	// 콤보 공격 시 전방 이동 제거 (애니메이션에서 처리)
-	
-	// 디버그 출력
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Green, TEXT("Combo Collisions Enabled"));
-	}
 }
 
 void ACSkeletonEnemy::DisableComboCollisions()
@@ -474,12 +463,6 @@ void ACSkeletonEnemy::DisableComboCollisions()
 	
 	// 쿨다운 초기화 (다음 공격을 위해)
 	LastHitTime = 0.0f;
-	
-	// 디버그 출력
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Red, TEXT("Combo Collisions Disabled - Cooldown Reset"));
-	}
 }
 
 void ACSkeletonEnemy::EnableComboRCollision()
@@ -529,12 +512,6 @@ void ACSkeletonEnemy::EnableLastComboCollision()
 	}
 	
 	// 마지막 콤보 공격 시 전방 이동 제거 (애니메이션에서 처리)
-	
-	// 디버그 출력
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Magenta, TEXT("Last Combo Collision Enabled"));
-	}
 }
 
 void ACSkeletonEnemy::LastComboMovement(float ForwardDistance)
@@ -555,13 +532,6 @@ void ACSkeletonEnemy::LastComboMovement(float ForwardDistance)
 	
 	// 이동 상태 시작
 	bIsLastComboMoving = true;
-	
-	// 디버그 출력
-	if (GEngine)
-	{
-		FString DebugMessage = FString::Printf(TEXT("Last Combo Movement Started: Moving %.1f cm forward"), ForwardDistance);
-		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Magenta, DebugMessage);
-	}
 }
 
 void ACSkeletonEnemy::EnableDashCollision()
@@ -574,12 +544,6 @@ void ACSkeletonEnemy::EnableDashCollision()
 	}
 	
 	// 돌진 공격은 전방 이동 효과 없음 (애니메이션에서 처리)
-	
-	// 디버그 출력
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Cyan, TEXT("Dash Attack Collision Enabled"));
-	}
 }
 
 void ACSkeletonEnemy::StartDashMovementToPlayer()
@@ -613,21 +577,9 @@ void ACSkeletonEnemy::StartDashMovementToPlayer()
 		// DashTotalTime은 애니메이션 노티파이에서 설정됨
 		
 		bIsDashMoving = true;
-		
-		// 디버그 출력
-		if (GEngine)
-		{
-			FString DebugMessage = FString::Printf(TEXT("Skeleton Enemy Target Location (70cm in front of player): %s"), *CachedPlayerLocation.ToString());
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Blue, DebugMessage);
-		}
 	}
 	else
 	{
-		// 플레이어를 찾을 수 없는 경우
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("Player not found for dash movement!"));
-		}
 		bIsDashMoving = false;
 	}
 }
@@ -679,11 +631,6 @@ void ACSkeletonEnemy::UpdateDashMovementToPlayer(float DeltaTime, float TotalTim
 		// 정확히 목표 위치에 도달
 		SetActorLocation(CachedPlayerLocation);
 		bIsDashMoving = false;
-		
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Green, TEXT("Skeleton Enemy reached target location in time!"));
-		}
 	}
 }
 
@@ -695,12 +642,6 @@ void ACSkeletonEnemy::EndDashMovementToPlayer()
 	if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
 	{
 		MoveComp->StopMovementImmediately();
-	}
-	
-	// 디버그 출력
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Orange, TEXT("Dash Movement Ended"));
 	}
 }
 
@@ -722,13 +663,6 @@ void ACSkeletonEnemy::StartComboAttackMovement()
 	// 이동 상태 설정
 	bIsComboMoving = true;
 	ComboMovementProgress = 0.0f;
-	
-	// 디버그 출력
-	if (GEngine)
-	{
-		FString DebugMessage = FString::Printf(TEXT("Combo Movement Started - Direction: %s"), *ComboMovementDirection.ToString());
-		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, DebugMessage);
-	}
 }
 
 void ACSkeletonEnemy::UpdateComboAttackMovement(float DeltaTime, float Speed, float Distance)
@@ -759,10 +693,6 @@ void ACSkeletonEnemy::UpdateComboAttackMovement(float DeltaTime, float Speed, fl
 	if (ComboMovementProgress >= 1.0f)
 	{
 		bIsComboMoving = false;
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Green, TEXT("Combo Movement Completed"));
-		}
 	}
 }
 
@@ -770,12 +700,6 @@ void ACSkeletonEnemy::EndComboAttackMovement()
 {
 	bIsComboMoving = false;
 	ComboMovementProgress = 0.0f;
-	
-	// 디버그 출력
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Orange, TEXT("Combo Movement Ended"));
-	}
 }
 
 void ACSkeletonEnemy::NotifyComboAttackCompleted()
@@ -793,11 +717,8 @@ void ACSkeletonEnemy::NotifyComboAttackCompleted()
 				// 콤보 공격 상태 초기화
 				bIsComboAttacking = false;
 				
-				// 디버그 출력
-				if (GEngine)
-				{
-					GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, TEXT("Combo Attack Completed - Blackboard Updated"));
-				}
+				// 사운드 상태: 공격 완료
+				OnAttackCompleted();
 			}
 		}
 	}
@@ -818,11 +739,8 @@ void ACSkeletonEnemy::NotifyDashAttackCompleted()
 				// 대시 공격 상태 초기화
 				bIsDashAttacking = false;
 				
-				// 디버그 출력
-				if (GEngine)
-				{
-					GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Cyan, TEXT("Dash Attack Completed - Blackboard Updated"));
-				}
+				// 사운드 상태: 공격 완료
+				OnAttackCompleted();
 			}
 		}
 	}
@@ -831,11 +749,17 @@ void ACSkeletonEnemy::NotifyDashAttackCompleted()
 
 void ACSkeletonEnemy::OnDeath()
 {
-	// 사망 시 처리 로직
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Skeleton Enemy Died! Will be removed in 3 seconds..."));
-	}
+    // 사망 즉시 HP Bar 비표시
+    if (UCEnemyHealthBarComponent* HB = FindComponentByClass<UCEnemyHealthBarComponent>())
+    {
+        HB->HideHealthBar();
+    }
+
+	// 사운드 상태: 사망
+	bIsDead = true;
+	
+	// 상태 변경 시 즉시 사운드 상태 업데이트
+	UpdateSoundState();
 
 	// 모든 콜리전 비활성화 (사망 시 충돌 방지)
 	DisableAllCollisions();
@@ -889,10 +813,6 @@ void ACSkeletonEnemy::OnDeath()
 	{
 		if (IsValid(this))
 		{
-			if (GEngine)
-			{
-				GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("Skeleton Enemy removed from game!"));
-			}
 			// 블루프린트에서 구현된 흡수 애니메이션 실행
 			StartAbsorbAnimation();
 			SetActorEnableCollision(false);
@@ -916,12 +836,8 @@ void ACSkeletonEnemy::OnMeleeAttackHit(AActor* HitActor)
 	// 근접 공격이 플레이어에게 히트했을 때의 처리
 	if (HitActor && HitActor->IsA<APawn>())
 	{
-		if (GEngine)
-		{
-			float Damage = MeleeAttackComponent->GetMeleeDamage();
-			FString DebugMessage = FString::Printf(TEXT("Skeleton Enemy Melee Attack Hit: %s with %.1f damage!"), *HitActor->GetName(), Damage);
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Orange, DebugMessage);
-		}
+		float Damage = MeleeAttackComponent->GetMeleeDamage();
+		
 		
 		// 여기에 플레이어에게 데미지를 주는 로직 추가
 		// 예: HitActor->TakeDamage(MeleeAttackComponent->GetMeleeDamage());
@@ -975,13 +891,6 @@ void ACSkeletonEnemy::OnMeleeAttackOverlap(UPrimitiveComponent* OverlappedCompon
 		
 		// 쿨다운 업데이트
 		LastHitTime = CurrentTime;
-		
-		// 디버그 출력
-		if (GEngine)
-		{
-			FString DebugMessage = FString::Printf(TEXT("Skeleton Enemy Melee Attack Overlap: %s with %.1f damage!"), *OtherActor->GetName(), Damage);
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, DebugMessage);
-		}
 	}
 }
 
@@ -989,18 +898,6 @@ void ACSkeletonEnemy::OnWeakPointOverlap(UPrimitiveComponent* OverlappedComponen
 {
 	if (!OtherActor || OtherActor == this)
 		return;
-
-	// 디버그 출력: 약점 오버랩 감지
-	if (GEngine)
-	{
-		const FString OtherName = OtherActor ? OtherActor->GetName() : TEXT("None");
-		GEngine->AddOnScreenDebugMessage(
-			-1,
-			2.0f,
-			FColor::Cyan,
-			FString::Printf(TEXT("[WeakPoint Overlap] by: %s"), *OtherName)
-		);
-	}
 
 	// 플레이어 투사체/무기 등으로부터의 데미지를 2배로 적용
 	// 기존 방식: UGameplayStatics::ApplyDamage 사용 -> ApplyPointDamage로 변경
@@ -1068,3 +965,75 @@ void ACSkeletonEnemy::OnTakeDamageOverlap(UPrimitiveComponent* OverlappedCompone
 // PerformForwardMovement 함수 제거됨 - 애니메이션에서 처리
 
 // 이동/낙하 연출 관련 로직은 애니메이션으로 대체
+
+// 사운드 상태 업데이트 함수
+void ACSkeletonEnemy::UpdateSoundState()
+{
+	if (!SoundCollectionComponent)
+		return;
+
+	// 현재 상태들 가져오기
+	bool CurrentIsDead = bIsDead;
+	bool CurrentIsAttacking = bIsAttacking;
+	bool CurrentIsInCombat = false;
+
+	// 블랙보드에서 IsInCombat 상태 체크
+	AAIController* AIController = Cast<AAIController>(GetController());
+	if (AIController)
+	{
+		UBlackboardComponent* BlackboardComponent = AIController->GetBlackboardComponent();
+		if (BlackboardComponent)
+		{
+			CurrentIsInCombat = BlackboardComponent->GetValueAsBool(TEXT("IsInCombat"));
+		}
+	}
+
+	// 상태가 변경되었거나 초기화되지 않았을 때만 처리
+	bool bStateChanged = (CurrentIsDead != bPreviousIsDead) ||
+						(CurrentIsAttacking != bPreviousIsAttacking) ||
+						(CurrentIsInCombat != bPreviousIsInCombat) ||
+						!bSoundStateInitialized;
+
+	if (!bStateChanged)
+	{
+		return; // 상태가 변경되지 않았으면 아무것도 하지 않음
+	}
+
+	// 조건 4: 사망 시 모든 사운드 정지
+	if (CurrentIsDead)
+	{
+		SoundCollectionComponent->StopAllSoundLoops();
+	}
+	// 조건 3: 공격 중일 때 모든 사운드 정지
+	else if (CurrentIsAttacking)
+	{
+		SoundCollectionComponent->StopAllSoundLoops();
+	}
+	// 조건 1: 전투 상태가 아닐 때 Idle 사운드
+	else if (!CurrentIsInCombat)
+	{
+		SoundCollectionComponent->StartIdleSoundLoop();
+		SoundCollectionComponent->StopRunSoundLoop();
+	}
+	// 조건 2: 전투 상태일 때 Run 사운드
+	else
+	{
+		SoundCollectionComponent->StartRunSoundLoop();
+		SoundCollectionComponent->StopIdleSoundLoop();
+	}
+
+	// 이전 상태들 업데이트
+	bPreviousIsDead = CurrentIsDead;
+	bPreviousIsAttacking = CurrentIsAttacking;
+	bPreviousIsInCombat = CurrentIsInCombat;
+	bSoundStateInitialized = true;
+}
+
+// 공격 완료 콜백 함수
+void ACSkeletonEnemy::OnAttackCompleted()
+{
+	bIsAttacking = false;
+	
+	// 상태 변경 시 즉시 사운드 상태 업데이트
+	UpdateSoundState();
+}

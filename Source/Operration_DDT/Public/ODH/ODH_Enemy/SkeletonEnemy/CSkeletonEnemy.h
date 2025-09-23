@@ -7,6 +7,7 @@
 #include "ODH/ODH_Enemy/Interface/IDamageable.h"
 #include "ODH/ODH_Enemy/Component/CEnemyStatusComponent.h"
 #include "ODH/ODH_Enemy/Component/CEnemyMeleeAttackComponent.h"
+#include "ODH/Component/CSoundCollectionComponent.h"
 #include "GenericTeamAgentInterface.h"
 #include "CSkeletonEnemy.generated.h"
 
@@ -226,5 +227,37 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = "Animation")
 	void StartAbsorbAnimation();
 
+	// 사운드 관련 컴포넌트
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Sound")
+	UCSoundCollectionComponent* SoundCollectionComponent;
+
+	// 사운드 상태 관리 변수들
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Sound")
+	bool bIsAttacking = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Sound")
+	bool bIsDead = false;
+
+	// 이전 상태 저장 변수들
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Sound")
+	bool bPreviousIsInCombat = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Sound")
+	bool bPreviousIsAttacking = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Sound")
+	bool bPreviousIsDead = false;
+
+	// 사운드 상태가 이미 설정되었는지 체크하는 변수
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Sound")
+	bool bSoundStateInitialized = false;
+
 private:
+	// 사운드 상태 업데이트 함수
+	UFUNCTION()
+	void UpdateSoundState();
+
+	// 공격 완료 콜백 함수
+	UFUNCTION()
+	void OnAttackCompleted();
 };

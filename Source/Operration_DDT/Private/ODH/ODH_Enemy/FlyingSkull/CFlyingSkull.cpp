@@ -20,6 +20,7 @@
 #include "ODH/ODH_Enemy/CCombatEncounterManager.h"
 #include "../../AIModule/Classes/BehaviorTree/BlackboardComponent.h"
 #include "ODH/ODH_Enemy/Component/CEnemyHealthBarComponent.h"
+#include "ODH/ODH_Enemy/Component/CEnemyHealthBarComponent.h"
 #include "../../UMG/Public/Components/WidgetComponent.h"
 #include "Player/DDTGameMode.h"
 
@@ -536,6 +537,11 @@ TSubclassOf<AActor> ACFlyingSkull::GetProjectileClass() const
 
 void ACFlyingSkull::OnDeath()
 {
+    // 사망 즉시 HP Bar 비표시
+    if (UCEnemyHealthBarComponent* HB = FindComponentByClass<UCEnemyHealthBarComponent>())
+    {
+        HB->HideHealthBar();
+    }
 	// 사망 시 처리 로직
 	if (GEngine)
 	{
