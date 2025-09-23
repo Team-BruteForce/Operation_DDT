@@ -9,6 +9,7 @@
 #include "NiagaraFunctionLibrary.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/Character.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 AGateOfBabyonProjectile::AGateOfBabyonProjectile()
@@ -135,6 +136,22 @@ void AGateOfBabyonProjectile::OnBeginOverlap(UPrimitiveComponent* OverlappedComp
 				FRotator::ZeroRotator
 			);
 		}
+		
+		// 임팩트 사운드 재생 (50% 확률로만 재생)
+		if (DestroySound && FMath::RandRange(0.0f, 1.0f) < 0.5f)
+		{
+			UGameplayStatics::PlaySoundAtLocation(
+				GetWorld(),
+				DestroySound,
+				GetActorLocation(),
+				GetActorRotation(),
+				0.9f, // 90% 볼륨
+				1.0f,
+				0.0f,
+				SoundAttenuation,
+				nullptr
+			);
+		}
 		ACharacter* Player = Cast<ACharacter>(OtherActor);
 		if(Player)
 		{
@@ -182,6 +199,22 @@ void AGateOfBabyonProjectile::OnBeginOverlap(UPrimitiveComponent* OverlappedComp
 						ImpactSystem,
 						ImpactLocation,
 						FRotator::ZeroRotator
+					);
+				}
+				
+				// 임팩트 사운드 재생 (50% 확률로만 재생)
+				if (DestroySound && FMath::RandRange(0.0f, 1.0f) < 0.5f)
+				{
+					UGameplayStatics::PlaySoundAtLocation(
+						GetWorld(),
+						DestroySound,
+						GetActorLocation(),
+						GetActorRotation(),
+						0.9f, // 90% 볼륨
+						1.0f,
+						0.0f,
+						SoundAttenuation,
+						nullptr
 					);
 				}
 				
@@ -235,6 +268,21 @@ void AGateOfBabyonProjectile::ActivateProjectile()
 		ProjectileNiagaraComponent->Activate(true); // 강제 재시작
 	}
 	
+	// 발사 사운드 재생 (30% 확률로만 재생)
+	if (ShotSound && FMath::RandRange(0.0f, 1.0f) < 0.3f)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			GetWorld(),
+			ShotSound,
+			GetActorLocation(),
+			GetActorRotation(),
+			0.8f, // 80% 볼륨
+			1.0f,
+			0.0f,
+			SoundAttenuation,
+			nullptr
+		);
+	}
 	
 	// 플레이어 위치로 이동 시작
 	UCBossTargetingComponent* TargetingComp = CHelpers::GetComponent<UCBossTargetingComponent>(GetOwner());

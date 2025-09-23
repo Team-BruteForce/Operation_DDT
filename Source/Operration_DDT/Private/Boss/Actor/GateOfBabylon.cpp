@@ -9,6 +9,7 @@
 #include "Global.h"
 #include "Boss/Component/BossProjectileComponent.h"
 #include "Boss/Component/CBossTargetingComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 AGateOfBabylon::AGateOfBabylon()
@@ -64,6 +65,22 @@ void AGateOfBabylon::ActivateGate()
 	{
 		MagicCircleComponent->SetAsset(MagicCircleSystem);
 		MagicCircleComponent->Activate();
+		
+		// 나이아가라 시작과 동시에 사운드 재생 (30% 확률로만 재생)
+		if (SpawnSound && FMath::RandRange(0.0f, 1.0f) < 0.3f)
+		{
+			UGameplayStatics::PlaySoundAtLocation(
+				GetWorld(),
+				SpawnSound,
+				GetActorLocation(),
+				GetActorRotation(),
+				0.8f, // 80% 볼륨
+				1.0f,
+				0.0f,
+				SoundAttenuation,
+				nullptr
+			);
+		}
 	}
 	
 	// 2. n초 후 투사체 나이아가라 재생 (타이머 방식)
@@ -262,4 +279,5 @@ void AGateOfBabylon::UpdateLookAtPlayer()
 		SetActorRotation(TargetRotation);
 	}
 }
+
 

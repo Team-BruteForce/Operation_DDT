@@ -8,6 +8,7 @@
 #include "Global.h"
 #include "Boss/Component/BossProjectileComponent.h"
 #include "GameFramework/Character.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 AHolySwordMagic::AHolySwordMagic()
@@ -115,6 +116,22 @@ void AHolySwordMagic::StartFirstNiagara()
 		FirstNiagaraComponent->SetAsset(FirstNiagaraSystem);
 		FirstNiagaraComponent->Activate();
 		bFirstNiagaraPlaying = true;
+		
+		// 첫 번째 나이아가라 시작 시 사운드 재생
+		if (FirstSound)
+		{
+			UGameplayStatics::PlaySoundAtLocation(
+				GetWorld(),
+				FirstSound,
+				GetActorLocation(),
+				GetActorRotation(),
+				1.0f,
+				1.0f,
+				0.0f,
+				SoundAttenuation,
+				nullptr
+			);
+		}
 	}
 }
 
@@ -140,6 +157,22 @@ void AHolySwordMagic::EnableCollision()
 	{
 		CollisionBox->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 		bCollisionEnabled = true;
+		
+		// 콜리전 활성화 시 사운드 재생
+		if (SecondSound)
+		{
+			UGameplayStatics::PlaySoundAtLocation(
+				GetWorld(),
+				SecondSound,
+				GetActorLocation(),
+				GetActorRotation(),
+				1.0f,
+				1.0f,
+				0.0f,
+				SoundAttenuation,
+				nullptr
+			);
+		}
 	}
 }
 

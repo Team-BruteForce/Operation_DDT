@@ -86,4 +86,12 @@ private:
 	// 플레이어를 바라보도록 회전 업데이트
 	void UpdateLookAtPlayer();
 
+public:
+	UPROPERTY(EditAnywhere,BlueprintReadWrite,meta=(ToolTip="Gate of Bayon 스폰사운드"))
+	class USoundBase* SpawnSound;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite,meta=(ToolTip="사운드 감쇠 설정"))
+	class USoundAttenuation* SoundAttenuation;
+
+
 };

@@ -66,6 +66,8 @@ void ABossManager::ResetBossCompletely()
 		{
 			return;
 		}
+
+		OpenDoor();
 		// 1. 모든 컴포넌트 초기화
 		ResetAllBossComponents();
 
@@ -81,7 +83,6 @@ void ABossManager::ResetBossCompletely()
 
 	}, 3.0f, false);
 }
-
 /**
  * @brief StateTree 완전 리스타트
  */
@@ -241,6 +242,7 @@ void ABossManager::ResetAllBossComponents()
 	if (UFlyingComponent* FlyingComp = CHelpers::GetComponent<UFlyingComponent>(SpawnedBoss))
 	{
 		FlyingComp->ResetFlyingSystem();
+		FlyingComp->StopFlying();
 		UE_LOG(LogTemp, Warning, TEXT("✅ 보스 비행 시스템 초기화 완료"));
 	}
 

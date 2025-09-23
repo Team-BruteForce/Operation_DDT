@@ -48,6 +48,12 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Boss Location")
 	FVector InitialLocation;
 
+	/**
+	 * @brief 보스 죽음 상태 플래그 (한 번만 죽음 처리)
+	 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Boss State")
+	bool bIsDead = false;
+
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	TSubclassOf<ABossDissolve>BossDissolveClass;
 

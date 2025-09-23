@@ -65,6 +65,22 @@ void AProjectile_LightSpear::FireProjectile()
 	// 타이머 리셋
 	CurrentTime = 0.0f;
 	
+	// 발사 사운드 재생
+	if (LightSpearSpawnSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			GetWorld(),
+			LightSpearSpawnSound,
+			GetActorLocation(),
+			GetActorRotation(),
+			1.0f,
+			1.0f,
+			0.0f,
+			SoundAttenuation,
+			nullptr
+		);
+	}
+	
 	// 3초 후 풀로 반환은 Tick에서 처리 (중복 방지)
 	/*
 	if (bUseObjectPool)
@@ -186,6 +202,23 @@ void AProjectile_LightSpear::OnProjectileHit(UPrimitiveComponent* OverlappedComp
 			}
 			
 			PlayDestroyEffect();
+			
+			// 착탄 사운드 재생
+			if (LightSpearDestroySound)
+			{
+				UGameplayStatics::PlaySoundAtLocation(
+					GetWorld(),
+					LightSpearDestroySound,
+					GetActorLocation(),
+					GetActorRotation(),
+					1.0f,
+					1.0f,
+					0.0f,
+					SoundAttenuation,
+					nullptr
+				);
+			}
+			
 			// 0.25초 후 파괴 또는 풀 반환
 			FTimerHandle DestroyTimerHandle;
 			GetWorld()->GetTimerManager().SetTimer(DestroyTimerHandle, [this]()

@@ -58,4 +58,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Object Pool")
 	bool bUseObjectPool;
 
+public:
+	UPROPERTY(EditAnywhere,BlueprintReadWrite,meta=(ToolTip="오브 스폰 사운드"))
+	class USoundCue* OrbSound;
+
 };

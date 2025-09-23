@@ -74,4 +74,17 @@ public:
 	// 타이머 핸들
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Object Pool")
 	FTimerHandle LifeTimeTimerHandle;
+
+public:
+	UPROPERTY(EditAnywhere,BlueprintReadWrite,meta=(ToolTip="Lightspear 발사 사운드"))
+	class USoundBase* LightSpearSpawnSound;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite,meta=(ToolTip="Lightspear 비행 사운드"))
+	class USoundBase* LightSpearFlightSound;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite,meta=(ToolTip="Lightspear 착탄 사운드"))
+	class USoundBase* LightSpearDestroySound;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite,meta=(ToolTip="사운드 감쇠 설정"))
+	class USoundAttenuation* SoundAttenuation;
 };

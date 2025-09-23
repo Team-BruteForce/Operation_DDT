@@ -685,7 +685,7 @@ void UCBossMovementComponent::ExecuteSmartMovement(float DeltaTime, float MinDis
 		// 속도 조정 (궤도 이동)
 		if (ACharacter* BossChar = Cast<ACharacter>(Owner))
 		{
-			BossChar->GetCharacterMovement()->MaxWalkSpeed = 200;
+			BossChar->GetCharacterMovement()->MaxWalkSpeed = 300;
 		}
 	}
 	else
@@ -699,7 +699,7 @@ void UCBossMovementComponent::ExecuteSmartMovement(float DeltaTime, float MinDis
 			// 속도 조정 (거리 유지 - 빠른 이동)
 			if (ACharacter* BossChar = Cast<ACharacter>(Owner))
 			{
-				BossChar->GetCharacterMovement()->MaxWalkSpeed = 200;
+				BossChar->GetCharacterMovement()->MaxWalkSpeed = 300;
 			}
 			
 			// AI 컨트롤러로 이동 (Strafe 모드)
@@ -719,7 +719,7 @@ void UCBossMovementComponent::ExecuteSmartMovement(float DeltaTime, float MinDis
 			// 속도 조정 (거리 유지 - 빠른 이동)
 			if (ACharacter* BossChar = Cast<ACharacter>(Owner))
 			{
-				BossChar->GetCharacterMovement()->MaxWalkSpeed = 200;
+				BossChar->GetCharacterMovement()->MaxWalkSpeed = 300;
 			}
 			
 			// AI 컨트롤러로 이동 (Strafe 모드)
@@ -740,7 +740,7 @@ void UCBossMovementComponent::ExecuteSmartMovement(float DeltaTime, float MinDis
 			// 속도 조정 (거리 유지 - 부드러운 접근)
 			if (ACharacter* BossChar = Cast<ACharacter>(Owner))
 			{
-				BossChar->GetCharacterMovement()->MaxWalkSpeed = 200;
+				BossChar->GetCharacterMovement()->MaxWalkSpeed = 300;
 			}
 			
 			// AI 컨트롤러로 이동 (Strafe 모드)
