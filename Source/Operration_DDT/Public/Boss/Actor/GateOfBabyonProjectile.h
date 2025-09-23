@@ -82,4 +82,17 @@ private:
 	// 플레이어 주변 랜덤 위치로 이동하는 함수
 	void MoveToRandomLocationAroundPlayer(AActor* Player);
 
+public:
+	UPROPERTY(EditAnywhere,BlueprintReadWrite,meta=(ToolTip="게이트 오브 바빌론 투사체 발사 사운드"))
+	class USoundBase* ShotSound;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite,meta=(ToolTip="날아가는 도중에 나는 사운드"))
+	class USoundBase* ProjectileSound;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite,meta=(ToolTip="도착시 파괴 사운드"))
+	class USoundBase* DestroySound;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite,meta=(ToolTip="사운드 감쇠 설정"))
+	class USoundAttenuation* SoundAttenuation;
+
 };

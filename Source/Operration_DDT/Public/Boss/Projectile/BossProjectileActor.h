@@ -120,4 +120,17 @@ public:
 	// 타이머 핸들 (멤버 변수로 추가)
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Object Pool")
 	FTimerHandle DestroyTimerHandle;
+
+public:
+	UPROPERTY(EditAnywhere,BlueprintReadWrite,meta=(ToolTip="투사체 발사 사운드"))
+	class USoundBase* ProjectileSound;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite,meta=(ToolTip="투사체 비행 사운드"))
+	class USoundBase* FlightSound;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite,meta=(ToolTip="투사체 착탄 사운드"))
+	class USoundBase* ImpactSound;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite,meta=(ToolTip="사운드 감쇠 설정"))
+	class USoundAttenuation* SoundAttenuation;
 };

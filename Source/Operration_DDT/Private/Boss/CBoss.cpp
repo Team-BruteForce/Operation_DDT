@@ -85,9 +85,10 @@ void ACBoss::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 	
-	// 1순위: 죽음 체크
-	if (BossStatusComponent->BossCurrentStats.CurrentHP <= 0)
+	// 1순위: 죽음 체크 (한 번만 실행)
+	if (BossStatusComponent->BossCurrentStats.CurrentHP <= 0 && !bIsDead)
 	{
+		bIsDead = true; // 죽음 상태로 설정
 		UStateTreeComponent* StateTreeComp = GetController()->FindComponentByClass<UStateTreeComponent>();
 		StateTreeComp->SendStateTreeEvent(FGameplayTag::RequestGameplayTag("BOSS.State.Dead"));
 		BossStatusComponent->BossCurrentStats.CurrentHP = 1;

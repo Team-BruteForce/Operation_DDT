@@ -8,6 +8,7 @@
 #include "GameFramework/Character.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Boss/Component/BossProjectileComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 ABossProjectileActor::ABossProjectileActor()
@@ -170,6 +171,22 @@ void ABossProjectileActor::Tick(float DeltaTime)
 	{
 		PlayDestroyEffect();
 		
+		// 착탄 사운드 재생
+		if (ImpactSound)
+		{
+			UGameplayStatics::PlaySoundAtLocation(
+				GetWorld(),
+				ImpactSound,
+				GetActorLocation(),
+				GetActorRotation(),
+				1.0f,
+				1.0f,
+				0.0f,
+				SoundAttenuation,
+				nullptr
+			);
+		}
+		
 		if (bUseObjectPool)
 		{
 			// 오브젝트 풀에 반환
@@ -210,6 +227,22 @@ void ABossProjectileActor::FireProjectile(AActor* Target)
 	
 	// 스폰 이펙트 재생
 	PlaySpawnEffect();
+	
+	// 발사 사운드 재생
+	if (ProjectileSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			GetWorld(),
+			ProjectileSound,
+			GetActorLocation(),
+			GetActorRotation(),
+			1.0f,
+			1.0f,
+			0.0f,
+			SoundAttenuation,
+			nullptr
+		);
+	}
 }
 
 // 스폰 시 나이아가라 이펙트 재생
@@ -260,6 +293,22 @@ void ABossProjectileActor::FireProjectileToLocation(const FVector& TargetLocatio
 	{
 		NiagaraProjectile->Activate();
 	}
+	
+	// 발사 사운드 재생
+	if (ProjectileSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			GetWorld(),
+			ProjectileSound,
+			GetActorLocation(),
+			GetActorRotation(),
+			1.0f,
+			1.0f,
+			0.0f,
+			SoundAttenuation,
+			nullptr
+		);
+	}
 }
 
 // 충돌 판정 함수
@@ -278,6 +327,22 @@ void ABossProjectileActor::OnProjectileHit(UPrimitiveComponent* OverlappedCompon
 		
 		// 파괴 이펙트 재생
 		PlayDestroyEffect();
+		
+		// 착탄 사운드 재생
+		if (ImpactSound)
+		{
+			UGameplayStatics::PlaySoundAtLocation(
+				GetWorld(),
+				ImpactSound,
+				GetActorLocation(),
+				GetActorRotation(),
+				1.0f,
+				1.0f,
+				0.0f,
+				SoundAttenuation,
+				nullptr
+			);
+		}
 		
 		// 0.25초 후에 풀로 반환 또는 파괴 (이펙트 재생 시간 확보)
 		GetWorld()->GetTimerManager().SetTimer(DestroyTimerHandle, [this]()

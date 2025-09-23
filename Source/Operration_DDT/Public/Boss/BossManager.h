@@ -69,6 +69,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Boss Reset")
 	void ResetBossCompletely();
 
+	UFUNCTION(BlueprintImplementableEvent)
+	void OpenDoor();
 	/**
 	 * @brief 월드에서 보스 찾기
 	 */

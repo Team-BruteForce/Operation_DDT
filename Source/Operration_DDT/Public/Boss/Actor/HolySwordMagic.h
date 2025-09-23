@@ -92,5 +92,12 @@ public:
 	// 오브젝트 풀 관련
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Object Pool", meta = (AllowPrivateAccess = "true"))
 	bool bUseObjectPool = true;
+public:
+	UPROPERTY(EditAnywhere,BlueprintReadWrite,meta=(ToolTip="검 장판 생성 사운드"))
+	class USoundBase* FirstSound;
+	UPROPERTY(EditAnywhere,BlueprintReadWrite,meta=(ToolTip="검 떨어질때 사운드"))
+	class USoundBase* SecondSound;
+	UPROPERTY(EditAnywhere,BlueprintReadWrite,meta=(ToolTip="사운드 감쇠 설정"))
+	class USoundAttenuation* SoundAttenuation;
 
 };

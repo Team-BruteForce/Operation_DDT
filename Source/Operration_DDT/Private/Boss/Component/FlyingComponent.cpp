@@ -93,7 +93,7 @@ void UFlyingComponent::StartTakeoff(float TargetHeight, float Speed)
 	CLog::Log(FString::Printf(TEXT("StartTakeoff 호출 - bCanTakeoff: %s, bIsFlying: %s"), 
 		bCanTakeoff ? TEXT("true") : TEXT("false"), bIsFlying ? TEXT("true") : TEXT("false")));
 	
-	if (!OwnerCharacter || bIsFlying) return;
+	if (!OwnerCharacter || bIsFlying || !bCanTakeoff) return;
 	
 	bIsTakingOff = true;
 	bIsFlying = true;  // 이륙 시작 시 비행 상태로 설정
@@ -131,6 +131,11 @@ void UFlyingComponent::StartLanding(FVector LandLocation)
 	bIsOrbiting = false;
 	bIsHovering = false;  // 호버링 상태 초기화
 	
+	// 이륙 쿨타임 시작 (착륙 시작 시)
+	bCanTakeoff = false;
+	TakeoffCooldownTimer = TakeoffCooldownTime;
+	CLog::Log(FString::Printf(TEXT("=== StartLanding - 이륙 쿨타임 시작: %.1f초 ==="), TakeoffCooldownTime));
+	
 	// 착륙 위치가 지정되지 않았으면 현재 위치 아래로 설정
 	if (LandLocation == FVector::ZeroVector)
 	{
@@ -154,6 +159,11 @@ void UFlyingComponent::StopFlying()
 	bIsLanding = false;
 	bIsOrbiting = false;
 	bIsHovering = false;  // 호버링 상태 초기화
+	
+	// 이륙 쿨타임 시작 (StopFlying 호출 시)
+	bCanTakeoff = false;
+	TakeoffCooldownTimer = TakeoffCooldownTime;
+	CLog::Log(FString::Printf(TEXT("=== StopFlying - 이륙 쿨타임 시작: %.1f초 ==="), TakeoffCooldownTime));
 	
 	// 지상 이동 모드로 전환
 	CharacterMovement->SetMovementMode(MOVE_NavWalking);
@@ -1985,6 +1995,11 @@ void UFlyingComponent::UpdateFlyStopState(float DeltaTime)
 		
 		bFlyStopEventSent = true;
 		
+		// 착륙 타이머 시작 (end 상태에서도 착륙 가능하도록)
+		bCanLanding = false;
+		LandingCooldownTimer = LandingCooldownTime;
+		CLog::Log(FString::Printf(TEXT("=== FlyStop 완료 - 착륙 쿨타임 시작: %.1f초 ==="), LandingCooldownTime));
+		
 		// 이벤트 전송 후 Idle로 전환
 		ChangeState(EFlyingState::Idle);
 	}
@@ -2122,6 +2137,11 @@ void UFlyingComponent::UpdateSplineFlyStopState(float DeltaTime)
 		}
 		
 		bFlyStopEventSent = true;
+		
+		// 착륙 타이머 시작 (end 상태에서도 착륙 가능하도록)
+		bCanLanding = false;
+		LandingCooldownTimer = LandingCooldownTime;
+		CLog::Log(FString::Printf(TEXT("=== Spline FlyStop 완료 - 착륙 쿨타임 시작: %.1f초 ==="), LandingCooldownTime));
 		
 		// 이벤트 전송 후 Idle로 전환
 		ChangeState(EFlyingState::Idle);

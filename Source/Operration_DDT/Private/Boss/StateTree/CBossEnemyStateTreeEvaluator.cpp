@@ -61,12 +61,9 @@ void UCBossEnemyStateTreeEvaluator::Tick(FStateTreeExecutionContext& Context, co
 	CanTakeoff = FlyingComponent->bCanTakeoff;
 	CanLanding = FlyingComponent->bCanLanding;
 	// 디버그 출력
-	CLog::Print(State->GetStateTag().ToString(), 1);
-	CLog::Print(FString::Printf(TEXT("Distance : %f"), player_ai_dist), 2);
-	CLog::Print("Target : " + Target->GetName(), 3);
-	CLog::Print(Status->BossCurrentStats.CurrentAP, 4);
-	CLog::Print("Current Range Tag: " + CurrentRangeTag.ToString(), 5);
-	CLog::Print("Current Pase Tag: " + WeaponComponent->GetCurrentWeaponMode().ToString(), 6);
+	// CLog::Print(State->GetStateTag().ToString(), 1);
+	CanTakeoff?CLog::CLog::Log("CanTakeoff : true"):CLog::CLog::Log("CanTakeoff : false");
+	CanLanding?CLog::CLog::Log("CanLanding : true"):CLog::CLog::Log("CanLanding : false");
 	// 보스 머리 위에 HP 표시
 	if (GetWorld())
 	{
