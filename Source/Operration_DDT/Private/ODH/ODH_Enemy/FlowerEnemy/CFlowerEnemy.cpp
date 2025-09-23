@@ -22,6 +22,7 @@
 #include "ODH/ODH_Enemy/Component/CEnemyHealthBarComponent.h"
 #include "Player/DDTPlayer.h"
 #include "../../UMG/Public/Components/WidgetComponent.h"
+#include "ODH/ODH_Enemy/CCombatEncounterManager.h"
 
 // Sets default values
 ACFlowerEnemy::ACFlowerEnemy()
@@ -96,17 +97,41 @@ void ACFlowerEnemy::BeginPlay()
 	// 자동 머리 열기 시스템 시작
 	StartAutoHeadOpening();
 
+	// Encounter Manager 등록
+	if (HasAuthority())
+	{
+		UWorld* World = GetWorld();
+		if (World)
+		{
+			TArray<AActor*> Found;
+			UGameplayStatics::GetAllActorsOfClass(World, ACCombatEncounterManager::StaticClass(), Found);
+			if (Found.Num() > 0)
+			{
+				if (ACCombatEncounterManager* Mgr = Cast<ACCombatEncounterManager>(Found[0]))
+				{
+					Mgr->RegisterEnemy(this);
+				}
+			}
+		}
+	}
+
 	//공격 콜리전 비활성화
+	DisableDashAttackCollision();
+	DisableHandLAttackCollision();
+	DisableHandRAttackCollision();
 
 	// 사운드 상태 초기화
 	bIsAttacking = false;
 	bIsDead = false;
 	
-	// 초기 사운드 상태 설정
+	// 이전 상태들을 현재 상태로 초기화
+	bPreviousIsInCombat = false;
+	bPreviousIsAttacking = false;
+	bPreviousIsDead = false;
+	bSoundStateInitialized = false;
+	
+	// 초기 사운드 상태 설정 (한 번만)
 	UpdateSoundState();
-	DisableDashAttackCollision();
-	DisableHandLAttackCollision();
-	DisableHandRAttackCollision();
 }
 
 void ACFlowerEnemy::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -124,6 +149,24 @@ void ACFlowerEnemy::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	if (GetWorldTimerManager().IsTimerActive(HeadAutoOpenTimerHandle))
 	{
 		GetWorldTimerManager().ClearTimer(HeadAutoOpenTimerHandle);
+	}
+	
+	// Encounter Manager 해제
+	if (HasAuthority())
+	{
+		UWorld* World = GetWorld();
+		if (World)
+		{
+			TArray<AActor*> Found;
+			UGameplayStatics::GetAllActorsOfClass(World, ACCombatEncounterManager::StaticClass(), Found);
+			if (Found.Num() > 0)
+			{
+				if (ACCombatEncounterManager* Mgr = Cast<ACCombatEncounterManager>(Found[0]))
+				{
+					Mgr->UnregisterEnemy(this);
+				}
+			}
+		}
 	}
 	
 	Super::EndPlay(EndPlayReason);
@@ -336,6 +379,9 @@ void ACFlowerEnemy::PlayRangedAttack()
 	// 사운드 상태: 공격 중
 	bIsAttacking = true;
 	
+	// 상태 변경 시 즉시 사운드 상태 업데이트
+	UpdateSoundState();
+	
 	// 다른 공격 콜리전들 비활성화
 	DisableHandLAttackCollision();
 	DisableHandRAttackCollision();
@@ -370,6 +416,9 @@ void ACFlowerEnemy::PlayComboAttack()
 		// 사운드 상태: 공격 중
 		bIsAttacking = true;
 		
+		// 상태 변경 시 즉시 사운드 상태 업데이트
+		UpdateSoundState();
+		
 		// 다른 공격 콜리전들 비활성화
 		DisableHandLAttackCollision();
 		DisableHandRAttackCollision();
@@ -394,6 +443,9 @@ void ACFlowerEnemy::PlayDashAttack()
 		
 		// 사운드 상태: 공격 중
 		bIsAttacking = true;
+		
+		// 상태 변경 시 즉시 사운드 상태 업데이트
+		UpdateSoundState();
 		
 		// 다른 공격 콜리전들 비활성화
 		DisableHandLAttackCollision();
@@ -910,6 +962,9 @@ void ACFlowerEnemy::OnDeath()
 
 	// 사운드 상태: 사망
 	bIsDead = true;
+	
+	// 상태 변경 시 즉시 사운드 상태 업데이트
+	UpdateSoundState();
 
 	// 돌진 이동 정지
 	bIsDashMoving = false;
@@ -965,6 +1020,24 @@ void ACFlowerEnemy::OnDeath()
 
 	// 소켓 기반 데미지 콜리전 비활성화
 	DisableDamageCollisions();
+
+	// Encounter Manager 해제(사망 즉시)
+	if (HasAuthority())
+	{
+		UWorld* World = GetWorld();
+		if (World)
+		{
+			TArray<AActor*> Found;
+			UGameplayStatics::GetAllActorsOfClass(World, ACCombatEncounterManager::StaticClass(), Found);
+			if (Found.Num() > 0)
+			{
+				if (ACCombatEncounterManager* Mgr = Cast<ACCombatEncounterManager>(Found[0]))
+				{
+					Mgr->UnregisterEnemy(this);
+				}
+			}
+		}
+	}
 
 }
 
@@ -1224,19 +1297,10 @@ void ACFlowerEnemy::UpdateSoundState()
 	if (!SoundCollectionComponent)
 		return;
 
-	// 조건 4: 사망 시 모든 사운드 정지
-	if (bIsDead)
-	{
-		SoundCollectionComponent->StopAllSoundLoops();
-		return;
-	}
-
-	// 조건 3: 공격 중일 때 모든 사운드 정지
-	if (bIsAttacking)
-	{
-		SoundCollectionComponent->StopAllSoundLoops();
-		return;
-	}
+	// 현재 상태들 가져오기
+	bool CurrentIsDead = bIsDead;
+	bool CurrentIsAttacking = bIsAttacking;
+	bool CurrentIsInCombat = false;
 
 	// 블랙보드에서 IsInCombat 상태 체크
 	AAIController* AIController = Cast<AAIController>(GetController());
@@ -1245,29 +1309,70 @@ void ACFlowerEnemy::UpdateSoundState()
 		UBlackboardComponent* BlackboardComponent = AIController->GetBlackboardComponent();
 		if (BlackboardComponent)
 		{
-			bool IsInCombat = BlackboardComponent->GetValueAsBool(TEXT("IsInCombat"));
-
-			// 조건 1: 전투 상태가 아닐 때 Idle 사운드
-			if (!IsInCombat)
-			{
-				SoundCollectionComponent->StartIdleSoundLoop();
-				SoundCollectionComponent->StopRunSoundLoop();
-			}
-			// 조건 2: 전투 상태일 때 Run 사운드
-			else
-			{
-				SoundCollectionComponent->StartRunSoundLoop();
-				SoundCollectionComponent->StopIdleSoundLoop();
-			}
+			CurrentIsInCombat = BlackboardComponent->GetValueAsBool(TEXT("IsInCombat"));
 		}
 	}
+
+	// 상태가 변경되었거나 초기화되지 않았을 때만 처리
+	bool bStateChanged = (CurrentIsDead != bPreviousIsDead) ||
+						(CurrentIsAttacking != bPreviousIsAttacking) ||
+						(CurrentIsInCombat != bPreviousIsInCombat) ||
+						!bSoundStateInitialized;
+
+	if (!bStateChanged)
+	{
+		return; // 상태가 변경되지 않았으면 아무것도 하지 않음
+	}
+
+	// 디버그 출력 (상태 변경 감지 시)
+	if (GEngine && bSoundStateInitialized)
+	{
+		FString DebugMessage = FString::Printf(
+			TEXT("Flower Enemy Sound State Changed - Dead: %s, Attacking: %s, InCombat: %s"),
+			CurrentIsDead ? TEXT("True") : TEXT("False"),
+			CurrentIsAttacking ? TEXT("True") : TEXT("False"),
+			CurrentIsInCombat ? TEXT("True") : TEXT("False")
+		);
+		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Cyan, DebugMessage);
+	}
+
+	// 조건 4: 사망 시 모든 사운드 정지
+	if (CurrentIsDead)
+	{
+		SoundCollectionComponent->StopAllSoundLoops();
+	}
+	// 조건 3: 공격 중일 때 모든 사운드 정지
+	else if (CurrentIsAttacking)
+	{
+		SoundCollectionComponent->StopAllSoundLoops();
+	}
+	// 조건 1: 전투 상태가 아닐 때 Idle 사운드
+	else if (!CurrentIsInCombat)
+	{
+		SoundCollectionComponent->StartIdleSoundLoop();
+		SoundCollectionComponent->StopRunSoundLoop();
+	}
+	// 조건 2: 전투 상태일 때 Run 사운드
+	else
+	{
+		SoundCollectionComponent->StartRunSoundLoop();
+		SoundCollectionComponent->StopIdleSoundLoop();
+	}
+
+	// 이전 상태들 업데이트
+	bPreviousIsDead = CurrentIsDead;
+	bPreviousIsAttacking = CurrentIsAttacking;
+	bPreviousIsInCombat = CurrentIsInCombat;
+	bSoundStateInitialized = true;
 }
 
 // 공격 완료 콜백 함수
 void ACFlowerEnemy::OnAttackCompleted()
 {
 	bIsAttacking = false;
-	// UpdateSoundState는 Tick에서 자동으로 호출됨
+	
+	// 상태 변경 시 즉시 사운드 상태 업데이트
+	UpdateSoundState();
 }
 
 
