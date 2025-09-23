@@ -12,6 +12,7 @@ FString UAnimNotifyState_PaseChange::GetNotifyName_Implementation() const
 void UAnimNotifyState_PaseChange::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
                                               float TotalDuration)
 {
+	CheckNull(MeshComp->GetOwner());
 	UCBossStatusComponent* Status = CHelpers::GetComponent<UCBossStatusComponent>(MeshComp->GetOwner());
 	CheckNull(Status);
 	Status->OnPaseChange();
@@ -19,6 +20,7 @@ void UAnimNotifyState_PaseChange::NotifyBegin(USkeletalMeshComponent* MeshComp, 
 
 void UAnimNotifyState_PaseChange::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation)
 {
+	CheckNull(MeshComp->GetOwner());
 	UCBossStatusComponent* Status = CHelpers::GetComponent<UCBossStatusComponent>(MeshComp->GetOwner());
 	CheckNull(Status);
 	Status->OffPaseChange();

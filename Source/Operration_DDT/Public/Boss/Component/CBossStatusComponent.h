@@ -141,7 +141,7 @@ public:
 	 */
 	void IncreaseAP(float AP);
 
-	void SetDamage(float Damage);
+	void SetDamage(float Damage, bool isCritical);
 
 	void ResetAp();
 

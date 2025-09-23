@@ -49,12 +49,16 @@ public:
 	UFUNCTION()
 	void OnTotalBulletChanged(int32 value);
 
+	UFUNCTION()
+	void OnPlayerDeathCallAnimation();
+
 
 private:
 	class ADDTPlayer* OwnerCharater;
 	class UCStaminaComponent* StaminaComp;
 	class UCStatusComponent* StatusComp;
 	class UCMagazineComponent* MagazineComp;
+	class UCRespawnComponent* RespawnComp;
 
 
 		

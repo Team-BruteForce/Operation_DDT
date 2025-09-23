@@ -2,6 +2,11 @@
 
 
 #include "Boss/Widget/DDTLoadingWidget.h"
+#include "Global.h"
+#include "Player/DDTPlayer.h"
+#include "Player/Components/CUIComponent.h"
+#include "Player/Widget/CPlayerUI.h"
+#include "Slate/SGameLayerManager.h"
 
 void UDDTLoadingWidget::NativeConstruct()
 {
@@ -22,4 +27,14 @@ void UDDTLoadingWidget::EndLoading()
 	FInputModeGameOnly InputMode;
 	C->SetInputMode(InputMode);
 	C->bShowMouseCursor=false;
+
+	ADDTPlayer* player = Cast<ADDTPlayer>(C->GetPawn());
+	if (player)
+	{
+		UCUIComponent* UIComp = CHelpers::GetComponent<UCUIComponent>(player);
+		if (UIComp)
+		{
+			UIComp->InitUIWidget();
+		}
+	}
 }

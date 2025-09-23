@@ -36,20 +36,36 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Pool")
 	TArray<class ACPlayerBullet*> VFXPool;
 
+	UPROPERTY(EditAnywhere, Category = "Pool")
+	TArray<class ACNormalDamageUIActor*> DamageUIPool;
+
 	UPROPERTY(EditDefaultsOnly, Category = "Pool")
-	int32 CurrentPoolIndex = 0;
+	int32 CurrentBulletPoolIndex = 0;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Pool")
+	int32 CurrentVFXPoolIndex = 0;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Pool")
+	int32 CurrentDamageUIPoolIndex = 0;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Gun")
 	TSubclassOf<ACPlayerBullet> PlayerBulletClass;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Gun")
 	TSubclassOf<ACPlayerBullet> PlayerBulletVFXClass;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Pool")
+	TSubclassOf<ACNormalDamageUIActor> DamageActorClass;
 
 public:
 	// 오브젝트 풀 관련 함수들
 	ACPlayerBullet* CreateBulletForPool();
 	ACPlayerBullet* CreateBulletVFXForPool();
+	ACNormalDamageUIActor* CreateDamageUIForPool();
 	
 	ACPlayerBullet* GetInactiveBullet();
 	ACPlayerBullet* GetInactiveVFX();
+	ACNormalDamageUIActor* GetInactiveDamageUI();
+
+	
 };

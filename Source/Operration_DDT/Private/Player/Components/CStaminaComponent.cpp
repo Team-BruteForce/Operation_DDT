@@ -40,6 +40,7 @@ void UCStaminaComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAc
 	// ...
 	if (movement->GetIsSprinting())
 	{
+		if (!movement->GetOnMovePressing()) return;
 		DrowningStamina(SprintStamina * DeltaTime);
 	}
 	else if (bIsRecovering)

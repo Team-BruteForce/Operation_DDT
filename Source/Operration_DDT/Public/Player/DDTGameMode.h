@@ -41,13 +41,23 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	class UDDTLoadingWidget* LoadingUI;
 
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<class UUserWidget> DamageWidget;
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	class UCDamageWidget_Normal* DamageUI;
+
 	// 드랍 아이템 이펙트 풀 매니저
 	UPROPERTY()
 	class ACDropItemEffectPoolManager* DropItemEffectPoolManager;
-
-	void test();
+	
 
 	UFUNCTION()
 	void LinkedMaintoLoading();
+	
+	void BroadCastDamage(float inValue, bool bCritical, bool bGroggy);
+
+	UFUNCTION()
+	void DamageUIAnimationFinished();
 	
 };

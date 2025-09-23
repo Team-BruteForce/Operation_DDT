@@ -14,8 +14,10 @@
 #include "Components/CapsuleComponent.h"
 // BossManager BP 자동 탐색용
 #include "Kismet/GameplayStatics.h"
+#include "Player/Widget/CPlayerUI.h"
 #include "Player/Components/CMagazineComponent.h"
 #include "Player/Components/CStaminaComponent.h"
+#include "Player/Components/CUIComponent.h"
 
 // Sets default values for this component's properties
 UCRespawnComponent::UCRespawnComponent()
@@ -35,13 +37,15 @@ void UCRespawnComponent::BeginPlay()
 
 	// ...
 	OwnerCharacter = Cast<ADDTPlayer>(GetOwner());
-	State = CHelpers::GetComponent<UCStateComponent>(OwnerCharacter);
 	RespawnLocation = OwnerCharacter->GetActorLocation();
+	
+	State = CHelpers::GetComponent<UCStateComponent>(OwnerCharacter);
 	Capsule = CHelpers::GetComponent<UCapsuleComponent>(OwnerCharacter);
 	Movement = CHelpers::GetComponent<UCMovementComponent>(OwnerCharacter);
 	Status = CHelpers::GetComponent<UCStatusComponent>(OwnerCharacter);
 	Magazine = CHelpers::GetComponent<UCMagazineComponent>(OwnerCharacter);
 	Stamina = CHelpers::GetComponent<UCStaminaComponent>(OwnerCharacter);
+	UIComp = CHelpers::GetComponent<UCUIComponent>(OwnerCharacter);
 	
 	// DieDelegate 구독
 	if (OwnerCharacter && OwnerCharacter->Montages)
@@ -53,7 +57,7 @@ void UCRespawnComponent::BeginPlay()
 	{
 		CLog::Log("RespawnComponent: Failed to subscribe to DieDelegate");
 	}
-
+	
 	// 클래스 기반 탐색 (레벨에 하나만 배치되어 있다는 가정)
 	if (!BossManager)
 	{
@@ -84,14 +88,23 @@ void UCRespawnComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAc
 	// ...
 }
 
-void UCRespawnComponent::OnPlayerDied()
+void UCRespawnComponent::OnPlayerDied() 
 {
+	if (OwnerCharacter && UIComp && UIComp->playerUI)
+	{
+		if (!UIComp->playerUI->OnAnimFinishedDelegate.IsBound())
+			UIComp->playerUI->OnAnimFinishedDelegate.AddDynamic(this, &UCRespawnComponent::RespawnPlayer);
+	}
+	
 	// 플레이어가 사망했을 때 호출되는 함수
 	CLog::Log("RespawnComponent: Player Died! Starting respawn timer...");
-
 	
 	Capsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	Movement->Stop();
+
+	// Call Animation
+	OnPlayerDeath.Broadcast();
+	
 	if (BossManager)
 	{
 		BossManager->ResetBossCompletely();
@@ -101,7 +114,7 @@ void UCRespawnComponent::OnPlayerDied()
 		CLog::Log("RespawnComponent: BossManager is null, cannot reset boss");
 	}
 	
-	// 기존 타이머가 있다면 클리어
+	/*// 기존 타이머가 있다면 클리어
 	if (GetWorld())
 	{
 		GetWorld()->GetTimerManager().ClearTimer(RespawnTimerHandle);
@@ -116,7 +129,7 @@ void UCRespawnComponent::OnPlayerDied()
 		);
 		
 		CLog::Log("RespawnComponent: Respawn timer set for " + FString::SanitizeFloat(RespawnDelay) + " seconds");
-	}
+	}*/
 }
 
 void UCRespawnComponent::RespawnPlayer()
@@ -138,6 +151,8 @@ void UCRespawnComponent::RespawnPlayer()
 	State->SetIdleMode();
 	State->ResetDeadState();
 	CLog::Log("RespawnComponent: Player state set to Idle and dead state reset");
+
+	Movement->Move();
 	
 	// 3. HP를 최대치로 복구 (Status 컴포넌트가 있다면)
 	if (Status)
@@ -163,10 +178,9 @@ void UCRespawnComponent::RespawnPlayer()
 	
 	//OwnerCharacter->SetActorEnableCollision(ECollisionEnabled::QueryAndPhysics);
 	Capsule->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	Movement->Move();
-	
+		
 	// 5. 부활 델리게이트 브로드캐스트
-	OnPlayerRespawned.Broadcast();
+	//OnPlayerRespawned.Broadcast();
 	
 	CLog::Log("RespawnComponent: Player respawned successfully!");
 }

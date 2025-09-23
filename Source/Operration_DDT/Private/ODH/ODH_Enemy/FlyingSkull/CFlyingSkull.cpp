@@ -21,6 +21,7 @@
 #include "../../AIModule/Classes/BehaviorTree/BlackboardComponent.h"
 #include "ODH/ODH_Enemy/Component/CEnemyHealthBarComponent.h"
 #include "../../UMG/Public/Components/WidgetComponent.h"
+#include "Player/DDTGameMode.h"
 
 // Sets default values
 ACFlyingSkull::ACFlyingSkull()
@@ -253,13 +254,14 @@ float ACFlyingSkull::TakeDamage(float DamageAmount, struct FDamageEvent const& D
 			}
 		}
 	}
-
+	bool bCritical = false;
 	// 약점 본 피격 시 즉시 피격 상태 진입 (그로기 누적은 하지 않음)
 	if (const FPointDamageEvent* PointEvt = static_cast<const FPointDamageEvent*>(DamageEvent.GetTypeID() == FPointDamageEvent::ClassID ? &DamageEvent : nullptr))
 	{
 		const FName HitBone = PointEvt->HitInfo.BoneName;
 		if (HitBone == "head" || HitBone == "Head" || HitBone == "head_01" || HitBone == "Head_01" || HitBone == "skull" || HitBone == "Skull")
 		{
+			bCritical = true;
 			GroggyGage += 100; // 명세상 누적은 불필요하지만, 임계 체크를 위해 더해도 무방
 			bIsHitState = true;
 			GroggyGage = 0; // 즉시 초기화(선호에 따라 유지 가능)
@@ -271,6 +273,11 @@ float ACFlyingSkull::TakeDamage(float DamageAmount, struct FDamageEvent const& D
 			}
 		}
 	}
+	if (ADDTGameMode* GM = GetWorld()->GetAuthGameMode<ADDTGameMode>())
+	{
+		GM->BroadCastDamage(DamageAmount, bCritical, false);
+	}
+
 
 	// 전투 비진입 상태에서 피격 시 타겟 및 전투 상태 설정
 	if (AController* OwnerController = Cast<AController>(GetController()))

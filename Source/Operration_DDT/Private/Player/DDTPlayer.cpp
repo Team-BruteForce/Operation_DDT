@@ -23,6 +23,7 @@
 #include "Player/Components/CStaminaComponent.h"
 #include "Player/Components/CBulletObjectPoolComponent.h"
 #include "Player/Components/CUIComponent.h"
+#include "Player/Components/CDamageUIManageComponent.h"
 #include "InputMappingContext.h"
 
 // Sets default values
@@ -59,6 +60,7 @@ ADDTPlayer::ADDTPlayer()
 	CHelpers::CreateActorComponent<UCStaminaComponent>(this, &StaminaComp, "StaminaComp");
 	CHelpers::CreateActorComponent<UCBulletObjectPoolComponent>(this, &BulletPool, "BulletPool");
 	CHelpers::CreateActorComponent<UCUIComponent>(this, &UIComp, "UIComp");
+	CHelpers::CreateActorComponent<UCDamageUIManageComponent>(this, &DamageUIManager, "DamageUIManager");
 	
 #pragma endregion
 	
@@ -99,6 +101,7 @@ void ADDTPlayer::BeginPlay()
 	if(Movement)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Movement is %s"), *Movement->GetName());
+		Movement->Move();
 		Movement->OnRun();
 		Movement->EnableControlRotation ();
 

@@ -23,6 +23,7 @@
 #include "Player/DDTPlayer.h"
 #include "../../UMG/Public/Components/WidgetComponent.h"
 #include "ODH/ODH_Enemy/CCombatEncounterManager.h"
+#include "Player/DDTGameMode.h"
 
 // Sets default values
 ACFlowerEnemy::ACFlowerEnemy()
@@ -247,6 +248,7 @@ float ACFlowerEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const& D
 		if (bIsHeadOpen && (HitBone == "head" || HitBone == "Head" || HitBone == "head_01" || HitBone == "Head_01" || HitBone == "skull" || HitBone == "Skull"))
 		{
 			bWeakSpotHit = true;
+			DamageAmount += DamageAmount;
 
 			// 디버그 출력
 			if (GEngine)
@@ -255,6 +257,10 @@ float ACFlowerEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const& D
 				FString::Printf(TEXT("Flower Enemy Weak Spot Hit")));
 			}
 		}
+	}
+	if (ADDTGameMode* GM = GetWorld()->GetAuthGameMode<ADDTGameMode>())
+	{
+		GM->BroadCastDamage(DamageAmount, bWeakSpotHit, false);
 	}
 
 	if (bWeakSpotHit)

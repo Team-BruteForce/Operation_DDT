@@ -40,6 +40,8 @@ void UCMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 
 	// ...
 	//CLog::Log("Movement) Direction " + Direction.ToString());
+	if (!bCanMove) return;
+	
 	if (!Direction.IsNearlyZero())
 	{
 		FVector InputDirection = FTransform(OwnerCharacter->GetControlRotation()).TransformVector(Direction);
@@ -61,6 +63,7 @@ void UCMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 	{
 		OnRun();
 	}
+	
 
 }
 

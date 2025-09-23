@@ -9,6 +9,12 @@
 #include "Kismet/GameplayStatics.h"
 #include "NiagaraSystem.h"
 #include "NiagaraComponent.h"
+#include "Boss/CBoss.h"
+#include "Player/DDTGameMode.h"
+#include "Player/Components/CBulletObjectPoolComponent.h"
+#include "Player/Components/CDamageUIManageComponent.h"
+#include "Player/Widget/CDamageWidget_Normal.h"
+#include "Player/Widget/CNormalDamageUIActor.h"
 
 // Sets default values
 ACPlayerBullet::ACPlayerBullet()
@@ -38,6 +44,8 @@ void ACPlayerBullet::BeginPlay()
 	Super::BeginPlay();
 	// SetLifeSpan 제거 - 오브젝트 풀에서 관리
 	OwnerCharacter = Cast<ADDTPlayer>(GetOwner());
+	BulletPool = CHelpers::GetComponent<UCBulletObjectPoolComponent>(OwnerCharacter);
+	DamageUIManager = CHelpers::GetComponent<UCDamageUIManageComponent>(OwnerCharacter);
 	bIsActive = false;  // 초기에는 비활성화
 	
 	// 랜덤 데미지 설정
@@ -169,6 +177,26 @@ void ACPlayerBullet::OnBulletHit(UPrimitiveComponent* HitComponent, AActor* Othe
 	
 	// UGameplayStatics::ApplyPointDamage로 데미지 적용
 	UGameplayStatics::ApplyPointDamage(OtherActor, FinalDamage, PointDamageEvent.ShotDirection, PointDamageEvent.HitInfo, OwnerCharacter->GetInstigatorController(), this, PointDamageEvent.DamageTypeClass);
+
+	ACBoss* Boss = Cast<ACBoss>(OtherActor);
+	if (Boss)
+	{
+		/*FVector DamageLocation = Boss->GetMesh()->GetComponentLocation();
+		DamageLocation.Z += 325.f;
+
+		ACNormalDamageUIActor* DamageUIActor = BulletPool->GetInactiveDamageUI();
+		DamageUIActor->SetActorLocation(DamageLocation);
+		DamageUIActor->SetActive(true);*/
+
+		/*UCDamageWidget_Normal* DamageUI = DamageUIManager->GetInactiveUI();
+		DamageUI->SetActive(true);*/
+		/*ADDTGameMode* GM = GetWorld()->GetAuthGameMode<ADDTGameMode>();
+		if (GM)
+		{
+			UCDamageWidget_Normal* DamageUI = GM->DamageUI;			
+		}*/
+
+	}
 	
 	// 충돌 후 Destroy() 대신 풀로 돌아가기
 	ReturnToPool();
