@@ -23,6 +23,10 @@ public:
 	void End_DoAction() override;
 
 
+	void PlayFireSound();
+	void PlayEmptySound();
+
+
 private:
 	bool bEnable;;
 	bool bExist;

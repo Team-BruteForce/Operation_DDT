@@ -62,6 +62,7 @@ void UCUIComponent::BeginPlay()
 		{
 			RespawnComp->OnPlayerDeath.AddDynamic(this, &UCUIComponent::OnPlayerDeathCallAnimation);
 		}
+		playerUI->OnAnimFinishedDelegate.AddDynamic(this,&UCUIComponent::OnDeathAnimationEnd );
 	}
 	
 }
@@ -135,6 +136,14 @@ void UCUIComponent::OnPlayerDeathCallAnimation()
 	if (playerUI)
 	{
 		playerUI->CallDeathAnimation();
+	}
+}
+
+void UCUIComponent::OnDeathAnimationEnd()
+{
+	if (playerUI && playerUI->IsInViewport())
+	{
+		playerUI->RemoveFromParent();
 	}
 }
 

@@ -11,6 +11,7 @@
 #include "Player/Components/CMovementComponent.h"
 #include "Player/Components/CUIComponent.h"
 #include "Player/Components/CWeaponComponent.h"
+#include "Sound/SoundCue.h"
 
 // Sets default values for this component's properties
 UCCameraActionComponent::UCCameraActionComponent()
@@ -48,7 +49,7 @@ void UCCameraActionComponent::SetAimPosition()
 	OwnerSpringArm->SetRelativeRotation(FRotator(0.f, 90.f, 0.f));
 	OwnerSpringArm->TargetArmLength = ArmLen;
 	OwnerSpringArm->bEnableCameraLag = false;
-	
+	UGameplayStatics::PlaySound2D(OwnerCharacter->GetWorld(), AimSound);
 	OwnerCharacter->State->SetRifleAimMode(true);
 	//CLog::Log("SetAimPosition: " + OwnerCharacter->State->IsRifleAimMode() ? TEXT("true") : TEXT("false"));
 	Movement->OnWalk();

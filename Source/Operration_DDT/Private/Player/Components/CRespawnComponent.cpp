@@ -13,7 +13,9 @@
 #include "Boss/BossManager.h"
 #include "Components/CapsuleComponent.h"
 // BossManager BP 자동 탐색용
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Player/DDTGameMode.h"
 #include "Player/Widget/CPlayerUI.h"
 #include "Player/Components/CMagazineComponent.h"
 #include "Player/Components/CStaminaComponent.h"
@@ -92,8 +94,15 @@ void UCRespawnComponent::OnPlayerDied()
 {
 	if (OwnerCharacter && UIComp && UIComp->playerUI)
 	{
-		if (!UIComp->playerUI->OnAnimFinishedDelegate.IsBound())
-			UIComp->playerUI->OnAnimFinishedDelegate.AddDynamic(this, &UCRespawnComponent::RespawnPlayer);
+		CLog::Log("OnPlayerDied) Owner, UIComp, PlayerUI");
+		ADDTGameMode* GM = GetWorld()->GetAuthGameMode<ADDTGameMode>();
+		if (GM)
+		{
+			CLog::Log("OnPlayerDied)  GM Successed");
+			UIComp->playerUI->OnAnimFinishedDelegate.AddDynamic(GM, &ADDTGameMode::LinkedMaintoLoading);
+			CLog::Log("OnPlayerDied)  AddDynamic");
+		}
+		
 	}
 	
 	// 플레이어가 사망했을 때 호출되는 함수
@@ -101,6 +110,7 @@ void UCRespawnComponent::OnPlayerDied()
 	
 	Capsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	Movement->Stop();
+	OwnerCharacter->GetCharacterMovement()->StopActiveMovement();
 
 	// Call Animation
 	OnPlayerDeath.Broadcast();
@@ -134,12 +144,14 @@ void UCRespawnComponent::OnPlayerDied()
 
 void UCRespawnComponent::RespawnPlayer()
 {
+	
 	// 실제 부활 처리
 	if (!OwnerCharacter || !State) 
 	{
 		CLog::Log("RespawnComponent: Cannot respawn - OwnerCharacter or State is null");
 		return;
 	}
+	OwnerCharacter->GetCharacterMovement()->StopActiveMovement();
 	
 	CLog::Log("RespawnComponent: Starting respawn process...");
 	

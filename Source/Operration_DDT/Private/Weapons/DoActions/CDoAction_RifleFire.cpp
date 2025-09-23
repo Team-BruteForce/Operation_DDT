@@ -7,6 +7,8 @@
 #include "Player/Components/CFireComponent.h"
 #include "Player/Components/CMagazineComponent.h"
 #include "Player/Components/CStateComponent.h"
+#include "Sound/SoundCue.h"
+
 
 void UCDoAction_RifleFire::DoAction()
 {
@@ -41,9 +43,14 @@ void UCDoAction_RifleFire::DoAction()
 		if (StateComp->GetIsHammerPulled() == true && MagazineComponent->CurrentRifleBullets > 0)
 		{
 			DoActionDatas[0].DoAction(OwnerCharacter);
+			PlayFireSound();
 			FireComp->Fire();
 			StateComp->SetIsHammerPulled(false);
 			DoActionDatas[1].DoAction(OwnerCharacter);
+		}
+		if (StateComp->GetIsHammerPulled() == true &&MagazineComponent->CurrentRifleBullets == 0)
+		{
+			PlayEmptySound();
 		}
 		
 	}
@@ -62,5 +69,37 @@ void UCDoAction_RifleFire::Begin_DoAction()
 void UCDoAction_RifleFire::End_DoAction()
 {
 	Super::End_DoAction();
+}
+
+void UCDoAction_RifleFire::PlayFireSound()
+{
+	if (!World)
+	{
+		CLog::Log("DoAction RifleFire) Null GetWorld!");
+		return;
+	}
+	if (DoActionDatas[0].FireSound == nullptr)
+	{
+		CLog::Log("DoAction RifleFire) Null DoActionDatas[0].FireSound");
+		return;
+	}
+	UGameplayStatics::PlaySound2D(World, DoActionDatas[0].FireSound);
+	CLog::Log("DoAction RifleFire) Fire Sound Successfully");
+}
+
+void UCDoAction_RifleFire::PlayEmptySound()
+{
+	if (!World)
+	{
+		CLog::Log("DoAction RifleFire) Null GetWorld!");
+		return;
+	}
+	if (DoActionDatas[0].EmptySound == nullptr)
+	{
+		CLog::Log("DoAction RifleFire) Null DoActionDatas[0].EmptySound");
+		return;
+	}
+	UGameplayStatics::PlaySound2D(World, DoActionDatas[0].EmptySound);
+	CLog::Log("DoAction RifleFire) Empty Sound Successfully");
 }
 

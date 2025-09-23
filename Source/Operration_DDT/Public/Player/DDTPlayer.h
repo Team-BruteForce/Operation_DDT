@@ -32,6 +32,9 @@ private:
 public:
 	FORCEINLINE USpringArmComponent* GetSpringArm() const { return this->SpringArm; }
 
+	UPROPERTY(EditDefaultsOnly, Category = "Sound")
+	class USoundCue* DeathSound;
+
 #pragma region InputActions
 public:
 	UPROPERTY(EditDefaultsOnly, Category = "Input")

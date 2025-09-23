@@ -60,6 +60,8 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "RespawnPoint")
 	FVector BossDoorLocation = FVector(-59584.154248,-50296.910881,4538.023350);
+
+	
 	
 private:
 	class ADDTPlayer* OwnerCharacter;
@@ -78,6 +80,7 @@ private:
 	// 부활 관련 변수들
 	UPROPERTY(EditAnywhere, Category = "Respawn", meta = (AllowPrivateAccess = "true"))
 	float RespawnDelay = 3.0f;
+	
 
 	FTimerHandle RespawnTimerHandle;
 		

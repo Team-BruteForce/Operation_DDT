@@ -59,5 +59,7 @@ public:
 
 	UFUNCTION()
 	void DamageUIAnimationFinished();
+
+	
 	
 };

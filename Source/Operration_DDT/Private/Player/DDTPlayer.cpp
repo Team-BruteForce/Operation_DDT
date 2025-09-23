@@ -25,6 +25,7 @@
 #include "Player/Components/CUIComponent.h"
 #include "Player/Components/CDamageUIManageComponent.h"
 #include "InputMappingContext.h"
+#include "Sound/SoundCue.h"
 
 // Sets default values
 ADDTPlayer::ADDTPlayer()
@@ -129,7 +130,7 @@ void ADDTPlayer::BeginPlay()
 	APlayerController* pc = Cast<APlayerController>(GetController());
 	if (pc)
 	{
-		UE_LOG(LogTemp, Log, TEXT("ADDTPlayer) PC Loaded"));
+		//UE_LOG(LogTemp, Log, TEXT("ADDTPlayer) PC Loaded"));
 		UEnhancedInputLocalPlayerSubsystem* subsys = ULocalPlayer::GetSubsystem <UEnhancedInputLocalPlayerSubsystem>(pc->GetLocalPlayer());
 		if (subsys)
 		{
@@ -138,21 +139,21 @@ void ADDTPlayer::BeginPlay()
 			if (IMC_Player)
             {
                 subsys->AddMappingContext(IMC_Player, 0);
-                UE_LOG(LogTemp, Log, TEXT("ADDTPlayer) Mapping Context Loaded: %s, Priority: %d"), *IMC_Player->GetName(), 0);
+                //UE_LOG(LogTemp, Log, TEXT("ADDTPlayer) Mapping Context Loaded: %s, Priority: %d"), *IMC_Player->GetName(), 0);
                 for (const FEnhancedActionKeyMapping& Mapping : IMC_Player->GetMappings())
                 {
-                    UE_LOG(LogTemp, Log, TEXT("Mapped Action: %s, Key: %s"), *Mapping.GetDisplayName().ToString(), *Mapping.Key.ToString());
+                    //E_LOG(LogTemp, Log, TEXT("Mapped Action: %s, Key: %s"), *Mapping.GetDisplayName().ToString(), *Mapping.Key.ToString());
                 }
             }
 		}
 		else
 		{
-			UE_LOG(LogTemp, Error, TEXT("ADDTPlayer) Mapping Context Load Error"));
+			//UE_LOG(LogTemp, Error, TEXT("ADDTPlayer) Mapping Context Load Error"));
 		}
 	}
 	else
 	{
-		UE_LOG (LogTemp, Error, TEXT("ADDTPlayer) PC Load Error"));
+		//UE_LOG (LogTemp, Error, TEXT("ADDTPlayer) PC Load Error"));
 	}
 	
 }
@@ -161,7 +162,7 @@ void ADDTPlayer::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	CLog::Print(TEXT("ADDTPlayer) Type : " + State->GetTypeString()));
+	//CLog::Print(TEXT("ADDTPlayer) Type : " + State->GetTypeString()));
 }
 
 
@@ -173,7 +174,7 @@ void ADDTPlayer::SetupPlayerInputComponent(class UInputComponent* PlayerInputCom
 
 	if (input)
 	{
-		UE_LOG(LogTemp, Log, TEXT("ADDTPlayer) Input Loaded"));
+		//UE_LOG(LogTemp, Log, TEXT("ADDTPlayer) Input Loaded"));
 		//Movement->SetupInputBinding (input);
 		input->BindAction(IA_Sword, ETriggerEvent::Started, WeaponComp, &UCWeaponComponent::SetSwordMode);
 		input->BindAction(IA_Rifle, ETriggerEvent::Started, WeaponComp, &UCWeaponComponent::SetRifleMode);
@@ -194,7 +195,7 @@ void ADDTPlayer::SetupPlayerInputComponent(class UInputComponent* PlayerInputCom
 	}
 	else
 	{
-		UE_LOG(LogTemp, Error, TEXT("ADDTPlayer) Input Loaded Failed"));
+		//UE_LOG(LogTemp, Error, TEXT("ADDTPlayer) Input Loaded Failed"));
 	}
 
 }
@@ -205,7 +206,7 @@ void ADDTPlayer::OnPlayerOverlap(UPrimitiveComponent* OverlappedComponent, AActo
 	if (Cast<ABossManager>(OtherActor))
 	{
 		RespawnComp->SetRespawnLocation(RespawnComp->BossDoorLocation);
-		CLog::Log("ADDTPlayer) 리스폰 지역 변경");
+		//CLog::Log("ADDTPlayer) 리스폰 지역 변경");
 	}
 }
 
@@ -221,7 +222,8 @@ float ADDTPlayer::TakeDamage(float DamageAmount, struct FDamageEvent const& Dama
 	Status->GetDamage(DamageAmount);
 	if (Status->GetNowHp() <= 0)
 	{
-		State->SetDeadMode();	
+		State->SetDeadMode();
+		UGameplayStatics::PlaySound2D(GetWorld(), DeathSound);
 		//Dead();
 	}
 	else
@@ -345,7 +347,7 @@ void ADDTPlayer::Reload()
 
 void ADDTPlayer::Heal()
 {
-	CLog::Log("ADDTPlayer) " + State->GetTypeString() );
+	//CLog::Log("ADDTPlayer) " + State->GetTypeString() );
 	
 	if (Status->GetHealItemCount() > 0)
 	{

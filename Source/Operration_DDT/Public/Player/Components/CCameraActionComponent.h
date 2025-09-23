@@ -42,5 +42,8 @@ public:
 	UPROPERTY(EditAnywhere)
 	float ArmLen = 75.f;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Sound")
+	class USoundCue* AimSound;
+
 		
 };

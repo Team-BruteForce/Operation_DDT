@@ -56,6 +56,13 @@ struct FDoActionData
 	UPROPERTY(EditAnywhere)
 	FVector EffectScale = FVector::OneVector; // Effect 크기 기본값 1 설정
 
+	UPROPERTY(EditAnywhere)
+	class USoundCue* FireSound;
+
+	UPROPERTY(EditAnywhere)
+	class USoundCue* EmptySound;
+	
+
 public:
 	void DoAction(class ACharacter* InOwner);
 	

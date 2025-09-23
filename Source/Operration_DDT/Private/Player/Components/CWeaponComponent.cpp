@@ -136,7 +136,7 @@ void UCWeaponComponent::SetRevolverMode()
 
 void UCWeaponComponent::DoAction()
 {
-	CLog::Print("DoAction Called - Type: " + FString::FromInt((int32)Type));
+	//CLog::Print("DoAction Called - Type: " + FString::FromInt((int32)Type));
 	
 	// Unarmed 모드일 때는 아무것도 하지 않음
 	if (IsUnarmedMode())

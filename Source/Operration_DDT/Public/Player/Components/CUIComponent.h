@@ -52,6 +52,12 @@ public:
 	UFUNCTION()
 	void OnPlayerDeathCallAnimation();
 
+	UPROPERTY(EditDefaultsOnly, Category = "Sound")
+	class USoundCue* RespawnSound;
+
+	UFUNCTION()
+	void OnDeathAnimationEnd();
+
 
 private:
 	class ADDTPlayer* OwnerCharater;

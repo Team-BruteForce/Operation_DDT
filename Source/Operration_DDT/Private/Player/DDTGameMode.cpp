@@ -56,7 +56,8 @@ void ADDTGameMode::BeginPlay()
 
 void ADDTGameMode::LinkedMaintoLoading()
 {
-	MainUI->RemoveFromParent();
+	if (MainUI->IsInViewport())
+		MainUI->RemoveFromParent();
 	LoadingUI->AddToViewport();
 	LoadingUI->PlayLoadingAnimation();
 }
