@@ -73,10 +73,7 @@ void UCEnemyDamageComponent::DealDamageInRadius(FVector Origin, float Radius)
 	}
 
 	// 디버그 시각화 (개발 중에만 사용)
-	if (GEngine)
-	{
-		DrawDebugSphere(GetWorld(), Origin, Radius, 12, FColor::Red, false, 2.0f);
-	}
+	
 }
 
 void UCEnemyDamageComponent::SetDamageAmount(float NewDamageAmount)
@@ -105,11 +102,7 @@ void UCEnemyDamageComponent::ProcessDamage(AActor* TargetActor)
 			IDamageable::Execute_TakeDamage(TargetActor, DamageAmount);
 			
 			// 디버그 출력
-			if (GEngine)
-			{
-				FString DebugMessage = FString::Printf(TEXT("Dealt %.1f damage to %s"), DamageAmount, *TargetActor->GetName());
-				GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Green, DebugMessage);
-			}
+			
 		}
 	}
 }

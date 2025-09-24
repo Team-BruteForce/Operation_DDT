@@ -19,18 +19,9 @@ void UCSkeletonComboAttackEndNotify::Notify(USkeletalMeshComponent* MeshComp, UA
 		// 콤보 공격 완료 알림
 		SkeletonEnemy->NotifyComboAttackCompleted();
 		
-		// 디버그 출력
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, TEXT("Combo Attack Completed - Blackboard Updated"));
-		}
+
 	}
 	else
 	{
-		// 디버그 메시지 출력
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("CSkeletonComboAttackEndNotify: SkeletonEnemy not found!"));
-		}
 	}
 }

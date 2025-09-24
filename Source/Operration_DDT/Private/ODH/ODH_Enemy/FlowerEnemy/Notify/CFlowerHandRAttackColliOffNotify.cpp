@@ -13,23 +13,10 @@ void UCFlowerHandRAttackColliOffNotify::Notify(USkeletalMeshComponent* MeshComp,
 {
 	Super::Notify(MeshComp, Animation, EventReference);
 
-	// ¸Þ½Ã ÄÄÆ÷³ÍÆ®ÀÇ ¼ÒÀ¯ÀÚ°¡ ÇÃ¶ó¿ö ¿¡³Ê¹ÌÀÎÁö È®ÀÎ
+	// ï¿½Þ½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ú°ï¿½ ï¿½Ã¶ï¿½ï¿½ ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½
 	if (ACFlowerEnemy* FlowerEnemy = Cast<ACFlowerEnemy>(MeshComp->GetOwner()))
 	{
 		FlowerEnemy->DisableHandRAttackCollision();
 
-		// µð¹ö±× Ãâ·Â
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Cyan, TEXT("Hand R Attack Collision Off"));
-		}
-		else
-		{
-			// µð¹ö±× ¸Þ½ÃÁö Ãâ·Â
-			if (GEngine)
-			{
-				GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("CSkeletonDashAttackEndNotify: FlowerEnemy not found!"));
-			}
-		}
 	}
 }

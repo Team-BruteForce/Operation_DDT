@@ -117,12 +117,7 @@ void ACFlowerProjectile::ActivateProjectile(FVector InStartLocation, FVector InT
 	// 현재 속도를 초기 속도로 설정
 	CurrentVelocity = InitialVelocity;
 
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Green, 
-			FString::Printf(TEXT("FlowerProjectile Activated: Start(%s) Target(%s)"), 
-			*InStartLocation.ToString(), *InTargetLocation.ToString()));
-	}
+
 }
 
 void ACFlowerProjectile::DeactivateProjectile()
@@ -144,10 +139,7 @@ void ACFlowerProjectile::DeactivateProjectile()
 	FlightTime = 0.0f;
 	CurrentVelocity = FVector::ZeroVector;
 
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("FlowerProjectile Deactivated"));
-	}
+
 
 	// 풀 매니저로 반환
 	ReturnToPool();
@@ -158,10 +150,7 @@ void ACFlowerProjectile::ReturnToPool()
 	if (PoolManager)
 	{
 		PoolManager->ReleaseProjectile(this);
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Blue, TEXT("FlowerProjectile Returned to Pool"));
-		}
+
 	}
 }
 
@@ -182,20 +171,12 @@ void ACFlowerProjectile::CalculateTrajectory()
 	if (HorizontalDistance < 500.0f) // 가까운 거리
 	{
 		AngleDeg = 30.0f; // 낮은 각도
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, 
-				FString::Printf(TEXT("FlowerProjectile: 가까운 거리 (%.0fcm) - 각도: %.1f도"), HorizontalDistance, AngleDeg));
-		}
+
 	}
 	else if (HorizontalDistance < 1000.0f) // 중간 거리
 	{
 		AngleDeg = 45.0f; // 기본 각도
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, 
-				FString::Printf(TEXT("FlowerProjectile: 중간 거리 (%.0fcm) - 각도: %.1f도"), HorizontalDistance, AngleDeg));
-		}
+
 	}
 	else // 먼 거리
 	{
@@ -203,12 +184,7 @@ void ACFlowerProjectile::CalculateTrajectory()
 		float MaxHeight = 50.0f;
 		float MaxAngle = FMath::RadiansToDegrees(FMath::Atan(MaxHeight / HorizontalDistance));
 		AngleDeg = FMath::Clamp(MaxAngle, 30.0f, 45.0f); // 최소 30도, 최대 45도로 줄임
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, 
-				FString::Printf(TEXT("FlowerProjectile: 먼 거리 (%.0fcm) - 계산된각도: %.1f도, 최종각도: %.1f도, 최대높이: %.0fcm"), 
-					HorizontalDistance, MaxAngle, AngleDeg, MaxHeight));
-		}
+
 	}
 
 	// 거리에 따른 속도 조절
@@ -315,11 +291,7 @@ void ACFlowerProjectile::OnProjectileHit(UPrimitiveComponent* HitComp, AActor* O
             }
 
 
-			if (GEngine)
-			{
-				GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, 
-					FString::Printf(TEXT("FlowerProjectile Hit Player: %f Damage"), Damage));
-			}
+
 		}
 	}
 
@@ -354,11 +326,7 @@ void ACFlowerProjectile::OnProjectileBeginOverlap(UPrimitiveComponent* Overlappe
             }
 
 
-			if (GEngine)
-			{
-				GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, 
-					FString::Printf(TEXT("FlowerProjectile Overlap Player: %f Damage"), Damage));
-			}
+
 
 			// 플레이어와 충돌 시 프로젝타일 비활성화
 			DeactivateProjectile();

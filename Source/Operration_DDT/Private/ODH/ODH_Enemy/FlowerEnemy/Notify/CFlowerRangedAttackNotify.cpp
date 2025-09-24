@@ -16,7 +16,7 @@ void UCFlowerRangedAttackNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimS
 {
 	Super::Notify(MeshComp, Animation, EventReference);
 
-	// ¸Þ½Ã ÄÄÆ÷³ÍÆ®ÀÇ ¼ÒÀ¯ÀÚ°¡ ÇÃ¶ó¿ö ¿¡³Ê¹ÌÀÎÁö È®ÀÎ
+	// ï¿½Þ½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ú°ï¿½ ï¿½Ã¶ï¿½ï¿½ ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½
 	if (ACFlowerEnemy* FlowerEnemy = Cast<ACFlowerEnemy>(MeshComp->GetOwner()))
 	{
 		ACFlowerEnemyAIController* FlowerAIController = Cast<ACFlowerEnemyAIController>(FlowerEnemy->GetController());
@@ -25,7 +25,7 @@ void UCFlowerRangedAttackNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimS
 			UBlackboardComponent* BlackboardComp = FlowerAIController->GetBlackboardComponent();
 			if (BlackboardComp)
 			{
-				// ÇöÀç °ÔÀÌÁö °ª °¡Á®¿À±â
+				// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 				UObject* BlackboardObject = BlackboardComp->GetValueAsObject("TargetPlayer");
 				if (BlackboardObject)
 				{
@@ -36,18 +36,6 @@ void UCFlowerRangedAttackNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimS
 
 		FlowerEnemy->SpawnRangedProjectile(UGameplayStatics::GetPlayerPawn(GetWorld(), 0));
 
-		// µð¹ö±× Ãâ·Â
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Cyan, TEXT("Dash Attack Collision Off"));
-		}
-		else
-		{
-			// µð¹ö±× ¸Þ½ÃÁö Ãâ·Â
-			if (GEngine)
-			{
-				GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("CSkeletonDashAttackEndNotify: FlowerEnemy not found!"));
-			}
-		}
+
 	}
 }

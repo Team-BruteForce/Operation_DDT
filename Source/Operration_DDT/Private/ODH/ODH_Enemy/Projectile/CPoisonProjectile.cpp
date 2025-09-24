@@ -102,12 +102,7 @@ void ACPoisonProjectile::ActivateProjectile(FVector InStartLocation, FVector InT
 	MovementPhase = 0; // 위로 올라가기 단계
 	PhaseTime = 0.0f;
 
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Magenta, 
-			FString::Printf(TEXT("PoisonProjectile Activated: Start(%s) Target(%s)"), 
-			*InStartLocation.ToString(), *InTargetLocation.ToString()));
-	}
+
 }
 
 void ACPoisonProjectile::DeactivateProjectile()
@@ -129,10 +124,7 @@ void ACPoisonProjectile::DeactivateProjectile()
 	MovementPhase = 0;
 	PhaseTime = 0.0f;
 
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("PoisonProjectile Deactivated"));
-	}
+
 
 	// 풀 매니저로 반환
 	ReturnToPool();
@@ -143,10 +135,7 @@ void ACPoisonProjectile::ReturnToPool()
 	if (PoolManager)
 	{
 		PoolManager->ReleaseProjectile(this);
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Blue, TEXT("PoisonProjectile Returned to Pool"));
-		}
+
 	}
 }
 
@@ -263,11 +252,7 @@ void ACPoisonProjectile::SpawnPoisonArea(FVector Location)
 			// PoisonArea 활성화
 			PooledPoisonArea->ActivatePoisonArea(10.0f); // 10초간 지속
 
-			if (GEngine)
-			{
-				GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Green, 
-					FString::Printf(TEXT("PoisonArea spawned from pool at %s"), *Location.ToString()));
-			}
+
 			return;
 		}
 	}
@@ -275,11 +260,7 @@ void ACPoisonProjectile::SpawnPoisonArea(FVector Location)
 	// 풀을 사용하지 못하면 기존 스폰 방식으로 폴백
 	if (!PoisonAreaClass)
 	{
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, 
-				TEXT("PoisonAreaClass not set in PoisonProjectile!"));
-		}
+
 		return;
 	}
 
@@ -300,19 +281,11 @@ void ACPoisonProjectile::SpawnPoisonArea(FVector Location)
 		// PoisonArea 활성화
 		SpawnedPoisonArea->ActivatePoisonArea(10.0f); // 10초간 지속
 
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Green, 
-				FString::Printf(TEXT("PoisonArea spawned (fallback) at %s"), *Location.ToString()));
-		}
+
 	}
 	else
 	{
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, 
-				TEXT("Failed to spawn PoisonArea!"));
-		}
+
 	}
 }
 

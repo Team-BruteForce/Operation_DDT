@@ -19,18 +19,9 @@ void UCFlowerDashAttackEndNotify::Notify(USkeletalMeshComponent* MeshComp, UAnim
 		// 대시 공격 완료 알림
 		FlowerEnemy->NotifyDashAttackCompleted();
 		
-		// 디버그 출력
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Cyan, TEXT("Flower Dash Attack Completed - Blackboard Updated"));
-		}
+
 	}
 	else
 	{
-		// 디버그 메시지 출력
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("CFlowerDashAttackEndNotify: FlowerEnemy not found!"));
-		}
 	}
 }

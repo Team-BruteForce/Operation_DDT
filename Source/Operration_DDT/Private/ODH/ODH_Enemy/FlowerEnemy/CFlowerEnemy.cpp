@@ -862,10 +862,6 @@ void ACFlowerEnemy::OnDeath()
 	{
 		if (IsValid(this))
 		{
-			if (GEngine)
-			{
-				GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("Flower Enemy removed from game!"));
-			}
 			// 블루프린트에서 구현된 흡수 애니메이션 실행
 			//StartAbsorbAnimation();
 			//SetActorEnableCollision(false);

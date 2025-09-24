@@ -19,18 +19,9 @@ void UCSkeletonDashAttackEndNotify::Notify(USkeletalMeshComponent* MeshComp, UAn
 		// 대시 공격 완료 알림
 		SkeletonEnemy->NotifyDashAttackCompleted();
 		
-		// 디버그 출력
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Cyan, TEXT("Dash Attack Completed - Blackboard Updated"));
-		}
+
 	}
 	else
 	{
-		// 디버그 메시지 출력
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("CSkeletonDashAttackEndNotify: SkeletonEnemy not found!"));
-		}
 	}
 }

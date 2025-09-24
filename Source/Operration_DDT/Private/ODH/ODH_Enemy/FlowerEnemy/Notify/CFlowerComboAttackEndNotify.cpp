@@ -19,18 +19,9 @@ void UCFlowerComboAttackEndNotify::Notify(USkeletalMeshComponent* MeshComp, UAni
 		// 콤보 공격 완료 알림
 		FlowerEnemy->NotifyComboAttackCompleted();
 		
-		// 디버그 출력
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, TEXT("Flower Combo Attack Completed - Blackboard Updated"));
-		}
+
 	}
 	else
 	{
-		// 디버그 메시지 출력
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("CFlowerComboAttackEndNotify: FlowerEnemy not found!"));
-		}
 	}
 }

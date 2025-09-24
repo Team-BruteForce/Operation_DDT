@@ -19,10 +19,6 @@ void UCFlowerDashAttackCollisionNotify::Notify(USkeletalMeshComponent* MeshComp,
 
 	else
 	{
-		// 디버그 메시지 출력
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("CFlowerDashAttackCollisionNotify: FlowerEnemy not found!"));
-		}
+		
 	}
 }

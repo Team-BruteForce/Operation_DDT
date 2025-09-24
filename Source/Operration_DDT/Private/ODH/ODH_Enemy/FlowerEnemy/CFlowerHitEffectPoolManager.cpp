@@ -26,11 +26,6 @@ void ACFlowerHitEffectPoolManager::WarmUp()
 {
 	if (!HitEffectAsset)
 	{
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, 
-				TEXT("CFlowerHitEffectPoolManager: HitEffectAsset is not set!"));
-		}
 		return;
 	}
 
@@ -44,11 +39,7 @@ void ACFlowerHitEffectPoolManager::WarmUp()
 		}
 	}
 
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Green, 
-			FString::Printf(TEXT("CFlowerHitEffectPoolManager: Pool warmed up with %d hit effects"), PoolSize));
-	}
+
 }
 
 UNiagaraComponent* ACFlowerHitEffectPoolManager::SpawnOne()
@@ -114,30 +105,17 @@ void ACFlowerHitEffectPoolManager::ReleaseHitEffect(UNiagaraComponent* HitEffect
 
 void ACFlowerHitEffectPoolManager::PlayHitEffectAtLocation(FVector HitLocation)
 {
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Magenta, 
-			FString::Printf(TEXT("CFlowerHitEffectPoolManager::PlayHitEffectAtLocation called at: %s"), *HitLocation.ToString()));
-	}
+
 
 	if (!HitEffectAsset)
 	{
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, 
-				TEXT("CFlowerHitEffectPoolManager: HitEffectAsset is not set!"));
-		}
 		return;
 	}
 
 	UNiagaraComponent* HitEffect = AcquireHitEffect();
 	if (HitEffect)
 	{
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Orange, 
-				FString::Printf(TEXT("HitEffect acquired, activating at: %s"), *HitLocation.ToString()));
-		}
+
 
 		ActivateHitEffect(HitEffect, HitLocation);
 
@@ -150,19 +128,10 @@ void ACFlowerHitEffectPoolManager::PlayHitEffectAtLocation(FVector HitLocation)
 
 		HitEffectTimers.Add(HitEffect, AutoReturnTimer);
 
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, 
-				FString::Printf(TEXT("Hit Effect Played at: %s"), *HitLocation.ToString()));
-		}
+
 	}
 	else
 	{
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, 
-				TEXT("CFlowerHitEffectPoolManager: Failed to acquire HitEffect!"));
-		}
 	}
 }
 
@@ -170,19 +139,10 @@ void ACFlowerHitEffectPoolManager::ActivateHitEffect(UNiagaraComponent* HitEffec
 {
 	if (!IsValid(HitEffect))
 	{
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, 
-				TEXT("CFlowerHitEffectPoolManager::ActivateHitEffect: HitEffect is not valid!"));
-		}
 		return;
 	}
 
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Blue, 
-			FString::Printf(TEXT("Activating HitEffect at: %s"), *HitLocation.ToString()));
-	}
+
 
 	// 위치 설정
 	HitEffect->SetWorldLocation(HitLocation);
@@ -193,11 +153,7 @@ void ACFlowerHitEffectPoolManager::ActivateHitEffect(UNiagaraComponent* HitEffec
 	HitEffect->SetHiddenInGame(false);
 	HitEffect->Activate();
 
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Green, 
-			TEXT("HitEffect activated successfully!"));
-	}
+
 }
 
 void ACFlowerHitEffectPoolManager::DeactivateHitEffect(UNiagaraComponent* HitEffect)

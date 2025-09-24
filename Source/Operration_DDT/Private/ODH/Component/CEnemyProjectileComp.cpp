@@ -299,12 +299,7 @@ void UCEnemyProjectileComp::DealProjectileDamage(AActor* HitActor)
 		UGameplayStatics::PlaySoundAtLocation(GetWorld(), HitSound, HitActor->GetActorLocation());
 	}
 
-	// 디버그 출력
-	if (GEngine)
-	{
-		FString DebugMessage = FString::Printf(TEXT("Projectile Hit: %s with %.1f damage!"), *HitActor->GetName(), Damage);
-		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Blue, DebugMessage);
-	}
+
 }
 
 void UCEnemyProjectileComp::RegisterCollisionComponent(UPrimitiveComponent* CollisionComponent)
@@ -329,12 +324,7 @@ void UCEnemyProjectileComp::RegisterCollisionComponent(UPrimitiveComponent* Coll
 	// 블루프린트 콜리전 사용 모드로 전환
 	bUseBlueprintCollision = true;
 
-	// 디버그 출력
-	if (GEngine)
-	{
-		FString DebugMessage = FString::Printf(TEXT("Registered Collision Component: %s"), *CollisionComponent->GetName());
-		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, DebugMessage);
-	}
+
 }
 
 void UCEnemyProjectileComp::OnBlueprintCollisionOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
