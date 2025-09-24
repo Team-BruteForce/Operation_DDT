@@ -64,6 +64,11 @@ void UCSoundCollectionComponent::PlayRangedAttackSound()
 	PlaySoundInternal(RangedAttackSound);
 }
 
+void UCSoundCollectionComponent::PlayRangedAttackHitSound()
+{
+    PlaySoundInternal(RangedAttackHitSound);
+}
+
 void UCSoundCollectionComponent::PlayHeadOpenSound()
 {
 	PlaySoundInternal(HeadOpenSound);

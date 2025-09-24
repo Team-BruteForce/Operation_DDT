@@ -84,15 +84,8 @@ void UShakeAndSinkComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	const float EasedAlpha = UKismetMathLibrary::Ease(0.0f, 1.0f, Alpha, EEasingFunc::EaseInOut);
 	const float SinkOffset = -SinkDistance * EasedAlpha; // downward along -Z
 
-	// Shake: simple sin-based vertical jitter, can add horizontal subtle noise
-	float ShakeOffsetZ = 0.0f;
-	if (ShakeAmplitude > 0.0f && ShakeFrequency > 0.0f)
-	{
-		const float Time = GetWorld() ? GetWorld()->GetTimeSeconds() : SinkElapsed;
-		ShakeOffsetZ = FMath::Sin(Time * 2.0f * PI * ShakeFrequency) * ShakeAmplitude;
-	}
-
-	FVector TargetLocation = InitialLocation + FVector(0.0f, 0.0f, SinkOffset + ShakeOffsetZ);
+	// Apply only sinking without shake
+	FVector TargetLocation = InitialLocation + FVector(0.0f, 0.0f, SinkOffset);
 	OwnerActor->SetActorLocation(TargetLocation, false, nullptr, ETeleportType::TeleportPhysics);
 
 	if (Alpha >= 1.0f)

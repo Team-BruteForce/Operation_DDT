@@ -15,6 +15,7 @@
 #include "UObject/UnrealType.h"
 #include "Player/DDTPlayer.h"
 #include "NiagaraFunctionLibrary.h"
+#include "ODH/Component/CSoundCollectionComponent.h"
 
 namespace
 {
@@ -345,6 +346,11 @@ void UCEnemyProjectileComp::OnBlueprintCollisionOverlap(UPrimitiveComponent* Ove
 		// 투사체 파괴
 		if (AActor* OwnerActor = GetOwner())
 		{
+            if (UCSoundCollectionComponent* SoundComp = OwnerActor->FindComponentByClass<UCSoundCollectionComponent>())
+            {
+                SoundComp->PlayRangedAttackHitSound();
+            }
+			
 			if (UWorld* World = GetWorld())
 			{
 				if (ACSkullRangedATKManager* Pool = FindSkullRangedATKManager(World))

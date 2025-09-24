@@ -149,4 +149,19 @@ private:
     // 파괴 타이머 핸들
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Destroy", meta = (AllowPrivateAccess = "true"))
     FTimerHandle DestroyTimerHandle;
+
+    // 하강 연출 설정 (에디터에서 조절)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sink", meta = (AllowPrivateAccess = "true"))
+    float SinkDistanceOnDestroy = 100.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sink", meta = (AllowPrivateAccess = "true"))
+    float SinkDurationOnDestroy = 1.5f;
+
+    // 아이템 드랍이 이미 수행되었는지 여부
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State", meta = (AllowPrivateAccess = "true"))
+    bool bItemDropped = false;
+
+    // 누적 타격 횟수 (홀수일 때 드랍)
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State", meta = (AllowPrivateAccess = "true"))
+    int32 HitCount = 0;
 };

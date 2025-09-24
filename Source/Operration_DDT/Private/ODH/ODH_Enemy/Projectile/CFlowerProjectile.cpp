@@ -14,6 +14,7 @@
 #include "Player/DDTPlayer.h"
 #include "ODH/ODH_Enemy/Interface/IDamageable.h"
 #include "../../Engine/Classes/Engine/DamageEvents.h"
+#include "ODH/Component/CSoundCollectionComponent.h"
 
 // Sets default values
 ACFlowerProjectile::ACFlowerProjectile()
@@ -289,9 +290,15 @@ void ACFlowerProjectile::OnProjectileHit(UPrimitiveComponent* HitComp, AActor* O
                 const FVector EffectLocation = Player->GetActorLocation() + HitEffectOffset;
                 UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), HitEffect, EffectLocation);
             }
+		}
+	}
 
-
-
+	// 오너의 사운드 콜렉션이 있으면 원거리 피격 사운드 재생
+	if (AActor* OwnerActor = GetOwner())
+	{
+		if (UCSoundCollectionComponent* SoundComp = OwnerActor->FindComponentByClass<UCSoundCollectionComponent>())
+		{
+			SoundComp->PlayRangedAttackHitSound();
 		}
 	}
 

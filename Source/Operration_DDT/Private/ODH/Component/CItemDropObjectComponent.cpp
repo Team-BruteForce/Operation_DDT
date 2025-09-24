@@ -3,6 +3,7 @@
 #include "Engine/World.h"
 #include "TimerManager.h"
 #include "Player/CPlayerBullet.h"
+#include "ODH/Component/ShakeAndSinkComponent.h"
 
 UCItemDropObjectComponent::UCItemDropObjectComponent()
 {
@@ -12,6 +13,7 @@ UCItemDropObjectComponent::UCItemDropObjectComponent()
     CurrentHealth = MaxHealth;
     CurrentRespawnTimer = 0.0f;
     bIsDestroyed = false;
+    bItemDropped = false;
 }
 
 void UCItemDropObjectComponent::BeginPlay()
@@ -61,6 +63,25 @@ void UCItemDropObjectComponent::TakeDamage(float DamageAmount)
 {
     UE_LOG(LogTemp, Warning, TEXT("UCItemDropObjectComponent::TakeDamage called with damage: %f"), DamageAmount);
     
+    // 하강 연출 시작 (지연 0, 떨림 0) - 에디터 설정값 반영
+    if (AActor* Owner = GetOwner())
+    {
+        UShakeAndSinkComponent* EffectComp = Owner->FindComponentByClass<UShakeAndSinkComponent>();
+        if (!EffectComp)
+        {
+            EffectComp = NewObject<UShakeAndSinkComponent>(Owner);
+            if (EffectComp)
+            {
+                EffectComp->RegisterComponent();
+            }
+        }
+
+        if (EffectComp)
+        {
+            EffectComp->StartEffect(0.0f, SinkDistanceOnDestroy, SinkDurationOnDestroy, 0.0f, 0.0f);
+        }
+    }
+    
     // 이미 파괴된 상태이거나 데미지가 0 이하면 무시
     if (bIsDestroyed || DamageAmount <= 0.0f)
     {
@@ -68,7 +89,14 @@ void UCItemDropObjectComponent::TakeDamage(float DamageAmount)
                bIsDestroyed ? TEXT("true") : TEXT("false"), DamageAmount);
         return;
     }
-    
+
+    // 타격 횟수 증가 후 홀수 타격일 때만 아이템 드랍
+    HitCount++;
+    if ((HitCount % 2) == 1)
+    {
+        ExecuteItemDrop();
+    }
+
     UE_LOG(LogTemp, Warning, TEXT("Taking damage: %f, Current health before: %f"), DamageAmount, CurrentHealth);
     
     // 체력 감소
@@ -100,6 +128,8 @@ void UCItemDropObjectComponent::RespawnObject()
     
     // 파괴 상태 해제
     bIsDestroyed = false;
+    bItemDropped = false;
+    HitCount = 0;
     
     // 리스폰 타이머 리셋
     CurrentRespawnTimer = 0.0f;
@@ -124,15 +154,17 @@ void UCItemDropObjectComponent::HandleObjectDestroyed()
     
     UE_LOG(LogTemp, Log, TEXT("UCItemDropObjectComponent: Object destroyed - %s"), 
            *GetOwner()->GetName());
+
     
-    // 파괴 지연시간 후에 Mesh 숨기고 리스폰 타이머 시작
+
+    // 하강 중 6초 후 메쉬 숨김이 적용되므로, 그 시점에 파괴 처리 콜백 실행
     if (GetWorld())
     {
         GetWorld()->GetTimerManager().SetTimer(
             DestroyTimerHandle,
             this,
             &UCItemDropObjectComponent::DelayedDestroy,
-            DestroyDelay,
+            6.0f,
             false
         );
     }
@@ -276,5 +308,5 @@ void UCItemDropObjectComponent::SetMeshComponent(UStaticMeshComponent* MeshComp)
 void UCItemDropObjectComponent::TestTakeDamage()
 {
     UE_LOG(LogTemp, Warning, TEXT("UCItemDropObjectComponent: TestTakeDamage called"));
-    TakeDamage(50.0f);
+    TakeDamage(1.0f);
 }

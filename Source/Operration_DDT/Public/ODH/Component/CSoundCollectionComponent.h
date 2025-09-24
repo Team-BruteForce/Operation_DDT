@@ -45,6 +45,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound Collection")
 	USoundBase* RangedAttackSound;
 
+	// 원거리 공격 피격 사운드
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound Collection")
+	USoundBase* RangedAttackHitSound;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound Collection")
 	USoundBase* HeadOpenSound;
 
@@ -78,6 +82,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Sound Collection")
 	void PlayRangedAttackSound();
+
+	UFUNCTION(BlueprintCallable, Category = "Sound Collection")
+	void PlayRangedAttackHitSound();
 
 	UFUNCTION(BlueprintCallable, Category = "Sound Collection")
 	void PlayHeadOpenSound();
