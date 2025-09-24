@@ -33,6 +33,12 @@ public:
 
 	void InitUIWidget();
 
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<class UUserWidget> UCPauseWidgetUI;
+
+	UPROPERTY()
+	class UCPauseWidget* pauseWidget;
+
 	//델리게이트 핸들러
 	UFUNCTION()
 	void OnStaminaChanged(float prevStamina, float nowStamina, float maxStamina);

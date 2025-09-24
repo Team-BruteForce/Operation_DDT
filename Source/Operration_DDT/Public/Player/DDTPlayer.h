@@ -76,6 +76,9 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Input")
 	class UInputAction* IA_Sprint;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	class UInputAction* IA_Pause;
 	
 #pragma endregion 
  
@@ -156,10 +159,12 @@ private:
 	void Reload();
 	void Heal();
 
+
 public:
 	void End_Rolling();
 	void End_Hitted();
 	void End_Healing();
 	void End_Reload();
 
+	void Pause();
 };

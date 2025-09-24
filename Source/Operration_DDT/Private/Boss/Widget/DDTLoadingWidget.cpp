@@ -31,7 +31,7 @@ void UDDTLoadingWidget::EndLoading()
 	APlayerController* C=Cast<APlayerController>(GetWorld()->GetFirstPlayerController());
 	FInputModeGameOnly InputMode;
 	C->SetInputMode(InputMode);
-	C->bShowMouseCursor=false;
+	C->bShowMouseCursor = false;
 	//PlayAnimation(OrbLoopAnimation, 0.f, 1, EUMGSequencePlayMode::Reverse, 1.22f);
 	
 

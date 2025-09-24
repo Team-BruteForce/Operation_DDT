@@ -45,6 +45,12 @@ public:
 	UPROPERTY(visibleAnywhere)
 	class UNiagaraComponent* BulletTrailComp;
 	
+	UPROPERTY(EditDefaultsOnly, Category = "VFX")
+    class UNiagaraSystem* BulletImpactSystem;
+
+    UPROPERTY(visibleAnywhere)
+    class UNiagaraComponent* BulletImpactComp;
+
 
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "Default")
 	float LifeTime = 5.f;
