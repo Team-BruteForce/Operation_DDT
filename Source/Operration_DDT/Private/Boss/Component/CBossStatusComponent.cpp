@@ -226,10 +226,6 @@ void UCBossStatusComponent::InitializeAIComponents()
 	if (AIC)
 	{
 		StateTreeComp = CHelpers::GetComponent<UStateTreeAIComponent>(AIC);
-		if (StateTreeComp)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("BossStatusComponent: AI 컴포넌트 초기화 완료"));
-		}
 	}
 }
 

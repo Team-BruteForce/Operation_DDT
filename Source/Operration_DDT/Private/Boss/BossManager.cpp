@@ -55,6 +55,11 @@ void ABossManager::Tick(float DeltaTime)
  */
 void ABossManager::ResetBossCompletely()
 {
+	// 보스 배경음악 정지
+	if (SpawnedBoss)
+	{
+		SpawnedBoss->StopBossBGM();
+	}
 
 	SpawnedBoss->BossWidget->RemoveFromParent();
 
@@ -171,21 +176,14 @@ void ABossManager::OnTriggerBoxOverlapBegin(UPrimitiveComponent* OverlappedComp,
 	if (BossStartEventTag.IsValid())
 	{
 		StateTreeComp->SendStateTreeEvent(BossStartEventTag);
-		UE_LOG(LogTemp, Warning, TEXT("BossManager: StateTree 이벤트 전송 완료: %s"), 
-			*BossStartEventTag.ToString());
-
-
 		
 		// 보스 시작 후 콜리전 비활성화 (중복 트리거 방지)
 		TriggerBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		UE_LOG(LogTemp, Warning, TEXT("🔒 트리거 콜리전 비활성화 (보스 시작됨)"));
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("BossManager: BossStartEventTag가 설정되지 않았습니다!"));
 	}
 	SpawnedBoss->ShowBossStatusWidget();
 	SpawnedBoss->HPUpdate();
+	
+	SpawnedBoss->PlayBossBGM(); // 보스 배경음악 재생
 }
 
 /**

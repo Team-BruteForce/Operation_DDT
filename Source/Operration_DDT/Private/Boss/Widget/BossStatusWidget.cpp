@@ -1,8 +1,11 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Boss/Widget/BossStatusWidget.h"
+
+#include "Boss/CBoss.h"
 #include "Components/ProgressBar.h"
 #include "Components/WidgetSwitcher.h"
+#include "Kismet/GameplayStatics.h"
 
 void UBossStatusWidget::NativeConstruct()
 {
@@ -11,6 +14,9 @@ void UBossStatusWidget::NativeConstruct()
 	BindToAnimationFinished(FadeIn,FCompleteUIFadeIn);
 	FCompleteUIFadeOut.BindDynamic(this,&UBossStatusWidget::EndWidget);
 	BindToAnimationFinished(FadeOut,FCompleteUIFadeOut);
+	FBlackFadeIn.BindDynamic(Owner,&ACBoss::RestartUI);
+	BindToAnimationFinished(BlackBoard,FBlackFadeIn);
+	
 }
 
 void UBossStatusWidget::UpdateBossHP(float CurrentHPValue, float MaxHPValue)
@@ -50,6 +56,11 @@ void UBossStatusWidget::SwitchBossCompleteUI()
 {
 	BossWidgetSwitcher->SetActiveWidgetIndex(2);
 	FadeInHandler();
+	
+	if (VictorySound && GetWorld())
+	{
+		UGameplayStatics::PlaySound2D(GetWorld(), VictorySound);
+	}
 }
 
 void UBossStatusWidget::FadeInHandler()
@@ -69,6 +80,12 @@ void UBossStatusWidget::FadeOutHandler()
 }
 
 void UBossStatusWidget::EndWidget()
+{
+	auto Timer=[this](){PlayAnimation(BlackBoard);};
+	GetWorld()->GetTimerManager().SetTimer(Hander,Timer,6.0f,false);
+}
+
+void UBossStatusWidget::RestartReady()
 {
 	RemoveFromParent();
 }
