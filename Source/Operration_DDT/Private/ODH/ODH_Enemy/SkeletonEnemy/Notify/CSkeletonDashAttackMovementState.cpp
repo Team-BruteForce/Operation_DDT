@@ -21,19 +21,11 @@ void UCSkeletonDashAttackMovementState::NotifyBegin(USkeletalMeshComponent* Mesh
 		SkeletonEnemy->StartDashMovementToPlayer();
 		bIsMoving = true;
 		
-		// 디버그 출력
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, TEXT("Skeleton Enemy Dash Movement Started - Player Position Captured"));
-		}
+
 	}
 	else
 	{
-		// 디버그 메시지 출력
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("CSkeletonDashAttackMovementState: SkeletonEnemy not found!"));
-		}
+
 	}
 }
 
@@ -64,10 +56,6 @@ void UCSkeletonDashAttackMovementState::NotifyEnd(USkeletalMeshComponent* MeshCo
 		SkeletonEnemy->EndDashMovementToPlayer();
 		bIsMoving = false;
 		
-		// 디버그 출력
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Orange, TEXT("Skeleton Enemy Dash Movement Ended"));
-		}
+
 	}
 }

@@ -21,7 +21,6 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "ODH/ODH_Enemy/Component/CEnemyHealthBarComponent.h"
 #include "Player/DDTPlayer.h"
-#include "ODH/ODH_Enemy/Component/CEnemyHealthBarComponent.h"
 #include "../../UMG/Public/Components/WidgetComponent.h"
 #include "ODH/ODH_Enemy/CCombatEncounterManager.h"
 #include "Player/DDTGameMode.h"
@@ -221,7 +220,7 @@ float ACFlowerEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const& D
 		GetComponentByClass(UWidgetComponent::StaticClass())))
 	{
 		const bool bShown = WC->IsVisible(); // 월드 컴포넌트 가시성
-		if (!bShown)
+		if (!bShown && !(StatusComponent && StatusComponent->IsDead()))
 		{
 			if (UCEnemyHealthBarComponent* HB = FindComponentByClass<UCEnemyHealthBarComponent>())
 			{
@@ -863,18 +862,14 @@ void ACFlowerEnemy::OnDeath()
 	{
 		if (IsValid(this))
 		{
-			if (GEngine)
-			{
-				GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("Flower Enemy removed from game!"));
-			}
 			// 블루프린트에서 구현된 흡수 애니메이션 실행
 			//StartAbsorbAnimation();
 			//SetActorEnableCollision(false);
 			SetActorTickEnabled(false);
-// 			if (USkeletalMeshComponent* MeshComp = GetMesh())
-// 			{
-// 				MeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-// 			}
+			if (USkeletalMeshComponent* MeshComp = GetMesh())
+			{
+				MeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			}
 		}
 	});
 	GetWorldTimerManager().SetTimer(DeathTimerHandle, DestroySelf, 3.0f, false);

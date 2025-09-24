@@ -39,7 +39,34 @@ void UCItemDropComponent::TryDropItem()
         return; // 드랍 안 함
     }
 
-    // 어떤 아이템을 드랍할지 결정
+    // IsItemDropper가 true이면 두 아이템을 모두 드랍
+    if (IsItemDropper)
+    {
+        AActor* Owner = GetOwner();
+        if (!Owner) return;
+        
+        const FVector BaseLocation = Owner->GetActorLocation();
+        
+        // 총알 드랍 (왼쪽으로 약간 이동)
+        if (*BulletItemActors)
+        {
+            SpawnItemAtLocation(BulletItemActors, 
+                BaseLocation + FVector(-50, 0, 0), 
+                FRotator::ZeroRotator);
+        }
+        
+        // 체력 포션 드랍 (오른쪽으로 약간 이동)
+        if (*HealthPotionItemActors)
+        {
+            SpawnItemAtLocation(HealthPotionItemActors, 
+                BaseLocation + FVector(50, 0, 0), 
+                FRotator::ZeroRotator);
+        }
+        
+        return;
+    }
+
+    // 기존 로직: 어떤 아이템을 드랍할지 결정
     const float TypeRoll = FMath::FRand();
     const bool bDropBullet = (TypeRoll <= BulletWeight);
 

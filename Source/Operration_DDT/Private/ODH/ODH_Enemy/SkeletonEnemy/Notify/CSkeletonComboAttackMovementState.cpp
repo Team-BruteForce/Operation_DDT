@@ -18,19 +18,10 @@ void UCSkeletonComboAttackMovementState::NotifyBegin(USkeletalMeshComponent* Mes
 		SkeletonEnemy->StartComboAttackMovement();
 		bIsMoving = true;
 		
-		// 디버그 출력
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, TEXT("Combo Attack Movement Started"));
-		}
+
 	}
 	else
 	{
-		// 디버그 메시지 출력
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("CSkeletonComboAttackMovementState: SkeletonEnemy not found!"));
-		}
 	}
 }
 
@@ -61,11 +52,7 @@ void UCSkeletonComboAttackMovementState::NotifyEnd(USkeletalMeshComponent* MeshC
 		SkeletonEnemy->EndComboAttackMovement();
 		bIsMoving = false;
 		
-		// 디버그 출력
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Orange, TEXT("Combo Attack Movement Ended"));
-		}
+
 	}
 }
 

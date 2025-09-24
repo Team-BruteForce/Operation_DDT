@@ -4,25 +4,21 @@
 
 UCSkeletonLastComboMovement::UCSkeletonLastComboMovement()
 {
-	// ±âº» »ı¼ºÀÚ
+	// ê¸°ë³¸ ìƒì„±ì
 }
 
 void UCSkeletonLastComboMovement::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
 {
 	Super::Notify(MeshComp, Animation, EventReference);
 
-	// ¸Ş½Ã ÄÄÆ÷³ÍÆ®ÀÇ ¼ÒÀ¯ÀÚ°¡ ½ºÄÌ·¹Åæ ¿¡³Ê¹ÌÀÎÁö È®ÀÎ
+	// ë©”ì‹œ ì»´í¬ë„ŒíŠ¸ì˜ ì†Œìœ ìê°€ ìŠ¤ì¼ˆë ˆí†¤ ì—ë„ˆë¯¸ì¸ì§€ í™•ì¸
 	if (ACSkeletonEnemy* SkeletonEnemy = Cast<ACSkeletonEnemy>(MeshComp->GetOwner()))
 	{
-		// ¸¶Áö¸· ÄŞº¸ °ø°İ ÀüÁø ¿òÁ÷ÀÓ ½ÇÇà (¸Å°³º¯¼ö·Î ÀüÁø °Å¸® Àü´Ş)
+		// ë§ˆì§€ë§‰ ì½¤ë³´ ê³µê²© ì „ì§„ ì›€ì§ì„ ì‹¤í–‰ (ë§¤ê°œë³€ìˆ˜ë¡œ ì „ì§„ ê±°ë¦¬ ì „ë‹¬)
 		SkeletonEnemy->LastComboMovement(ForwardDistance);
 	}
 	else
 	{
-		// µğ¹ö±× ¸Ş½ÃÁö Ãâ·Â
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("CSkeletonLastComboMovement: SkeletonEnemy not found!"));
-		}
+		
 	}
 }

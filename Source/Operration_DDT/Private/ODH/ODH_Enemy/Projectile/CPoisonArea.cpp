@@ -118,11 +118,7 @@ void ACPoisonArea::ActivatePoisonArea(float Duration)
 	// 콜리전 반경 업데이트
 	CollisionComponent->SetSphereRadius(AreaRadius);
 
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Green, 
-			FString::Printf(TEXT("PoisonArea Activated for %.1f seconds"), RemainingDuration));
-	}
+
 }
 
 void ACPoisonArea::DeactivatePoisonArea()
@@ -146,10 +142,7 @@ void ACPoisonArea::DeactivatePoisonArea()
 	RemainingDuration = 0.0f;
 	DamageTimer = 0.0f;
 
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("PoisonArea Deactivated"));
-	}
+
 
 	// 풀 매니저로 반환
 	ReturnToPool();
@@ -160,10 +153,7 @@ void ACPoisonArea::ReturnToPool()
 	if (PoolManager)
 	{
 		PoolManager->ReleasePoisonArea(this);
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Blue, TEXT("PoisonArea Returned to Pool"));
-		}
+
 	}
 	else
 	{
@@ -190,11 +180,7 @@ void ACPoisonArea::OnPoisonAreaBeginOverlap(UPrimitiveComponent* OverlappedCompo
 		{
 			PlayersInArea.Add(OtherActor);
 			
-			if (GEngine)
-			{
-				GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, 
-					FString::Printf(TEXT("Player entered Poison Area: %s"), *OtherActor->GetName()));
-			}
+
 		}
 	}
 }
@@ -210,11 +196,7 @@ void ACPoisonArea::OnPoisonAreaEndOverlap(UPrimitiveComponent* OverlappedCompone
 		// 목록에서 제거
 		PlayersInArea.Remove(OtherActor);
 		
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, 
-				FString::Printf(TEXT("Player left Poison Area: %s"), *OtherActor->GetName()));
-		}
+
 	}
 }
 
@@ -246,11 +228,7 @@ void ACPoisonArea::ApplyDamageToPlayer(AActor* Player)
 
 	Player->TakeDamage(PoisonDamage, DamageEvent, nullptr, this);
 
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Red, 
-			FString::Printf(TEXT("Poison Damage Applied: %.1f to %s"), PoisonDamage, *Player->GetName()));
-	}
+
 }
 
 void ACPoisonArea::DrawDebugArea()

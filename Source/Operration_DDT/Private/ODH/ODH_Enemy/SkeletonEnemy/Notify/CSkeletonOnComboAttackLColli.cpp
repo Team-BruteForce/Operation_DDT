@@ -13,24 +13,15 @@ void UCSkeletonOnComboAttackLColli::Notify(USkeletalMeshComponent* MeshComp, UAn
 {
 	Super::Notify(MeshComp, Animation, EventReference);
 
-	// ¸Þ½Ã ÄÄÆ÷³ÍÆ®ÀÇ ¼ÒÀ¯ÀÚ°¡ ½ºÄÌ·¹Åæ ¿¡³Ê¹ÌÀÎÁö È®ÀÎ
+	// ï¿½Þ½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ú°ï¿½ ï¿½ï¿½ï¿½Ì·ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½
 	if (ACSkeletonEnemy* SkeletonEnemy = Cast<ACSkeletonEnemy>(MeshComp->GetOwner()))
 	{
-		// ÄÞº¸ °ø°Ý ¿Ï·á ¾Ë¸²
+		// ï¿½Þºï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ï·ï¿½ ï¿½Ë¸ï¿½
 		SkeletonEnemy->EnableComboLCollision();
 
-		// µð¹ö±× Ãâ·Â
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, TEXT("Enable Combo L Collision"));
-		}
+
 	}
 	else
 	{
-		// µð¹ö±× ¸Þ½ÃÁö Ãâ·Â
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("SkeletonOnComboAttackLColliNotify: SkeletonEnemy not found!"));
-		}
 	}
 }	

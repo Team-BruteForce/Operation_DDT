@@ -21,19 +21,11 @@ void UCFlowerDashAttackMovementState::NotifyBegin(USkeletalMeshComponent* MeshCo
 		FlowerEnemy->StartDashMovementToPlayer();
 		bIsMoving = true;
 		
-		// 디버그 출력
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, TEXT("Flower Enemy Dash Movement Started - Player Position Captured"));
-		}
+
 	}
 	else
 	{
-		// 디버그 메시지 출력
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("CFlowerDashAttackMovementState: FlowerEnemy not found!"));
-		}
+
 	}
 }
 
@@ -64,11 +56,7 @@ void UCFlowerDashAttackMovementState::NotifyEnd(USkeletalMeshComponent* MeshComp
 		FlowerEnemy->EndDashMovementToPlayer();
 		bIsMoving = false;
 		
-		// 디버그 출력
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Orange, TEXT("Flower Enemy Dash Movement Ended"));
-		}
+
 	}
 }
 

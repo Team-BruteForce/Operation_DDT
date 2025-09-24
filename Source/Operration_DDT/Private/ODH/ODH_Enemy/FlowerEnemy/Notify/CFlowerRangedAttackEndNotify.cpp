@@ -19,18 +19,9 @@ void UCFlowerRangedAttackEndNotify::Notify(USkeletalMeshComponent* MeshComp, UAn
 		// 원거리 공격 완료 알림
 		FlowerEnemy->NotifyRangedAttackCompleted();
 		
-		// 디버그 출력
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Magenta, TEXT("Flower Ranged Attack Completed - Blackboard Updated"));
-		}
+
 	}
 	else
 	{
-		// 디버그 메시지 출력
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("CFlowerRangedAttackEndNotify: FlowerEnemy not found!"));
-		}
 	}
 }

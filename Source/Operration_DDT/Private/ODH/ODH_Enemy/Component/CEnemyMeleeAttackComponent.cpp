@@ -31,22 +31,14 @@ void UCEnemyMeleeAttackComponent::ActivateMeleeAttack()
 {
 	bIsAttackActive = true;
 	
-	// 디버그 출력
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Orange, TEXT("Melee Attack Activated!"));
-	}
+
 }
 
 void UCEnemyMeleeAttackComponent::DeactivateMeleeAttack()
 {
 	bIsAttackActive = false;
 	
-	// 디버그 출력
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Orange, TEXT("Melee Attack Deactivated!"));
-	}
+
 }
 
 float UCEnemyMeleeAttackComponent::GetMeleeDamage() const

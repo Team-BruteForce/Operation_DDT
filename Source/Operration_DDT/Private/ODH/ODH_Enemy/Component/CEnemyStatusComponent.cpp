@@ -53,12 +53,7 @@ void UCEnemyStatusComponent::TakeDamage(float DamageAmount)
 	// 사망 여부 확인
 	CheckDeath();
 	
-	// 디버그 출력 (개발 중에만 사용)
-	if (GEngine)
-	{
-		FString DebugMessage = FString::Printf(TEXT("Enemy took %.1f damage! Current Health: %.1f"), ActualDamage, CurrentHealth);
-		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, DebugMessage);
-	}
+
 }
 
 void UCEnemyStatusComponent::Heal(float HealAmount)
@@ -138,11 +133,7 @@ void UCEnemyStatusComponent::Die()
 	// 사망 이벤트 발생
 	OnDeath.Broadcast();
 	
-	// 디버그 출력
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Enemy Died!"));
-	}
+
 	
 	// 소유자 액터가 있다면 사망 처리
 	AActor* Owner = GetOwner();
