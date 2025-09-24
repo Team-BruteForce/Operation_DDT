@@ -90,7 +90,7 @@ void UFlyingComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 
 void UFlyingComponent::StartTakeoff(float TargetHeight, float Speed)
 {
-	if (!OwnerCharacter || bIsFlying || !bCanTakeoff) return;
+	//if (!OwnerCharacter || bIsFlying || !bCanTakeoff) return;
 	CharacterMovement->SetMovementMode(MOVE_Flying);
 	bIsTakingOff = true;
 	bIsFlying = true;  // 이륙 시작 시 비행 상태로 설정

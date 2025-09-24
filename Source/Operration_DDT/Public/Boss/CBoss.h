@@ -154,6 +154,12 @@ public:
 public:
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	class UBossStatusWidget* BossWidget;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	bool IsPaseChange=false;
+
+	UPROPERTY()
+	bool flag=false;
 	/**
 	 * @brief 게임 시작 시 호출되는 함수
 	 */
