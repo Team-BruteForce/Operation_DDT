@@ -7,6 +7,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Player/DDTPlayer.h"
 #include "ODH/ODH_Enemy/Interface/AllResettable.h"
+#include "ODH/ODH_AIController/CEnemyAIController.h"
 
 ACCombatEncounterManager::ACCombatEncounterManager()
 {
@@ -105,6 +106,75 @@ void ACCombatEncounterManager::ResetCombatInZone(AActor* InstigatorActor)
 				false);
 		}
 	}
+}
+
+void ACCombatEncounterManager::AllEnemyRestart()
+{
+    // 3초 지연 후 실행되도록 타이머 설정
+    GetWorld()->GetTimerManager().ClearTimer(AllEnemyRestartTimerHandle);
+    GetWorld()->GetTimerManager().SetTimer(
+        AllEnemyRestartTimerHandle,
+        this,
+        &ACCombatEncounterManager::DoAllEnemyRestart,
+        3.0f,
+        false
+    );
+}
+
+void ACCombatEncounterManager::DoAllEnemyRestart()
+{
+    int32 RestartCount = 0;
+
+    for (const TWeakObjectPtr<APawn>& WeakPawn : RegisteredEnemies)
+    {
+        APawn* Pawn = WeakPawn.Get();
+        if (!Pawn || Pawn->IsActorBeingDestroyed())
+            continue;
+
+        if (Pawn->Implements<UAllEnemyRestart>())
+        {
+            IAllEnemyRestart::Execute_EnemyRestart(Pawn);
+            RestartCount++;
+        }
+    }
+
+    UE_LOG(LogTemp, Log, TEXT("CombatEncounterManager: Restarted %d enemies with AllEnemyRestart interface (delayed)"), RestartCount);
+}
+
+void ACCombatEncounterManager::SetAllAIsNowPlayerDead()
+{
+    for (const TWeakObjectPtr<APawn>& WeakPawn : RegisteredEnemies)
+    {
+        APawn* Pawn = WeakPawn.Get();
+        if (!Pawn)
+            continue;
+
+        if (AAIController* AI = Cast<AAIController>(Pawn->GetController()))
+        {
+            if (ACEnemyAIController* EnemyAI = Cast<ACEnemyAIController>(AI))
+            {
+                EnemyAI->SetNowPlayerDead();
+            }
+        }
+    }
+}
+
+void ACCombatEncounterManager::ClearAllAIsNowPlayerDead()
+{
+    for (const TWeakObjectPtr<APawn>& WeakPawn : RegisteredEnemies)
+    {
+        APawn* Pawn = WeakPawn.Get();
+        if (!Pawn)
+            continue;
+
+        if (AAIController* AI = Cast<AAIController>(Pawn->GetController()))
+        {
+            if (ACEnemyAIController* EnemyAI = Cast<ACEnemyAIController>(AI))
+            {
+                EnemyAI->ClearNowPlayerDead();
+            }
+        }
+    }
 }
 
 void ACCombatEncounterManager::RegisterEnemy(APawn* Enemy)

@@ -95,6 +95,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Status")
 	void Die();
 
+	// 상태 초기화 (EnemyRestart용)
+	UFUNCTION(BlueprintCallable, Category = "Status")
+	void ResetStatus();
+
 private:
 	// 체력이 0 이하로 떨어졌는지 확인
 	void CheckDeath();

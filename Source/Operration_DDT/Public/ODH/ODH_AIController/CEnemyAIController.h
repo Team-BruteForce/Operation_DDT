@@ -65,6 +65,13 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "AI")
 	bool IsAlly(AActor* Actor) const;
 
+    // 플레이어 현재 사망 상태 플래그를 활성화/해제
+    UFUNCTION(BlueprintCallable, Category = "AI|PlayerState")
+    void SetNowPlayerDead();
+
+    UFUNCTION(BlueprintCallable, Category = "AI|PlayerState")
+    void ClearNowPlayerDead();
+
 protected:
 	// AIPerception 컴포넌트
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
@@ -113,4 +120,8 @@ private:
 	// 타겟 포기 함수
 	UFUNCTION()
 	void OnTargetLost();
+
+    // 플레이어가 방금 죽은 상태인지 여부 (true면 감지 무시)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|PlayerState", meta=(AllowPrivateAccess="true"))
+    bool bIsNowPlayerDead = false;
 };

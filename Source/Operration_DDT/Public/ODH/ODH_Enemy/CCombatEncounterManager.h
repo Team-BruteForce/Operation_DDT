@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "ODH/ODH_Enemy/Interface/AllEnemyRestart.h"
 #include "CCombatEncounterManager.generated.h"
 
 class UBoxComponent;
@@ -33,6 +34,17 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Encounter")
 	void ResetCombatInZone(AActor* InstigatorActor);
 
+	// 모든 에너미들에게 EnemyRestart 인터페이스 호출
+	UFUNCTION(BlueprintCallable, Category = "Encounter")
+	void AllEnemyRestart();
+
+	// 등록된 모든 에너미 AI에 플레이어 사망 플래그 설정/해제
+	UFUNCTION(BlueprintCallable, Category = "Encounter|AI")
+	void SetAllAIsNowPlayerDead();
+
+	UFUNCTION(BlueprintCallable, Category = "Encounter|AI")
+	void ClearAllAIsNowPlayerDead();
+
 	// BP 디버그용 수집
 	UFUNCTION(BlueprintCallable, Category = "Encounter")
 	void CollectActiveEnemiesInZone_BP(TArray<APawn*>& OutEnemies) const;
@@ -50,6 +62,9 @@ private:
 	void ResetOneEnemy(APawn* Pawn, AActor* InstigatorActor) const;
 	bool TryGetHomeLocationFromPatrolArray(const AActor* Enemy, FVector& OutLocation) const;
 
+	// AllEnemyRestart 실행 본체 (타이머 콜백)
+	void DoAllEnemyRestart();
+
 	UFUNCTION()
 	void OnPlayerTriggerBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
@@ -57,6 +72,9 @@ private:
 private:
     UPROPERTY()
     TSet<TWeakObjectPtr<APawn>> RegisteredEnemies;
+
+	// AllEnemyRestart 지연 실행용 타이머 핸들
+	FTimerHandle AllEnemyRestartTimerHandle;
 };
 
 

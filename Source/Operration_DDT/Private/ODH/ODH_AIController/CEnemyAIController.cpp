@@ -65,6 +65,12 @@ void ACEnemyAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus S
 	{
 		return;
 	}
+
+    // 플레이어가 방금 사망한 상태라면 모든 감지 무시
+    if (bIsNowPlayerDead)
+    {
+        return;
+    }
 	
 	// IsPlayerInBoss가 true이면 탐색하지 않음
 	UBlackboardComponent* BlackboardComp = GetBlackboardComponent();
@@ -117,6 +123,16 @@ void ACEnemyAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus S
 			// 시야 상실 시에도 전투 이탈을 처리하지 않음 (TargetPlayer/IsInCombat 유지)
 		}
 	}
+}
+
+void ACEnemyAIController::SetNowPlayerDead()
+{
+    bIsNowPlayerDead = true;
+}
+
+void ACEnemyAIController::ClearNowPlayerDead()
+{
+    bIsNowPlayerDead = false;
 }
 
 AActor* ACEnemyAIController::GetNearestEnemy() const

@@ -15,6 +15,8 @@
 // BossManager BP 자동 탐색용
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "ODH/ODH_Enemy/Interface/AllEnemyRestart.h"
+#include "ODH/ODH_Enemy/CCombatEncounterManager.h"
 #include "Player/DDTGameMode.h"
 #include "Player/Widget/CPlayerUI.h"
 #include "Player/Components/CMagazineComponent.h"
@@ -48,7 +50,6 @@ void UCRespawnComponent::BeginPlay()
 	Magazine = CHelpers::GetComponent<UCMagazineComponent>(OwnerCharacter);
 	Stamina = CHelpers::GetComponent<UCStaminaComponent>(OwnerCharacter);
 	UIComp = CHelpers::GetComponent<UCUIComponent>(OwnerCharacter);
-	OwnerController = Cast<APlayerController>(OwnerCharacter->GetController());
 	
 	// DieDelegate 구독
 	if (OwnerCharacter && OwnerCharacter->Montages)
@@ -80,7 +81,26 @@ void UCRespawnComponent::BeginPlay()
 	{
 		CLog::Log("RespawnComponent: Cannot find BossManager in level");
 	}
-	
+
+	// CCombatEncounterManager 찾기
+	if (!CombatEncounterManager)
+	{
+		TArray<AActor*> FoundEncounterManagers;
+		UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACCombatEncounterManager::StaticClass(), FoundEncounterManagers);
+		if (FoundEncounterManagers.Num() > 0)
+		{
+			CombatEncounterManager = Cast<ACCombatEncounterManager>(FoundEncounterManagers[0]);
+		}
+	}
+
+	if (CombatEncounterManager)
+	{
+		CLog::Log("RespawnComponent: CombatEncounterManager found in level: " + CombatEncounterManager->GetName());
+	}
+	else
+	{
+		CLog::Log("RespawnComponent: Cannot find CombatEncounterManager in level");
+	}
 }
 
 
@@ -94,21 +114,17 @@ void UCRespawnComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAc
 
 void UCRespawnComponent::OnPlayerDied() 
 {
-	CLog::Log("RespawnComp) OnPlayerDied Called");
-	if (UIComp && UIComp->playerUI)
+	if (OwnerCharacter && UIComp && UIComp->playerUI)
 	{
-		if (UIComp->playerUI->OnAnimFinishedDelegate.IsBound())
-			UIComp->playerUI->OnAnimFinishedDelegate.RemoveDynamic( GetWorld()->GetAuthGameMode<ADDTGameMode>(), &ADDTGameMode::LinkedMaintoLoading);
-		
-		UIComp->playerUI->OnAnimFinishedDelegate.AddDynamic( GetWorld()->GetAuthGameMode<ADDTGameMode>(), &ADDTGameMode::LinkedMaintoLoading);
-		if (UIComp->playerUI->OnAnimFinishedDelegate.IsBound())
+		CLog::Log("OnPlayerDied) Owner, UIComp, PlayerUI");
+		ADDTGameMode* GM = GetWorld()->GetAuthGameMode<ADDTGameMode>();
+		if (GM)
 		{
-			CLog::Log("RespawnComponent: OnAnimFinishedDelegate called");
+			CLog::Log("OnPlayerDied)  GM Successed");
+			UIComp->playerUI->OnAnimFinishedDelegate.AddDynamic(GM, &ADDTGameMode::LinkedMaintoLoading);
+			CLog::Log("OnPlayerDied)  AddDynamic");
 		}
-	}
-	else
-	{
-		CLog::Log("RespawnComponent: Cannot find UIComp in level");
+		
 	}
 	
 	// 플레이어가 사망했을 때 호출되는 함수
@@ -117,9 +133,6 @@ void UCRespawnComponent::OnPlayerDied()
 	Capsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	Movement->Stop();
 	OwnerCharacter->GetCharacterMovement()->StopActiveMovement();
-	
-	OwnerController->DisableInput(OwnerController);
-	
 
 	// Call Animation
 	OnPlayerDeath.Broadcast();
@@ -131,6 +144,12 @@ void UCRespawnComponent::OnPlayerDied()
 	else
 	{
 		CLog::Log("RespawnComponent: BossManager is null, cannot reset boss");
+	}
+
+	// 플레이어가 방금 사망했음을 모든 에너미 AI에 알림(감지 차단)
+	if (CombatEncounterManager)
+	{
+		CombatEncounterManager->SetAllAIsNowPlayerDead();
 	}
 	
 	/*// 기존 타이머가 있다면 클리어
@@ -161,7 +180,6 @@ void UCRespawnComponent::RespawnPlayer()
 		return;
 	}
 	OwnerCharacter->GetCharacterMovement()->StopActiveMovement();
-	Movement->ResetDirection();
 	
 	CLog::Log("RespawnComponent: Starting respawn process...");
 	
@@ -175,8 +193,6 @@ void UCRespawnComponent::RespawnPlayer()
 	CLog::Log("RespawnComponent: Player state set to Idle and dead state reset");
 
 	Movement->Move();
-
-	OwnerController->EnableInput(OwnerController);
 	
 	// 3. HP를 최대치로 복구 (Status 컴포넌트가 있다면)
 	if (Status)
@@ -205,8 +221,19 @@ void UCRespawnComponent::RespawnPlayer()
 		
 	// 5. 부활 델리게이트 브로드캐스트
 	//OnPlayerRespawned.Broadcast();
-	
 	CLog::Log("RespawnComponent: Player respawned successfully!");
+
+	// CCombatEncounterManager를 통해 에너미들 초기화
+	if (CombatEncounterManager)
+	{
+		CombatEncounterManager->AllEnemyRestart();
+		CombatEncounterManager->ClearAllAIsNowPlayerDead();
+		CLog::Log("RespawnComponent: All enemies restarted via CombatEncounterManager");
+	}
+	else
+	{
+		CLog::Log("RespawnComponent: CombatEncounterManager is null, cannot restart enemies");
+	}
 }
 
 void UCRespawnComponent::SetRespawnLocation(FVector NewLocation)

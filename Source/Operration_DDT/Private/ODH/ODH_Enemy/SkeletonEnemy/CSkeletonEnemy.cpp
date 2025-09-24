@@ -814,13 +814,13 @@ void ACSkeletonEnemy::OnDeath()
 		if (IsValid(this))
 		{
 			// 블루프린트에서 구현된 흡수 애니메이션 실행
-			StartAbsorbAnimation();
-			SetActorEnableCollision(false);
+			//StartAbsorbAnimation();
+			//SetActorEnableCollision(false);
 			SetActorTickEnabled(false);
-			if (USkeletalMeshComponent* MeshComp = GetMesh())
-			{
-				MeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-			}
+// 			if (USkeletalMeshComponent* MeshComp = GetMesh())
+// 			{
+// 				MeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+// 			}
 		}
 	});
 	GetWorldTimerManager().SetTimer(DeathTimerHandle, DestroySelf, 3.0f, false);
