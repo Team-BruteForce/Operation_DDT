@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "ODH/ODH_Enemy/Interface/AllEnemyRestart.h"
 #include "CCombatEncounterManager.generated.h"
 
 class UBoxComponent;
@@ -32,6 +33,10 @@ public:
 	// 수동 호출용
 	UFUNCTION(BlueprintCallable, Category = "Encounter")
 	void ResetCombatInZone(AActor* InstigatorActor);
+
+	// 모든 에너미들에게 EnemyRestart 인터페이스 호출
+	UFUNCTION(BlueprintCallable, Category = "Encounter")
+	void AllEnemyRestart();
 
 	// BP 디버그용 수집
 	UFUNCTION(BlueprintCallable, Category = "Encounter")

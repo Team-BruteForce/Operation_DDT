@@ -15,6 +15,8 @@
 // BossManager BP 자동 탐색용
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "ODH/ODH_Enemy/Interface/AllEnemyRestart.h"
+#include "ODH/ODH_Enemy/CCombatEncounterManager.h"
 #include "Player/DDTGameMode.h"
 #include "Player/Widget/CPlayerUI.h"
 #include "Player/Components/CMagazineComponent.h"
@@ -79,6 +81,26 @@ void UCRespawnComponent::BeginPlay()
 	{
 		CLog::Log("RespawnComponent: Cannot find BossManager in level");
 	}
+
+	// CCombatEncounterManager 찾기
+	if (!CombatEncounterManager)
+	{
+		TArray<AActor*> FoundEncounterManagers;
+		UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACCombatEncounterManager::StaticClass(), FoundEncounterManagers);
+		if (FoundEncounterManagers.Num() > 0)
+		{
+			CombatEncounterManager = Cast<ACCombatEncounterManager>(FoundEncounterManagers[0]);
+		}
+	}
+
+	if (CombatEncounterManager)
+	{
+		CLog::Log("RespawnComponent: CombatEncounterManager found in level: " + CombatEncounterManager->GetName());
+	}
+	else
+	{
+		CLog::Log("RespawnComponent: Cannot find CombatEncounterManager in level");
+	}
 }
 
 
@@ -123,7 +145,7 @@ void UCRespawnComponent::OnPlayerDied()
 	{
 		CLog::Log("RespawnComponent: BossManager is null, cannot reset boss");
 	}
-	
+
 	/*// 기존 타이머가 있다면 클리어
 	if (GetWorld())
 	{
@@ -195,6 +217,17 @@ void UCRespawnComponent::RespawnPlayer()
 	//OnPlayerRespawned.Broadcast();
 	
 	CLog::Log("RespawnComponent: Player respawned successfully!");
+
+	// CCombatEncounterManager를 통해 에너미들 초기화
+	if (CombatEncounterManager)
+	{
+		CombatEncounterManager->AllEnemyRestart();
+		CLog::Log("RespawnComponent: All enemies restarted via CombatEncounterManager");
+	}
+	else
+	{
+		CLog::Log("RespawnComponent: CombatEncounterManager is null, cannot restart enemies");
+	}
 }
 
 void UCRespawnComponent::SetRespawnLocation(FVector NewLocation)

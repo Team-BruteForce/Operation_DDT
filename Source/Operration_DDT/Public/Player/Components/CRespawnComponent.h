@@ -5,7 +5,10 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Engine/Engine.h"
+#include "ODH/ODH_Enemy/Interface/AllEnemyRestart.h"
 #include "CRespawnComponent.generated.h"
+
+class ACCombatEncounterManager;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPlayerDeath);
 
@@ -57,6 +60,10 @@ public:
 	// 레벨에 배치된 BossManager BP 인스턴스를 드래그로 연결하거나, BeginPlay에서 자동 탐색합니다.
 	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "Ref", meta = (AllowPrivateAccess = "true"))
 	class ABossManager* BossManager;
+
+	// 레벨에 배치된 CCombatEncounterManager BP 인스턴스를 드래그로 연결하거나, BeginPlay에서 자동 탐색합니다.
+	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "Ref", meta = (AllowPrivateAccess = "true"))
+	ACCombatEncounterManager* CombatEncounterManager;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "RespawnPoint")
 	FVector BossDoorLocation = FVector(-59584.154248,-50296.910881,4538.023350);

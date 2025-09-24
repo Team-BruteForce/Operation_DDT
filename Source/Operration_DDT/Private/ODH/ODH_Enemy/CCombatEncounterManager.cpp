@@ -107,6 +107,28 @@ void ACCombatEncounterManager::ResetCombatInZone(AActor* InstigatorActor)
 	}
 }
 
+void ACCombatEncounterManager::AllEnemyRestart()
+{
+	int32 RestartCount = 0;
+	
+	// 등록된 모든 에너미들을 순회 (죽은 에너미든 살아있는 에너미든 상관없이)
+	for (const TWeakObjectPtr<APawn>& WeakPawn : RegisteredEnemies)
+	{
+		APawn* Pawn = WeakPawn.Get();
+		if (!Pawn || Pawn->IsActorBeingDestroyed())
+			continue;
+
+		// AllEnemyRestart 인터페이스를 구현한 에너미인지 확인
+		if (Pawn->Implements<UAllEnemyRestart>())
+		{
+			IAllEnemyRestart::Execute_EnemyRestart(Pawn);
+			RestartCount++;
+		}
+	}
+	
+	UE_LOG(LogTemp, Log, TEXT("CombatEncounterManager: Restarted %d enemies with AllEnemyRestart interface"), RestartCount);
+}
+
 void ACCombatEncounterManager::RegisterEnemy(APawn* Enemy)
 {
     if (!IsValid(Enemy)) return;

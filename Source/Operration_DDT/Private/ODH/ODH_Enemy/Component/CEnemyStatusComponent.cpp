@@ -162,4 +162,17 @@ void UCEnemyStatusComponent::CheckDeath()
 	}
 }
 
+void UCEnemyStatusComponent::ResetStatus()
+{
+	// 사망 상태 리셋
+	bIsDead = false;
+	
+	// 체력을 최대치로 복구
+	CurrentHealth = MaxHealth;
+	
+	// 이벤트 발생
+	OnHealthChanged.Broadcast(CurrentHealth);
+	OnMaxHealthChanged.Broadcast(MaxHealth);
+}
+
 
