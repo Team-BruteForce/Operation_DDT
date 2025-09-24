@@ -294,13 +294,10 @@ void UCEnemyProjectileComp::DealProjectileDamage(AActor* HitActor)
 		UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), HitEffect, EffectLocation);
 	}
 	
-	// 히트 사운드 재생
-	if (HitSound)
+	if (UCSoundCollectionComponent* SoundComp = OwnerActor->FindComponentByClass<UCSoundCollectionComponent>())
 	{
-		UGameplayStatics::PlaySoundAtLocation(GetWorld(), HitSound, HitActor->GetActorLocation());
+		SoundComp->PlayRangedAttackHitSound();
 	}
-
-
 }
 
 void UCEnemyProjectileComp::RegisterCollisionComponent(UPrimitiveComponent* CollisionComponent)
@@ -346,11 +343,6 @@ void UCEnemyProjectileComp::OnBlueprintCollisionOverlap(UPrimitiveComponent* Ove
 		// 투사체 파괴
 		if (AActor* OwnerActor = GetOwner())
 		{
-            if (UCSoundCollectionComponent* SoundComp = OwnerActor->FindComponentByClass<UCSoundCollectionComponent>())
-            {
-                SoundComp->PlayRangedAttackHitSound();
-            }
-			
 			if (UWorld* World = GetWorld())
 			{
 				if (ACSkullRangedATKManager* Pool = FindSkullRangedATKManager(World))
