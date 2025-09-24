@@ -22,8 +22,20 @@ void UCEnemyHealthBarComponent::BeginPlay()
 
 	StatusComponent = Owner->FindComponentByClass<UCEnemyStatusComponent>();
 
-	// Create WidgetComponent dynamically if not already present
-	WidgetComponent = Owner->FindComponentByClass<UWidgetComponent>();
+	// Create/Find dedicated WidgetComponent named "EnemyHealthBarWidget"
+	WidgetComponent = nullptr;
+	{
+		TInlineComponentArray<UWidgetComponent*> WidgetComponents;
+		Owner->GetComponents<UWidgetComponent>(WidgetComponents);
+		for (UWidgetComponent* Comp : WidgetComponents)
+		{
+			if (Comp && Comp->GetName() == TEXT("EnemyHealthBarWidget"))
+			{
+				WidgetComponent = Comp;
+				break;
+			}
+		}
+	}
 	if (WidgetComponent == nullptr)
 	{
 		WidgetComponent = NewObject<UWidgetComponent>(Owner, UWidgetComponent::StaticClass(), TEXT("EnemyHealthBarWidget"));
@@ -46,7 +58,12 @@ void UCEnemyHealthBarComponent::BeginPlay()
 	{
 		WidgetComponent->SetWidgetClass(HealthBarWidgetClass);
 		WidgetComponent->InitWidget();
-		// 처음에는 항상 비가시화
+		// 처음에는 항상 비가시화 (컴포넌트+위젯 동기화)
+		if (UUserWidget* UserWidget = WidgetComponent->GetUserWidgetObject())
+		{
+			UserWidget->SetVisibility(ESlateVisibility::Collapsed);
+		}
+		WidgetComponent->SetHiddenInGame(true);
 		WidgetComponent->SetVisibility(false);
 	}
 
@@ -65,6 +82,12 @@ void UCEnemyHealthBarComponent::BeginPlay()
 void UCEnemyHealthBarComponent::HandleHealthChanged(float NewHealth)
 {
 	UpdateWidgetPercent();
+	
+	// 에너미가 죽었다면 HP바를 숨김
+	if (StatusComponent && StatusComponent->IsDead())
+	{
+		HideHealthBar();
+	}
 }
 
 void UCEnemyHealthBarComponent::HandleMaxHealthChanged(float NewMaxHealth)
@@ -95,6 +118,12 @@ void UCEnemyHealthBarComponent::ShowHealthBar()
 {
 	if (WidgetComponent)
 	{
+		// 컴포넌트와 위젯 양쪽 가시성 동기화
+		if (UUserWidget* UserWidget = WidgetComponent->GetUserWidgetObject())
+		{
+			UserWidget->SetVisibility(ESlateVisibility::Visible);
+		}
+		WidgetComponent->SetHiddenInGame(false);
 		WidgetComponent->SetVisibility(true);
 	}
 }
@@ -103,6 +132,12 @@ void UCEnemyHealthBarComponent::HideHealthBar()
 {
 	if (WidgetComponent)
 	{
+		// 컴포넌트와 위젯 양쪽 가시성 동기화
+		if (UUserWidget* UserWidget = WidgetComponent->GetUserWidgetObject())
+		{
+			UserWidget->SetVisibility(ESlateVisibility::Collapsed);
+		}
+		WidgetComponent->SetHiddenInGame(true);
 		WidgetComponent->SetVisibility(false);
 	}
 }

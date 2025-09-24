@@ -90,12 +90,6 @@ void ADropHPPotionItem::OnPooledDeactivated()
     bCanBePickedUp = false;
     Collision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     
-    // 자동 반환 타이머 정리
-    if (GetWorld())
-    {
-        GetWorld()->GetTimerManager().ClearTimer(AutoReturnTimerHandle);
-    }
-    
     // 활성화된 이펙트를 풀에 반환
     if (ActiveEffectComponent)
     {
@@ -142,8 +136,6 @@ void ADropHPPotionItem::EnablePickup()
         }
     }
 
-    // 자동 반환 타이머 시작
-    GetWorld()->GetTimerManager().SetTimer(AutoReturnTimerHandle, this, &ADropHPPotionItem::ReturnToPool, AutoReturnTime, false);
 }
 
 void ADropHPPotionItem::EnablePickupWithoutEffect()
@@ -177,12 +169,6 @@ void ADropHPPotionItem::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AAct
 
     if (ADDTPlayer* Player = Cast<ADDTPlayer>(OtherActor))
     {
-        // 자동 반환 타이머 취소
-        if (GetWorld())
-        {
-            GetWorld()->GetTimerManager().ClearTimer(AutoReturnTimerHandle);
-        }
-        
         // 플레이어의 체력 회복 아이템 개수 증가
         if (UCStatusComponent* StatusComp = Player->GetComponentByClass<UCStatusComponent>())
         {

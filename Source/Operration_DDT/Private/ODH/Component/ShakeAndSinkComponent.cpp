@@ -56,13 +56,14 @@ void UShakeAndSinkComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 
 	ElapsedSinceStart += DeltaTime;
 
-	// After 6 seconds, disable mesh collision once
+	// After 6 seconds, hide mesh visibility once
 	if (!bCollisionDisabled && ElapsedSinceStart >= 6.0f)
 	{
 		USkeletalMeshComponent* MeshComp = OwnerActor->FindComponentByClass<USkeletalMeshComponent>();
 		if (MeshComp)
 		{
 			MeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			MeshComp->SetVisibility(false, true);
 		}
 		bCollisionDisabled = true;
 	}

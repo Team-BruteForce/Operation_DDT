@@ -93,12 +93,6 @@ void ADropBulletItem::OnPooledDeactivated()
     bCanBePickedUp = false;
     Collision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     
-    // 자동 반환 타이머 정리
-    if (GetWorld())
-    {
-        GetWorld()->GetTimerManager().ClearTimer(AutoReturnTimerHandle);
-    }
-    
     // 활성화된 이펙트를 풀에 반환
     if (ActiveEffectComponent)
     {
@@ -134,8 +128,6 @@ void ADropBulletItem::EnablePickup()
         }
     }
 
-    // 자동 반환 타이머 시작
-    GetWorld()->GetTimerManager().SetTimer(AutoReturnTimerHandle, this, &ADropBulletItem::ReturnToPool, AutoReturnTime, false);
 }
 
 void ADropBulletItem::EnablePickupWithoutEffect()
@@ -170,12 +162,6 @@ void ADropBulletItem::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor
     // 간단히 플레이어 판정: 컨트롤 가능 Pawn
     if (ADDTPlayer* Player = Cast<ADDTPlayer>(OtherActor))
     {
-        // 자동 반환 타이머 취소
-        if (GetWorld())
-        {
-            GetWorld()->GetTimerManager().ClearTimer(AutoReturnTimerHandle);
-        }
-        
         if (Player->MagazineComp)
         {
             Player->MagazineComp->LootRifleBullets(BulletAmount);

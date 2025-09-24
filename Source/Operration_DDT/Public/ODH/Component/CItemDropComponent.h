@@ -52,6 +52,10 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Drop")
     TSubclassOf<AActor> HealthPotionItemActors;
+
+    // 아이템 드로퍼 모드: true일 때 총알과 체력 포션을 모두 드랍
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Drop")
+    bool IsItemDropper = false;
 };
 
 
