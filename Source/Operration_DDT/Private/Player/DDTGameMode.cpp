@@ -7,10 +7,11 @@
 #include "Player/Components/CStateComponent.h"
 #include "Global.h"
 #include "Blueprint/UserWidget.h"
-
+#include "Boss/Widget/DDTLoadingWidget.h"
 #include "Player/Widget/CPlayerUI.h"
 #include "Boss/Widget/DDTLoadingWidget.h"
 #include "Boss/Widget/DDTMainThemeWidget.h"
+#include "Player/Components/CRespawnComponent.h"
 #include "Player/Widget/CDamageWidget_Normal.h"
 
 
@@ -56,10 +57,21 @@ void ADDTGameMode::BeginPlay()
 
 void ADDTGameMode::LinkedMaintoLoading()
 {
+	CLog::Log("ADDTGameMode::LinkedMaintoLoading");
 	if (MainUI->IsInViewport())
 		MainUI->RemoveFromParent();
 	LoadingUI->AddToViewport();
 	LoadingUI->PlayLoadingAnimation();
+
+	ADDTPlayer* player= Cast<ADDTPlayer>(GetWorld()->GetFirstPlayerController()->GetPawn());
+	if (player)
+	{
+		UCRespawnComponent* respawncomp = CHelpers::GetComponent<UCRespawnComponent>(player);
+		if (respawncomp)
+		{
+			LoadingUI->OnLoadingFadeoutEnd.AddDynamic(respawncomp, &UCRespawnComponent::RespawnPlayer);
+		}
+	}
 }
 
 void ADDTGameMode::BroadCastDamage(float inValue, bool bCritical, bool bGroggy)

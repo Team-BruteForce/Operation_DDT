@@ -329,6 +329,7 @@ void ADDTPlayer::Hitted()
 
 void ADDTPlayer::Dead()
 {
+	Movement->ResetDirection();
 	Montages->PlayDeadMode();
 	Movement->DisableControlRotation();
 }
