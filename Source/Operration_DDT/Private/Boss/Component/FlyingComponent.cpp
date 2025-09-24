@@ -90,11 +90,8 @@ void UFlyingComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 
 void UFlyingComponent::StartTakeoff(float TargetHeight, float Speed)
 {
-	CLog::Log(FString::Printf(TEXT("StartTakeoff 호출 - bCanTakeoff: %s, bIsFlying: %s"), 
-		bCanTakeoff ? TEXT("true") : TEXT("false"), bIsFlying ? TEXT("true") : TEXT("false")));
-	
 	if (!OwnerCharacter || bIsFlying || !bCanTakeoff) return;
-	
+	CharacterMovement->SetMovementMode(MOVE_Flying);
 	bIsTakingOff = true;
 	bIsFlying = true;  // 이륙 시작 시 비행 상태로 설정
 	bIsLanding = false;
@@ -106,15 +103,11 @@ void UFlyingComponent::StartTakeoff(float TargetHeight, float Speed)
 	TargetAltitude = StartLocation.Z + TargetHeight;
 	TakeoffProgress = 0.0f;
 	
-	// 이륙 시작 로그
-	CLog::Log(FString::Printf(TEXT("이륙 시작 - 시작위치: %s, 목표고도: %f"), 
-		*StartLocation.ToString(), TargetAltitude));
 	
 	// 이륙 속도 설정
 	TakeoffSpeed = Speed;
 	
-	// 비행 모드로 전환
-	CharacterMovement->SetMovementMode(MOVE_Flying);
+
 	
 }
 
