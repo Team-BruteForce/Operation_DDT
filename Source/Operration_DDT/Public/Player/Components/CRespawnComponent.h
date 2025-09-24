@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Engine/Engine.h"
-#include "ODH/ODH_Enemy/Interface/AllEnemyRestart.h"
 #include "CRespawnComponent.generated.h"
 
 class ACCombatEncounterManager;
@@ -79,7 +78,7 @@ private:
 	class UCMagazineComponent* Magazine;
 	class UCStaminaComponent* Stamina;
 	class UCUIComponent* UIComp;
-	class APlayerController* OwnerController;
+	//class APlayerController* OwnerController;
 	
 
 	FVector RespawnLocation;

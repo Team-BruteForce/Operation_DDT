@@ -17,3 +17,4 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Enemy")
 	void EnemyRestart();
 };
+
