@@ -84,11 +84,9 @@ void UCBossMovementComponent::RotateTowardsPlayer(float DeltaTime, float Rotatio
 
 FGameplayTag UCBossMovementComponent::GetPlayerMovementStateTag()
 {
-	CLog::Log("=== 플레이어 행동 패턴 예측 시작 ===");
 	APawn* Player = FindPlayer();
 	if (!Player || !Owner) 
 	{
-		CLog::Log("Player 또는 Owner가 null - Center 반환");
 		return TargetStateTag.Center;
 	}
 	
@@ -110,9 +108,6 @@ FGameplayTag UCBossMovementComponent::GetPlayerMovementStateTag()
 	FVector PlayerVelocity = Player->GetVelocity();
 	float PlayerSpeed = PlayerVelocity.Size();
 	
-	CLog::Log("플레이어 속도: " + FString::SanitizeFloat(PlayerSpeed));
-	CLog::Log("플레이어 위치 (보스 기준): " + FString::SanitizeFloat(PlayerSideDot));
-	CLog::Log("거리: " + FString::SanitizeFloat(DistanceToPlayer));
 	
 	// 플레이어 움직임 히스토리 (static으로 유지)
 	static TArray<FVector> PlayerPositionHistory;
@@ -151,8 +146,6 @@ FGameplayTag UCBossMovementComponent::GetPlayerMovementStateTag()
 		}
 	}
 	
-	CLog::Log("평균 속도: " + FString::SanitizeFloat(AverageSpeed));
-	CLog::Log("움직임 트렌드: " + MovementTrend.ToString());
 	
 	// 시각적 디버그
 	if (GetWorld())
@@ -166,30 +159,25 @@ FGameplayTag UCBossMovementComponent::GetPlayerMovementStateTag()
 		
 		// 플레이어 위치 표시 (속도에 따른 크기)
 		float SphereSize = FMath::Clamp(PlayerSpeed * 0.5f, 30.0f, 150.0f);
-		DrawDebugSphere(GetWorld(), CurrentTargetLocation, SphereSize, 8, SpeedColor, false, -1.0f, 0, 3.0f);
 		
 		// 플레이어 속도 벡터 표시
 		if (PlayerSpeed > 10.0f)
 		{
 			FVector VelocityEnd = CurrentTargetLocation + PlayerVelocity * 0.1f;
-			DrawDebugLine(GetWorld(), CurrentTargetLocation, VelocityEnd, SpeedColor, false, -1.0f, 0, 4.0f);
 		}
 		
 		// 움직임 트렌드 표시
 		if (MovementTrend.Size() > 0.1f)
 		{
 			FVector TrendEnd = CurrentTargetLocation + MovementTrend * 200.0f;
-			DrawDebugLine(GetWorld(), CurrentTargetLocation, TrendEnd, FColor::Cyan, false, -1.0f, 0, 2.0f);
 		}
 		
 		// 보스에서 플레이어로의 방향 표시
-		DrawDebugLine(GetWorld(), BossLocation, CurrentTargetLocation, FColor::White, false, -1.0f, 0, 1.0f);
 	}
 	
 	// 행동 패턴 예측 로직
 	if (PlayerSpeed < 50.0f && AverageSpeed < 100.0f) // 정지 상태
 	{
-		CLog::Log("예측: 플레이어 정지 상태 - Center");
 		return TargetStateTag.Center;
 	}
 	else if (PlayerSpeed > 400.0f || AverageSpeed > 350.0f) // 매우 빠른 이동 (대시, 회피)
@@ -198,17 +186,14 @@ FGameplayTag UCBossMovementComponent::GetPlayerMovementStateTag()
 		float TrendDot = FVector::DotProduct(MovementTrend, BossRight);
 		if (TrendDot > 0.4f)
 		{
-			CLog::Log("예측: 플레이어 대시 이동 - Right");
 			return TargetStateTag.Right;
 		}
 		else if (TrendDot < -0.4f)
 		{
-			CLog::Log("예측: 플레이어 대시 이동 - Left");
 			return TargetStateTag.Left;
 		}
 		else
 		{
-			CLog::Log("예측: 플레이어 대시 이동 - Center");
 			return TargetStateTag.Center;
 		}
 	}
@@ -218,17 +203,14 @@ FGameplayTag UCBossMovementComponent::GetPlayerMovementStateTag()
 		float CombinedDot = (PlayerSideDot + FVector::DotProduct(MovementTrend, BossRight)) * 0.5f;
 		if (CombinedDot > 0.3f)
 		{
-			CLog::Log("예측: 플레이어 빠른 이동 - Right");
 			return TargetStateTag.Right;
 		}
 		else if (CombinedDot < -0.3f)
 		{
-			CLog::Log("예측: 플레이어 빠른 이동 - Left");
 			return TargetStateTag.Left;
 		}
 		else
 		{
-			CLog::Log("예측: 플레이어 빠른 이동 - Center");
 			return TargetStateTag.Center;
 		}
 	}
@@ -237,21 +219,19 @@ FGameplayTag UCBossMovementComponent::GetPlayerMovementStateTag()
 		// 보통 속도에서는 현재 위치 기반
 		if (PlayerSideDot > 0.25f)
 		{
-			CLog::Log("예측: 플레이어 보통 이동 - Right");
 			return TargetStateTag.Right;
 		}
 		else if (PlayerSideDot < -0.25f)
 		{
-			CLog::Log("예측: 플레이어 보통 이동 - Left");
 			return TargetStateTag.Left;
 		}
 		else
 		{
-			CLog::Log("예측: 플레이어 보통 이동 - Center");
 			return TargetStateTag.Center;
 		}
 	}
 }
+
 
 void UCBossMovementComponent::SetMovementStateWalk()
 {
@@ -329,15 +309,12 @@ FVector UCBossMovementComponent::FindBackstepPosition()
 			if (SafePosition != BossLocation && IsPositionFarFromPlayer(SafePosition, 0.0f))
 			{
 				// 디버그 시각화
-				DrawDebugSphere(GetWorld(), SafePosition, 30.0f, 8, BackstepConstants::DEBUG_COLORS[i], false, -1.0f, 0, 3.0f);
-				DrawDebugLine(GetWorld(), PlayerLocation, SafePosition, BackstepConstants::DEBUG_COLORS[i], false, -1.0f, 0, 2.0f);
 				return SafePosition;
 			}
 		}
 	}
 	
-	// 모든 방향에서 안전한 위치를 찾지 못한 경우
-	DrawDebugSphere(GetWorld(), BossLocation, 50.0f, 8, FColor::Red, false, -1.0f, 0, 3.0f);
+
 	return BossLocation;
 }
 
@@ -358,14 +335,10 @@ FVector UCBossMovementComponent::FindSafePositionOnNavMesh(const FVector& Direct
 		FNavLocation ProjectedLocation;
 		if (NavSystem->ProjectPointToNavigation(TargetLocation, ProjectedLocation))
 		{
-			// 디버그: Nav Mesh 위치 (파란색)
-			DrawDebugLine(GetWorld(), BossLocation, ProjectedLocation.Location, FColor::Blue, false, -1.0f, 0, 2.0f);
 			return ProjectedLocation.Location;
 		}
 		else
 		{
-			// Nav Mesh 프로젝션 실패 시 보스 위치 반환 (낭떨어지 방지)
-			DrawDebugSphere(GetWorld(), TargetLocation, 50.0f, 8, FColor::Red, false, -1.0f, 0, 3.0f);
 			return BossLocation; // 보스 현재 위치 반환
 		}
 	}
@@ -620,8 +593,6 @@ void UCBossMovementComponent::ExecuteSmartMovement(float DeltaTime, float MinDis
 				bIs180DegreeTurn = true;
 				DirectionChangeTimer = 0.0f; // 타이머 리셋
 				
-				// 디버그 로그
-				UE_LOG(LogTemp, Warning, TEXT("180도 방향 전환 감지! DotProduct: %f"), DotProduct);
 			}
 		}
 		
@@ -755,85 +726,6 @@ void UCBossMovementComponent::ExecuteSmartMovement(float DeltaTime, float MinDis
 		}
 	}
 	
-	// 디버그 데이터 저장
-	DebugTargetLocation = TargetLocation;
-	DebugOwnerLocation = OwnerLocation;
-	DebugClosestPosition = TargetPosition;
-	DebugCurrentDistance = CurrentDistance;
-	
-	// 시각적 디버그 - 거리 범위 표시
-	if (GetWorld())
-	{
-		// 플레이어 위치 (중앙)
-		DrawDebugSphere(GetWorld(), TargetLocation, 50.0f, 8, FColor::Yellow, false, -1.0f, 0, 3.0f);
-		
-		// 보스 위치
-		DrawDebugSphere(GetWorld(), OwnerLocation, 40.0f, 8, FColor::Magenta, false, -1.0f, 0, 3.0f);
-		
-		// 최소 거리 원 (빨간색)
-		DrawDebugCircle(GetWorld(), TargetLocation, MinDistance, 32, FColor::Red, false, -1.0f, 0, 2.0f);
-		
-		// 최대 거리 원 (파란색)
-		DrawDebugCircle(GetWorld(), TargetLocation, MaxDistance, 32, FColor::Blue, false, -1.0f, 0, 2.0f);
-		
-		// 현재 거리 원 (초록색)
-		DrawDebugCircle(GetWorld(), TargetLocation, CurrentDistance, 32, FColor::Green, false, -1.0f, 0, 1.0f);
-		
-		// 목표 위치 표시
-		DrawDebugSphere(GetWorld(), TargetPosition, 60.0f, 12, FColor::Cyan, false, -1.0f, 0, 4.0f);
-		
-		// 보스에서 목표 위치로의 선
-		DrawDebugLine(GetWorld(), OwnerLocation, TargetPosition, FColor::Cyan, false, -1.0f, 0, 3.0f);
-		
-		// 시각적 디버그만 유지 (텍스트 로그 제거)
-		if (bReachedMinDistance && bReachedTargetPosition)
-		{
-			// 플레이어 이동 방향 표시 (빨간색)
-			if (PlayerMovementDirection.Size() > 0.1f)
-			{
-				FVector PlayerDirectionEnd = TargetLocation + (PlayerMovementDirection * 150.0f);
-				DrawDebugLine(GetWorld(), TargetLocation, PlayerDirectionEnd, FColor::Red, false, -1.0f, 0, 3.0f);
-			}
-			
-			// 보스 지능형 이동 방향 표시
-			FVector BossRight = Owner->GetActorRightVector();
-			FVector BossForward = Owner->GetActorForwardVector();
-			
-			float RightDot = FVector::DotProduct(PlayerMovementDirection, BossRight);
-			float ForwardDot = FVector::DotProduct(PlayerMovementDirection, BossForward);
-			
-			FColor MovementColor = FColor::Blue;
-			FVector MovementEnd = OwnerLocation;
-			
-			// 좌우 방향 처리
-			if (FMath::Abs(RightDot) > FMath::Abs(ForwardDot))
-			{
-				// 좌우 이동 (반대 방향)
-				FVector SideDirection = (RightDot > 0) ? -BossRight : BossRight;
-				MovementEnd = OwnerLocation + (SideDirection * 150.0f);
-				MovementColor = FColor::Blue;
-			}
-			// 앞뒤 방향 처리
-			else if (ForwardDot < -0.1f) // 뒤로 이동
-			{
-				// 뒤로 따라가기
-				FVector BackwardDirection = -BossForward;
-				MovementEnd = OwnerLocation + (BackwardDirection * 150.0f);
-				MovementColor = FColor::Green;
-			}
-			else
-			{
-				// 앞으로 이동하거나 정지 (그대로 유지)
-				MovementColor = FColor::Yellow;
-			}
-			
-			// 보스 이동 방향 표시
-			if (MovementEnd != OwnerLocation)
-			{
-				DrawDebugLine(GetWorld(), OwnerLocation, MovementEnd, MovementColor, false, -1.0f, 0, 3.0f);
-			}
-		}
-	}
 }
 // ===== 디버그 데이터 Getter 함수들 =====
 
@@ -912,5 +804,4 @@ void UCBossMovementComponent::ResetMovementSystem()
 		FlyingComponent->bIsFlying = false;
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("보스 이동 시스템 완전 초기화 완료 - 걷기 모드로 리셋"));
 }

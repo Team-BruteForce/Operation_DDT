@@ -227,30 +227,6 @@ void UCBossTargetingComponent::CalculateTargetMovementDirection(FGameplayTag& Ou
 		DirectionColor = FColor::Yellow;
 	}
 	
-	if (TargetMovementDirection.Size() > 0.1f)
-	{
-		DrawDebugLine(
-			GetWorld(),
-			CurrentTargetLocation,
-			CurrentTargetLocation + TargetMovementDirection * 100.0f,
-			DirectionColor,
-			false,
-			-1.0f,
-			0,
-			3.0f
-		);
-	}
-	
-	DrawDebugLine(
-		GetWorld(),
-		Owner->GetActorLocation(),
-		Owner->GetActorLocation() + BossRight * 100.0f,
-		FColor::Blue,
-		false,
-		-1.0f,
-		0,
-		2.0f
-	);
 	
 	PreviousTargetLocation = CurrentTargetLocation;
 }
