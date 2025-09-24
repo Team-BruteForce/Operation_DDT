@@ -3,9 +3,14 @@
 
 #include "Boss/Task/Task_SetCurrentAction.h"
 
+#include "Global.h"
+#include "Boss/Component/BossStateComponent.h"
+
 EStateTreeRunStatus UTask_SetCurrentAction::EnterState(FStateTreeExecutionContext& Context,
-	const FStateTreeTransitionResult& Transition)
+                                                       const FStateTreeTransitionResult& Transition)
 {
-	CurrentActionTag=SelectActionTag;
+	UBossStateComponent* State=CHelpers::GetComponent<UBossStateComponent>(Boss);
+	if (State)
+		State->LastActiveTag=SelectActionTag;
 	return Super::EnterState(Context, Transition);
 }
