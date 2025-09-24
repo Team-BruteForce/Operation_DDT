@@ -25,6 +25,7 @@
 #include "Player/Components/CUIComponent.h"
 #include "Player/Components/CDamageUIManageComponent.h"
 #include "InputMappingContext.h"
+#include "Player/Widget/CPauseWidget.h"
 #include "Sound/SoundCue.h"
 
 // Sets default values
@@ -192,6 +193,7 @@ void ADDTPlayer::SetupPlayerInputComponent(class UInputComponent* PlayerInputCom
 		input->BindAction(IA_TurnVer, ETriggerEvent::Triggered, Movement, &UCMovementComponent::OnVerticalLook);
 		input->BindAction(IA_Sprint, ETriggerEvent::Started, Movement, &UCMovementComponent::SprintStart);
 		input->BindAction(IA_Sprint, ETriggerEvent::Completed, Movement, &UCMovementComponent::SprintEnd);
+		input->BindAction(IA_Pause, ETriggerEvent::Started, this, &ADDTPlayer::Pause);
 	}
 	else
 	{
@@ -325,10 +327,12 @@ void ADDTPlayer::Roll()
 void ADDTPlayer::Hitted()
 {
 	Montages->PlayHittedMode();
+	CameraActionComp->ShakeCameraByHit();
 }
 
 void ADDTPlayer::Dead()
 {
+	Movement->ResetDirection();
 	Montages->PlayDeadMode();
 	Movement->DisableControlRotation();
 }
@@ -382,6 +386,14 @@ void ADDTPlayer::End_Reload()
 	Weapon->DetachFromActor(FDetachmentTransformRules::KeepRelativeTransform);
 	Weapon->AttachToComponent (GetMesh(), FAttachmentTransformRules(EAttachmentRule::KeepRelative, true), FName("Hand_Rifle"));
 	State->SetIdleMode();
+}
+
+void ADDTPlayer::Pause()
+{
+	APlayerController* pc = Cast<APlayerController>(GetController());
+	pc->SetPause(true);
+	UIComp->pauseWidget->AddToViewport();
+	
 }
 
 

@@ -81,3 +81,9 @@ void UCCameraActionComponent::SetIdlePosition()
 	UIComp->playerUI->ShowCrosshair(false);
 }
 
+void UCCameraActionComponent::ShakeCameraByHit()
+{
+	APlayerController* pc = Cast<APlayerController>(OwnerCharacter->GetController());
+	pc->PlayerCameraManager->StartCameraShake(HitCameraShake);
+}
+

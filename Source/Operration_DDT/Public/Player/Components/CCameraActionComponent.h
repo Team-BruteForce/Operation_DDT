@@ -45,5 +45,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Sound")
 	class USoundCue* AimSound;
 
+	UPROPERTY(EditDefaultsOnly, Category = "CameraShake")
+	TSubclassOf<class UCameraShakeBase> HitCameraShake;
+
+	void ShakeCameraByHit();
+
 		
 };

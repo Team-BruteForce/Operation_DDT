@@ -245,7 +245,10 @@ void UCPlayerUI::ResetDeathImg()
 
 void UCPlayerUI::OnDeathAnimFinished()
 {
-	StartDeathAnimTimer();
+	//StartDeathAnimTimer();
+	ResetDeathImg();
+	RemoveFromParent();
+	OnAnimFinishedDelegate.Broadcast();
 }
 
 void UCPlayerUI::StartDeathAnimTimer()

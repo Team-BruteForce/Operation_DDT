@@ -70,6 +70,7 @@ void ACPlayerBullet::BeginPlay()
 		);
 	}
 	
+	
 }
 
 // Called every frame
@@ -154,19 +155,7 @@ void ACPlayerBullet::OnBulletHit(UPrimitiveComponent* HitComponent, AActor* Othe
 		CLog::Log("BODYSHOT! Damage: " + FString::SanitizeFloat(FinalDamage));
 	}
 	
-	/*// 충돌 지점에 본별 색상 디버그 구체 그리기
-	FColor HitColor = (DamageMultiplier > 1.0f) ? FColor::Red : FColor::Green;  // 헤드샷: 빨간색, 바디샷: 녹색
-	DrawDebugSphere(
-		GetWorld(),
-		Hit.ImpactPoint,
-		15.0f,  // 구체 반지름
-		12,     // 구체 세그먼트 수
-		HitColor,
-		false,  // bPersistentLines
-		30.0f,  // LifeTime (초)
-		0,      // DepthPriority
-		2.0f    // Thickness
-	);*/
+	
 	
 	// FPointDamageEvent 생성 및 설정
 	FPointDamageEvent PointDamageEvent;
@@ -178,25 +167,20 @@ void ACPlayerBullet::OnBulletHit(UPrimitiveComponent* HitComponent, AActor* Othe
 	// UGameplayStatics::ApplyPointDamage로 데미지 적용
 	UGameplayStatics::ApplyPointDamage(OtherActor, FinalDamage, PointDamageEvent.ShotDirection, PointDamageEvent.HitInfo, OwnerCharacter->GetInstigatorController(), this, PointDamageEvent.DamageTypeClass);
 
-	ACBoss* Boss = Cast<ACBoss>(OtherActor);
-	if (Boss)
+	if (BulletImpactSystem)
 	{
-		/*FVector DamageLocation = Boss->GetMesh()->GetComponentLocation();
-		DamageLocation.Z += 325.f;
-
-		ACNormalDamageUIActor* DamageUIActor = BulletPool->GetInactiveDamageUI();
-		DamageUIActor->SetActorLocation(DamageLocation);
-		DamageUIActor->SetActive(true);*/
-
-		/*UCDamageWidget_Normal* DamageUI = DamageUIManager->GetInactiveUI();
-		DamageUI->SetActive(true);*/
-		/*ADDTGameMode* GM = GetWorld()->GetAuthGameMode<ADDTGameMode>();
-		if (GM)
-		{
-			UCDamageWidget_Normal* DamageUI = GM->DamageUI;			
-		}*/
-
+		BulletImpactComp = UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+			GetWorld(),
+			BulletImpactSystem,
+			Hit.ImpactPoint,
+			FRotator::ZeroRotator,
+			FVector(1.f),
+			true,
+			true
+			);
 	}
+
+	
 	
 	// 충돌 후 Destroy() 대신 풀로 돌아가기
 	ReturnToPool();

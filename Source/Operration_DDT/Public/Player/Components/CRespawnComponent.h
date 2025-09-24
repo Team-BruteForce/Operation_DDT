@@ -72,6 +72,7 @@ private:
 	class UCMagazineComponent* Magazine;
 	class UCStaminaComponent* Stamina;
 	class UCUIComponent* UIComp;
+	class APlayerController* OwnerController;
 	
 
 	FVector RespawnLocation;

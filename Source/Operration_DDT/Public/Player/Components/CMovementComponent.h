@@ -94,6 +94,7 @@ public:
 
 	FORCEINLINE void SetFalseOnMovePressing(){ bOnMovePressing = false; }
 	FORCEINLINE bool GetOnMovePressing() { return bOnMovePressing; }
+	void ResetDirection();
 
 private:
 	void SetSpeed(ESpeedType InType);

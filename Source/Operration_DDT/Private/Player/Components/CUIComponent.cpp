@@ -10,6 +10,7 @@
 #include "Player/Components/CRespawnComponent.h"
 #include "Player/Components/CStaminaComponent.h"
 #include "Player/Components/CStatusComponent.h"
+#include "Player/Widget/CPauseWidget.h"
 
 // Sets default values for this component's properties
 UCUIComponent::UCUIComponent()
@@ -28,6 +29,7 @@ void UCUIComponent::BeginPlay()
 	Super::BeginPlay();
 
 	playerUI = Cast<UCPlayerUI>(CreateWidget(GetWorld(),UCPlayerUIWidget));
+	pauseWidget = Cast<UCPauseWidget>(CreateWidget(GetWorld(), UCPauseWidgetUI));
 	//InitUIWidget();
 	// ...
 	OwnerCharater = Cast<ADDTPlayer>(GetOwner());
@@ -62,7 +64,8 @@ void UCUIComponent::BeginPlay()
 		{
 			RespawnComp->OnPlayerDeath.AddDynamic(this, &UCUIComponent::OnPlayerDeathCallAnimation);
 		}
-		playerUI->OnAnimFinishedDelegate.AddDynamic(this,&UCUIComponent::OnDeathAnimationEnd );
+		
+		//playerUI->OnAnimFinishedDelegate.AddDynamic(this,&UCUIComponent::OnDeathAnimationEnd );
 	}
 	
 }
@@ -80,7 +83,6 @@ void UCUIComponent::InitUIWidget()
 {
 	if (UCPlayerUIWidget)
 	{
-		
 		playerUI->AddToViewport();
 		playerUI->ShowCrosshair(false);
 	}
