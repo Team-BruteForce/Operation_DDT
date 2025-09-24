@@ -326,6 +326,7 @@ void ADDTPlayer::Roll()
 
 void ADDTPlayer::Hitted()
 {
+	CLog::Log("ADDTPlayer Hitted");
 	Montages->PlayHittedMode();
 	CameraActionComp->ShakeCameraByHit();
 }
@@ -381,10 +382,10 @@ void ADDTPlayer::End_Healing()
 
 void ADDTPlayer::End_Reload()
 {
-	AActor* Weapon = FireComp->GetActorAttachedToSocket(FName("Reload_Rifle"));
+	/*AActor* Weapon = FireComp->GetActorAttachedToSocket(FName("Reload_Rifle"));
 	CheckNull(Weapon);
 	Weapon->DetachFromActor(FDetachmentTransformRules::KeepRelativeTransform);
-	Weapon->AttachToComponent (GetMesh(), FAttachmentTransformRules(EAttachmentRule::KeepRelative, true), FName("Hand_Rifle"));
+	Weapon->AttachToComponent (GetMesh(), FAttachmentTransformRules(EAttachmentRule::KeepRelative, true), FName("Hand_Rifle"));*/
 	State->SetIdleMode();
 }
 

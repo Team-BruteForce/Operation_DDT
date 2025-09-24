@@ -65,8 +65,11 @@ public:
 	float MaxHp = 100.f;
 
 	UPROPERTY(EditAnywhere, Category = "Health")
-	int32 HealItemCount = 3;
-
+	int32 HealItemCount;
+	
+	UPROPERTY(EditAnywhere, Category = "Health")
+	int32 MaxHealItemCount = 5;
+	
 	// 회복 관련 설정
 	UPROPERTY(EditAnywhere, Category = "Healing", meta = (AllowPrivateAccess = "true"))
 	float HealDuration = 0.5f; // 회복 시간 (초)

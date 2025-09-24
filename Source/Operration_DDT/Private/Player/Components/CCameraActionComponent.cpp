@@ -83,6 +83,7 @@ void UCCameraActionComponent::SetIdlePosition()
 
 void UCCameraActionComponent::ShakeCameraByHit()
 {
+	CLog::Log("CameraActionComponent::ShakeCameraByHit");
 	APlayerController* pc = Cast<APlayerController>(OwnerCharacter->GetController());
 	pc->PlayerCameraManager->StartCameraShake(HitCameraShake);
 }

@@ -28,6 +28,8 @@ void UCStatusComponent::BeginPlay()
 	// 초기 체력 설정
 	NowHp = MaxHp;
 	OnPlayerHealthChanged.Broadcast(NowHp, NowHp, MaxHp);
+
+	HealItemCount = MaxHealItemCount;
 	OnHealItemChanged.Broadcast(HealItemCount);
 	
 }
@@ -70,7 +72,7 @@ void UCStatusComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAct
 
 void UCStatusComponent::GainHealItem()
 {
-	HealItemCount = FMath::Clamp(HealItemCount + 1, 0, 3);
+	HealItemCount = FMath::Clamp(HealItemCount + 1, 0, MaxHealItemCount);
 	OnHealItemChanged.Broadcast(HealItemCount);
 }
 
@@ -160,7 +162,7 @@ void UCStatusComponent::ResetStatus()
 {
 	SetFullHealth();
 	OnPlayerHealthChanged.Broadcast(NowHp,NowHp, MaxHp);
-	HealItemCount = 3;
+	HealItemCount = MaxHealItemCount;
 	OnHealItemChanged.Broadcast(HealItemCount);
 }
 
