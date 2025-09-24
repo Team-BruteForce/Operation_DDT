@@ -16,8 +16,8 @@ class OPERRATION_DDT_API UTask_SetCurrentAction : public UStateTreeTaskBlueprint
 	virtual EStateTreeRunStatus EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) override;
 
 public:
-	UPROPERTY(EditAnywhere,BlueprintReadWrite,meta=(ToolTip="변경할 변수 넣기"))
-	FGameplayTag CurrentActionTag;
+	UPROPERTY(EditAnywhere,BlueprintReadWrite,meta=(ToolTip="보스 엑터"))
+	class AActor* Boss;
 
 	UPROPERTY(EditAnywhere,BlueprintReadWrite,meta=(ToolTip="변경할 테그 선택"))
 	FGameplayTag SelectActionTag;

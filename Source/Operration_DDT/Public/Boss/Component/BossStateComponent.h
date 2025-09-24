@@ -339,4 +339,8 @@ private:
 	 */
 	UPROPERTY()
 	class AAIController* AIC;
+public:
+	/** 중복 실행 방지 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Tag", meta=(ToolTip="보스의 중복 스킬 사용 방지 변수입니다."))
+	FGameplayTag LastActiveTag;
 };
