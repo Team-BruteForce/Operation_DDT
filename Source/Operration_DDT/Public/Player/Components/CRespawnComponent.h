@@ -67,7 +67,7 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "RespawnPoint")
 	FVector BossDoorLocation = FVector(-59584.154248,-50296.910881,4538.023350);
 
-	
+	FORCEINLINE void ResetIsRespawning() { IsRespawning = false;}
 	
 private:
 	class ADDTPlayer* OwnerCharacter;
@@ -78,10 +78,12 @@ private:
 	class UCMagazineComponent* Magazine;
 	class UCStaminaComponent* Stamina;
 	class UCUIComponent* UIComp;
-	//class APlayerController* OwnerController;
+	class APlayerController* OwnerController;
 	
 
 	FVector RespawnLocation;
+
+	bool IsRespawning = false;
 	
 	
 	// 부활 관련 변수들

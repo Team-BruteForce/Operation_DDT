@@ -333,6 +333,7 @@ void ADDTPlayer::Hitted()
 
 void ADDTPlayer::Dead()
 {
+	CLog::Log("ADDTPlayer Dead: Reset Direction");
 	Movement->ResetDirection();
 	Montages->PlayDeadMode();
 	Movement->DisableControlRotation();

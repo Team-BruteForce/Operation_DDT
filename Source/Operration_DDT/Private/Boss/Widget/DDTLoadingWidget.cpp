@@ -2,6 +2,9 @@
 
 
 #include "Boss/Widget/DDTLoadingWidget.h"
+
+#include "EnhancedInputComponent.h"
+#include "EnhancedInputSubsystems.h"
 #include "Global.h"
 #include "Components/CanvasPanel.h"
 #include "Player/DDTPlayer.h"
@@ -33,7 +36,8 @@ void UDDTLoadingWidget::EndLoading()
 	C->SetInputMode(InputMode);
 	C->bShowMouseCursor = false;
 	//PlayAnimation(OrbLoopAnimation, 0.f, 1, EUMGSequencePlayMode::Reverse, 1.22f);
-	
+	C->SetIgnoreMoveInput(false);
+	C->SetIgnoreLookInput(false);
 
 	ADDTPlayer* player = Cast<ADDTPlayer>(C->GetPawn());
 	if (player)
@@ -47,8 +51,15 @@ void UDDTLoadingWidget::EndLoading()
 		UCRespawnComponent* RespawnComp = CHelpers::GetComponent<UCRespawnComponent>(player);
 		if (RespawnComp)
 		{
-			RespawnComp->RespawnPlayer();
+			RespawnComp->ResetIsRespawning();
 		}
+		
+		UEnhancedInputLocalPlayerSubsystem* subsys = ULocalPlayer::GetSubsystem <UEnhancedInputLocalPlayerSubsystem>(C->GetLocalPlayer());
+		if (subsys)
+		{
+			subsys->AddMappingContext(player->IMC_Player, 0);
+		}
+    
 	}
 
 	Reset();

@@ -13,6 +13,7 @@
 #include "Boss/BossManager.h"
 #include "Components/CapsuleComponent.h"
 // BossManager BP 자동 탐색용
+#include "EnhancedInputSubsystems.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "ODH/ODH_Enemy/Interface/AllEnemyRestart.h"
@@ -50,6 +51,8 @@ void UCRespawnComponent::BeginPlay()
 	Magazine = CHelpers::GetComponent<UCMagazineComponent>(OwnerCharacter);
 	Stamina = CHelpers::GetComponent<UCStaminaComponent>(OwnerCharacter);
 	UIComp = CHelpers::GetComponent<UCUIComponent>(OwnerCharacter);
+
+	OwnerController = Cast<APlayerController>(OwnerCharacter->GetController());
 	
 	// DieDelegate 구독
 	if (OwnerCharacter && OwnerCharacter->Montages)
@@ -117,6 +120,11 @@ void UCRespawnComponent::OnPlayerDied()
 	if (OwnerCharacter && UIComp && UIComp->playerUI)
 	{
 		CLog::Log("OnPlayerDied) Owner, UIComp, PlayerUI");
+		if (UIComp->playerUI->OnAnimFinishedDelegate.IsBound())
+		{
+			UIComp->playerUI->OnAnimFinishedDelegate.Clear();
+		}
+    
 		ADDTGameMode* GM = GetWorld()->GetAuthGameMode<ADDTGameMode>();
 		if (GM)
 		{
@@ -133,7 +141,26 @@ void UCRespawnComponent::OnPlayerDied()
 	Capsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	Movement->Stop();
 	OwnerCharacter->GetCharacterMovement()->StopActiveMovement();
+	OwnerCharacter->GetCharacterMovement()->StopMovementImmediately();
+	CLog::Log("OnPlaylerDied: Reset Direction");
+	Movement->ResetDirection();
+	OwnerController->SetIgnoreMoveInput(true);
+	OwnerController->SetIgnoreMoveInput(true);
 
+	/*FInputModeUIOnly InputMode;
+	InputMode.SetWidgetToFocus(UIComp->playerUI->TakeWidget());
+	InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+	OwnerController->SetInputMode(InputMode);*/
+
+	UEnhancedInputLocalPlayerSubsystem* subsys = ULocalPlayer::GetSubsystem <UEnhancedInputLocalPlayerSubsystem>(OwnerController->GetLocalPlayer());
+	if (subsys)
+	{
+		if (OwnerCharacter->IMC_Player)
+		{
+			//subsys->AddMappingContext(OwnerCharacter->IMC_Player, 0);
+			subsys->RemoveMappingContext(OwnerCharacter->IMC_Player);
+		}
+	}
 	// Call Animation
 	OnPlayerDeath.Broadcast();
 	
@@ -172,27 +199,29 @@ void UCRespawnComponent::OnPlayerDied()
 
 void UCRespawnComponent::RespawnPlayer()
 {
-	
+	if (IsRespawning)
+	{
+		CLog::Log("RespawnPlayer: Respawning player");
+		return;
+	}
+	IsRespawning = true;
 	// 실제 부활 처리
 	if (!OwnerCharacter || !State) 
 	{
 		CLog::Log("RespawnComponent: Cannot respawn - OwnerCharacter or State is null");
 		return;
 	}
-	OwnerCharacter->GetCharacterMovement()->StopActiveMovement();
-	
+		
 	CLog::Log("RespawnComponent: Starting respawn process...");
 	
 	// 1. 플레이어 위치를 RespawnLocation으로 이동
 	OwnerCharacter->SetActorLocation(RespawnLocation);
 	CLog::Log("RespawnComponent: Player moved to respawn location: " + RespawnLocation.ToString());
+		
 	
-	// 2. 플레이어 상태를 Idle로 변경 및 사망 상태 리셋
-	State->SetIdleMode();
-	State->ResetDeadState();
-	CLog::Log("RespawnComponent: Player state set to Idle and dead state reset");
-
-	Movement->Move();
+	CLog::Log("RespawnPlayer: Reset Direction");
+	Movement->ResetDirection();
+	OwnerCharacter->GetCharacterMovement()->StopActiveMovement();
 	
 	// 3. HP를 최대치로 복구 (Status 컴포넌트가 있다면)
 	if (Status)
@@ -218,6 +247,12 @@ void UCRespawnComponent::RespawnPlayer()
 		OwnerCharacter->Movement->EnableControlRotation();
 		CLog::Log("RespawnComponent: Control rotation enabled");
 	}
+
+	Movement->Move();
+	// 2. 플레이어 상태를 Idle로 변경 및 사망 상태 리셋
+	State->SetIdleMode();
+	State->ResetDeadState();
+	CLog::Log("RespawnComponent: Player state set to Idle and dead state reset");
 	
 	//OwnerCharacter->SetActorEnableCollision(ECollisionEnabled::QueryAndPhysics);
 	Capsule->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);

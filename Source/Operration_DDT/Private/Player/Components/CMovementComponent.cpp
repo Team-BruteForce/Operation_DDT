@@ -28,7 +28,9 @@ void UCMovementComponent::BeginPlay()
 	OwnerCharacter->InputBindingDelegate.AddUObject(this, &UCMovementComponent::SetupInputBinding);
 	CharMove = CHelpers::GetComponent<UCharacterMovementComponent>(OwnerCharacter);
 	OwnerState = CHelpers::GetComponent<UCStateComponent>(OwnerCharacter);
-	OwnerStamina = CHelpers::GetComponent<UCStaminaComponent>(OwnerCharacter); 
+	OwnerStamina = CHelpers::GetComponent<UCStaminaComponent>(OwnerCharacter);
+
+	Direction = FVector::ZeroVector;
 	
 }
 
@@ -40,6 +42,7 @@ void UCMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 
 	// ...
 	CLog::Log("Movement) Direction " + Direction.ToString());
+	if (OwnerState->GetIsDead()) return;
 	if (!bCanMove) return;
 	
 	if (!Direction.IsNearlyZero())
@@ -129,6 +132,11 @@ void UCMovementComponent::DisableControlRotation()
 
 void UCMovementComponent::OnMove(const struct FInputActionValue& InAxis)
 {
+	if (OwnerState->GetIsDead())
+	{
+		Direction = FVector::ZeroVector;
+		return;
+	}
 	FVector2D inputValue = InAxis.Get<FVector2D>();
 
 	Direction.X = inputValue.X;
@@ -184,8 +192,12 @@ void UCMovementComponent::SprintEnd()
 
 void UCMovementComponent::ResetDirection()
 {
+	CLog::Log("Movement :: Reset Direction");
 	Direction = FVector::ZeroVector;
-	OwnerCharacter->GetCharacterMovement()->Velocity = Direction;
+	OwnerCharacter->GetCharacterMovement()->Velocity = FVector::ZeroVector;
+
+	OwnerCharacter->GetCharacterMovement()->StopActiveMovement();
+	OwnerCharacter->GetCharacterMovement()->StopMovementImmediately();
 }
 
 void UCMovementComponent::SetSpeed(ESpeedType InType)

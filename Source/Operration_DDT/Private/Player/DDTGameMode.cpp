@@ -63,7 +63,7 @@ void ADDTGameMode::LinkedMaintoLoading()
 	LoadingUI->AddToViewport();
 	LoadingUI->PlayLoadingAnimation();
 
-	ADDTPlayer* player= Cast<ADDTPlayer>(GetWorld()->GetFirstPlayerController()->GetPawn());
+	/*ADDTPlayer* player= Cast<ADDTPlayer>(GetWorld()->GetFirstPlayerController()->GetPawn());
 	if (player)
 	{
 		UCRespawnComponent* respawncomp = CHelpers::GetComponent<UCRespawnComponent>(player);
@@ -71,7 +71,7 @@ void ADDTGameMode::LinkedMaintoLoading()
 		{
 			LoadingUI->OnLoadingFadeoutEnd.AddDynamic(respawncomp, &UCRespawnComponent::RespawnPlayer);
 		}
-	}
+	}*/
 }
 
 void ADDTGameMode::BroadCastDamage(float inValue, bool bCritical, bool bGroggy)

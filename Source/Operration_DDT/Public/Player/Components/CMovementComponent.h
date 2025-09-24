@@ -115,7 +115,7 @@ private:
 	bool bIsSprinting = false;
 	bool bIsShiftPressing = false;
 
-	FVector Direction;
+	FVector Direction = FVector::ZeroVector;
 	FVector CachedDirection;
 
 	UPROPERTY(EditAnywhere, Category = "Camera")
