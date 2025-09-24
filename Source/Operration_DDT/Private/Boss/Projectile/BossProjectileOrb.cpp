@@ -7,6 +7,11 @@
 #include "Boss/Projectile/BossProjectileActor.h"
 #include "Boss/Component/BossProjectileComponent.h"
 #include "Components/SphereComponent.h"
+#include "Components/AudioComponent.h"
+#include "NiagaraFunctionLibrary.h"
+#include "Kismet/GameplayStatics.h"
+#include "Engine/World.h"
+#include "TimerManager.h"
 
 // Sets default values
 ABossProjectileOrb::ABossProjectileOrb()
@@ -15,6 +20,9 @@ ABossProjectileOrb::ABossProjectileOrb()
 	PrimaryActorTick.bCanEverTick = true;
 	CHelpers::GetClass<ABossProjectileActor>(&ProjectileClass,AssetPaths::Boss_Projectile);
 	CHelpers::CreateComponent<USphereComponent>(this,&SphereComponent,"SphereComponent",RootComponent);
+	
+	// 오디오 컴포넌트 생성
+	CHelpers::CreateComponent<UAudioComponent>(this,&AudioComponent,"AudioComponent",RootComponent);
 
 }
 
@@ -41,6 +49,9 @@ void ABossProjectileOrb::BeginPlay()
 	{
 		CLog::Log("BossProjectileOrb - SphereComponent is null!");
 	}
+	
+	// BeginPlay에서는 소리 재생하지 않음 (오브젝트 풀 재사용 시 문제)
+	// 실제 활성화 시점에 소리 재생하도록 수정 필요
 }
 
 // Called every frame
@@ -87,6 +98,14 @@ void ABossProjectileOrb::SpawnProjectile()
 				if (Projectile->Shape)
 				{
 					Projectile->Shape->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+				}
+				
+				// 오디오 컴포넌트 리셋 (오브젝트 풀 재사용 시 필요)
+				if (Projectile->AudioComponent)
+				{
+					Projectile->AudioComponent->Stop();
+					Projectile->AudioComponent->SetSound(nullptr);
+					CLog::Log("BossProjectileOrb - AudioComponent Reset for Pool Reuse");
 				}
 				
 				// 오너 설정
@@ -136,6 +155,10 @@ void ABossProjectileOrb::DestroyOrb()
 {
 	CLog::Log("BossProjectileOrb - DestroyOrb Called");
 	
+	// 풀 반환 사운드 및 이펙트 재생
+	PlayReturnToPoolSound();
+	PlayReturnToPoolEffect();
+	
 	if (bUseObjectPool)
 	{
 		// 오브젝트 풀 사용 시 풀로 반환
@@ -150,16 +173,6 @@ void ABossProjectileOrb::DestroyOrb()
 				// 오브 카운트 감소 및 ExitOrb 상태 업데이트
 				ProjectileComp->DestroyOrb();
 			}
-			else
-			{
-				CLog::Log("BossProjectileOrb - No BossProjectileComponent, Destroy Actor");
-				Destroy();
-			}
-		}
-		else
-		{
-			CLog::Log("BossProjectileOrb - No Owner, Destroy Actor");
-			Destroy();
 		}
 	}
 	else
@@ -177,11 +190,124 @@ void ABossProjectileOrb::OnOverlap(UPrimitiveComponent* OverlappedComponent, AAc
 	if (OtherActor)
 	{
 		CLog::Log(FString::Printf(TEXT("BossProjectileOrb - OnOverlap! Collision Actor: %s"), *OtherActor->GetName()));
-		DestroyOrb();
+		
+		// 충돌 사운드 및 이펙트 재생
+		PlayCollisionSound();
+		PlayCollisionEffect();
+		
+		// 딜레이 후 파괴
+		DestroyOrbWithDelay();
 	}
 	else
 	{
 		CLog::Log("BossProjectileOrb - OnOverlap Occurred but OtherActor is null");
 	}
+}
+
+// ===== 사운드 재생 함수들 =====
+
+void ABossProjectileOrb::PlaySpawnSound()
+{
+	if (SpawnSound && AudioComponent)
+	{
+		AudioComponent->SetSound(SpawnSound);
+		AudioComponent->AttenuationSettings = SoundAttenuation; // 어테뉴에이션 적용
+		AudioComponent->Play();
+		CLog::Log("BossProjectileOrb - Spawn Sound Played with Attenuation");
+	}
+	else
+	{
+		CLog::Log("BossProjectileOrb - Spawn Sound or AudioComponent is null");
+	}
+}
+
+void ABossProjectileOrb::PlayReturnToPoolSound()
+{
+	if (ReturnToPoolSound)
+	{
+		// 어테뉴에이션과 함께 위치 기반 사운드 재생
+		UGameplayStatics::PlaySoundAtLocation(GetWorld(), ReturnToPoolSound, GetActorLocation(), 1.0f, 1.0f, 0.0f, SoundAttenuation);
+		CLog::Log("BossProjectileOrb - Return to Pool Sound Played with Attenuation");
+	}
+	else
+	{
+		CLog::Log("BossProjectileOrb - Return to Pool Sound is null");
+	}
+}
+
+void ABossProjectileOrb::PlayCollisionSound()
+{
+	if (CollisionSound)
+	{
+		// 어테뉴에이션과 함께 위치 기반 사운드 재생
+		UGameplayStatics::PlaySoundAtLocation(GetWorld(), CollisionSound, GetActorLocation(), 1.0f, 1.0f, 0.0f, SoundAttenuation);
+		CLog::Log("BossProjectileOrb - Collision Sound Played with Attenuation");
+	}
+	else
+	{
+		CLog::Log("BossProjectileOrb - Collision Sound is null");
+	}
+}
+
+// ===== 이펙트 재생 함수들 =====
+
+void ABossProjectileOrb::PlaySpawnEffect()
+{
+	if (SpawnEffect)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), SpawnEffect, GetActorLocation(), GetActorRotation());
+		CLog::Log("BossProjectileOrb - Spawn Effect Played");
+	}
+	else
+	{
+		CLog::Log("BossProjectileOrb - Spawn Effect is null");
+	}
+}
+
+void ABossProjectileOrb::PlayReturnToPoolEffect()
+{
+	if (ReturnToPoolEffect)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), ReturnToPoolEffect, GetActorLocation(), GetActorRotation());
+		CLog::Log("BossProjectileOrb - Return to Pool Effect Played");
+	}
+	else
+	{
+		CLog::Log("BossProjectileOrb - Return to Pool Effect is null");
+	}
+}
+
+void ABossProjectileOrb::PlayCollisionEffect()
+{
+	if (CollisionEffect)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), CollisionEffect, GetActorLocation(), GetActorRotation());
+		CLog::Log("BossProjectileOrb - Collision Effect Played");
+	}
+	else
+	{
+		CLog::Log("BossProjectileOrb - Collision Effect is null");
+	}
+}
+
+// ===== 딜레이 파괴 함수 =====
+
+void ABossProjectileOrb::DestroyOrbWithDelay()
+{
+	CLog::Log(FString::Printf(TEXT("BossProjectileOrb - DestroyOrbWithDelay Called, Delay: %.2f초"), DestroyDelay));
+	
+	// 딜레이 후 파괴 실행 (멤버 변수 사용)
+	GetWorld()->GetTimerManager().SetTimer(DestroyTimerHandle, this, &ABossProjectileOrb::DestroyOrb, DestroyDelay, false);
+}
+
+// ===== 오브젝트 풀 활성화 함수 =====
+
+void ABossProjectileOrb::ActivateOrb()
+{
+	CLog::Log("BossProjectileOrb - ActivateOrb Called");
+	
+	// 오브 활성화 시 소리 및 이펙트 재생 (오브젝트 풀 재사용 시)
+	PlaySpawnSound();
+	PlaySpawnEffect();
 }
 

@@ -89,24 +89,13 @@ void UBossProjectileComponent::ShotProjectile()
 
 void UBossProjectileComponent::SpawnOrb()
 {
-	ExitOrb = true;
-	OrbSpawnCount = 0;
+	// 오브 1개 소환
+	ACharacter* Boss = Cast<ACharacter>(GetOwner());
 	
-	// 0.5초 간격으로 오브 3개 소환
-	GetWorld()->GetTimerManager().SetTimer(OrbTimerHandle, [this]()
-	{
-		// 오브 소환 카운터 증가
-		OrbSpawnCount++;
-		
-		// 소켓 이름 동적 생성
-		FString SocketNameString = FString::Printf(TEXT("OrbSocket_%d"), OrbSpawnCount);
-		FName SocketName = FName(*SocketNameString);
-		ACharacter* Boss = Cast<ACharacter>(GetOwner());
-		
-		// 소켓 위치 가져오기
-		FVector SocketLocation = Boss->GetMesh()->GetSocketLocation(SocketName);
-		FRotator SocketRotation = Boss->GetMesh()->GetSocketRotation(SocketName);
-		
+	// 오브 소켓 위치 사용
+	FVector SocketLocation = Boss->GetMesh()->GetSocketLocation(FName("OrbSocket_1"));
+	FRotator SocketRotation = Boss->GetMesh()->GetSocketRotation(FName("OrbSocket_1"));
+	
 	// 오브젝트 풀에서 오브 가져오기
 	ABossProjectileOrb* Orb = GetOrbFromPool();
 	if (Orb)
@@ -121,20 +110,21 @@ void UBossProjectileComponent::SpawnOrb()
 		Orb->SetActorEnableCollision(true);
 		Orb->SetActorTickEnabled(true);
 		
-	}
-		else
-		{
-			UE_LOG(LogTemp, Error, TEXT("SpawnOrb - 오브 풀에서 사용 가능한 오브가 없음 (소켓: %s, 카운트: %d)"), *SocketNameString, OrbSpawnCount);
-		}
+		// 오브 활성화 시 소리 및 이펙트 재생
+		Orb->ActivateOrb();
 		
-		// 3번 소환 완료 시 타이머 정리
-		if (OrbSpawnCount >= 1)
-		{
-			GetWorld()->GetTimerManager().ClearTimer(OrbTimerHandle);
-			OrbSpawnCount = 0;
-			UE_LOG(LogTemp, Warning, TEXT("SpawnOrb - 모든 오브 소환 완료"));
-		}
-	}, 0.5f, true, 0.0f);
+		// 오브 생성 성공 시에만 카운트와 상태 설정
+		OrbSpawnCount = 1;
+		ExitOrb = true;  // 오브가 존재하므로 true
+		UE_LOG(LogTemp, Warning, TEXT("SpawnOrb - 오브 1개 소환 완료"));
+	}
+	else
+	{
+		// 오브 생성 실패 시 상태 유지
+		OrbSpawnCount = 0;
+		ExitOrb = false;  // 오브가 없으므로 false
+		UE_LOG(LogTemp, Error, TEXT("SpawnOrb - 오브 풀에서 사용 가능한 오브가 없음"));
+	}
 }
 
 void UBossProjectileComponent::SpawnSingleOrb()
@@ -157,6 +147,9 @@ void UBossProjectileComponent::SpawnSingleOrb()
 		Orb->SetActorHiddenInGame(false);
 		Orb->SetActorEnableCollision(true);
 		Orb->SetActorTickEnabled(true);
+		
+		// 오브 활성화 시 소리 및 이펙트 재생
+		Orb->ActivateOrb();
 		
 	}
 	else
@@ -312,13 +305,14 @@ void UBossProjectileComponent::DestroyOrb()
 	
 	if (OrbSpawnCount > 0)
 	{
-		ExitOrb = false;
-		CLog::Log("DestroyOrb - ExitOrb = false (Still has orbs)");
+		ExitOrb = true;   // 아직 오브가 남아있음
+		CLog::Log("DestroyOrb - ExitOrb = true (Still has orbs)");
 	}
-	else
+	else if (OrbSpawnCount <= 0)
 	{
-		ExitOrb = true;
-		CLog::Log("DestroyOrb - ExitOrb = true (All orbs destroyed)");
+		ExitOrb = false;  // 모든 오브가 파괴됨
+		OrbSpawnCount = 0;  // 음수 방지
+		CLog::Log("DestroyOrb - ExitOrb = false (All orbs destroyed)");
 	}
 }
 
