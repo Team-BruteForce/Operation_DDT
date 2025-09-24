@@ -42,6 +42,34 @@ public:
 		const FHitResult& SweepResult
 	);
 
+	// ===== 사운드 재생 함수들 =====
+	UFUNCTION(BlueprintCallable, Category = "Audio")
+	void PlaySpawnSound();
+	
+	UFUNCTION(BlueprintCallable, Category = "Audio")
+	void PlayReturnToPoolSound();
+	
+	UFUNCTION(BlueprintCallable, Category = "Audio")
+	void PlayCollisionSound();
+	
+	// ===== 이펙트 재생 함수들 =====
+	UFUNCTION(BlueprintCallable, Category = "Effects")
+	void PlaySpawnEffect();
+	
+	UFUNCTION(BlueprintCallable, Category = "Effects")
+	void PlayReturnToPoolEffect();
+	
+	UFUNCTION(BlueprintCallable, Category = "Effects")
+	void PlayCollisionEffect();
+	
+	// ===== 딜레이 파괴 함수 =====
+	UFUNCTION(BlueprintCallable, Category = "Timing")
+	void DestroyOrbWithDelay();
+	
+	// 오브젝트 풀 활성화 함수
+	UFUNCTION(BlueprintCallable, Category = "Object Pool")
+	void ActivateOrb();
+
 public:
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	class USphereComponent* SphereComponent;
@@ -57,9 +85,41 @@ public:
 	// 오브젝트 풀 관련
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Object Pool")
 	bool bUseObjectPool;
+	
+	// 사운드/이펙트 재생 딜레이
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Timing", meta=(ToolTip="사운드/이펙트 재생 후 파괴까지 대기 시간"))
+	float DestroyDelay = 1.0f;
+	
+	// 타이머 핸들 (딜레이 파괴용)
+	FTimerHandle DestroyTimerHandle;
 
 public:
-	UPROPERTY(EditAnywhere,BlueprintReadWrite,meta=(ToolTip="오브 스폰 사운드"))
-	class USoundCue* OrbSound;
+	// 사운드 시스템 (SoundBase 사용)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio", meta=(ToolTip="오브 소환 사운드"))
+	class USoundBase* SpawnSound;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio", meta=(ToolTip="오브 풀 반환 사운드"))
+	class USoundBase* ReturnToPoolSound;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio", meta=(ToolTip="오브 충돌 사운드"))
+	class USoundBase* CollisionSound;
+	
+	// 사운드 어테뉴에이션
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio", meta=(ToolTip="사운드 거리 감쇠 설정"))
+	class USoundAttenuation* SoundAttenuation;
+	
+	// 이펙트 시스템 (나이아가라)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects", meta=(ToolTip="오브 소환 이펙트"))
+	class UNiagaraSystem* SpawnEffect;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects", meta=(ToolTip="오브 풀 반환 이펙트"))
+	class UNiagaraSystem* ReturnToPoolEffect;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects", meta=(ToolTip="오브 충돌 이펙트"))
+	class UNiagaraSystem* CollisionEffect;
+	
+	// 오디오 컴포넌트
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Audio")
+	class UAudioComponent* AudioComponent;
 
 };

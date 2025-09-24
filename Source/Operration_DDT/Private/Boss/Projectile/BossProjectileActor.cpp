@@ -5,6 +5,7 @@
 #include "NiagaraComponent.h"
 #include "Components/ShapeComponent.h"
 #include "Components/SphereComponent.h"
+#include "Components/AudioComponent.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Boss/Component/BossProjectileComponent.h"
@@ -23,6 +24,9 @@ ABossProjectileActor::ABossProjectileActor()
 	CHelpers::CreateComponent<UNiagaraComponent>(this, &NiagaraDestroyEffect, "NiagaraDestroyEffect", Root);
 	CHelpers::CreateActorComponent<UProjectileMovementComponent>(this, &ProjectileComp, "ProjectileComp");
 	CHelpers::CreateComponent<USphereComponent>(this, &Shape, "Shape", Root);
+	
+	// 오디오 컴포넌트 생성
+	CHelpers::CreateComponent<UAudioComponent>(this, &AudioComponent, "AudioComponent", Root);
 	
 	// 기본값 설정
 	ProjectileSpeed = 1000.0f;
@@ -169,6 +173,13 @@ void ABossProjectileActor::Tick(float DeltaTime)
 	// 수명이 다하면 풀로 반환 또는 파괴
 	if (CurrentTime >= LifeTime)
 	{
+		// 발사 사운드 중지
+		if (AudioComponent && AudioComponent->IsPlaying())
+		{
+			AudioComponent->Stop();
+			CLog::Log("BossProjectileActor - Projectile Sound Stopped (LifeTime)");
+		}
+		
 		PlayDestroyEffect();
 		
 		// 착탄 사운드 재생
@@ -182,7 +193,7 @@ void ABossProjectileActor::Tick(float DeltaTime)
 				1.0f,
 				1.0f,
 				0.0f,
-				SoundAttenuation,
+				nullptr,
 				nullptr
 			);
 		}
@@ -228,20 +239,12 @@ void ABossProjectileActor::FireProjectile(AActor* Target)
 	// 스폰 이펙트 재생
 	PlaySpawnEffect();
 	
-	// 발사 사운드 재생
-	if (ProjectileSound)
+	// 발사 사운드 재생 (오디오 컴포넌트 사용)
+	if (ProjectileSound && AudioComponent)
 	{
-		UGameplayStatics::PlaySoundAtLocation(
-			GetWorld(),
-			ProjectileSound,
-			GetActorLocation(),
-			GetActorRotation(),
-			1.0f,
-			1.0f,
-			0.0f,
-			SoundAttenuation,
-			nullptr
-		);
+		AudioComponent->SetSound(ProjectileSound);
+		AudioComponent->Play();
+		CLog::Log("BossProjectileActor - Projectile Sound Started");
 	}
 }
 
@@ -294,20 +297,12 @@ void ABossProjectileActor::FireProjectileToLocation(const FVector& TargetLocatio
 		NiagaraProjectile->Activate();
 	}
 	
-	// 발사 사운드 재생
-	if (ProjectileSound)
+	// 발사 사운드 재생 (오디오 컴포넌트 사용)
+	if (ProjectileSound && AudioComponent)
 	{
-		UGameplayStatics::PlaySoundAtLocation(
-			GetWorld(),
-			ProjectileSound,
-			GetActorLocation(),
-			GetActorRotation(),
-			1.0f,
-			1.0f,
-			0.0f,
-			SoundAttenuation,
-			nullptr
-		);
+		AudioComponent->SetSound(ProjectileSound);
+		AudioComponent->Play();
+		CLog::Log("BossProjectileActor - Projectile Sound Started (ToLocation)");
 	}
 }
 
@@ -323,7 +318,15 @@ void ABossProjectileActor::OnProjectileHit(UPrimitiveComponent* OverlappedCompon
 		{
 			Shape->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		}
-		UGameplayStatics::ApplyDamage(Boss,1,Boss->GetController(),Boss,nullptr);
+		
+		// 발사 사운드 중지
+		if (AudioComponent && AudioComponent->IsPlaying())
+		{
+			AudioComponent->Stop();
+			CLog::Log("BossProjectileActor - Projectile Sound Stopped");
+		}
+		
+		UGameplayStatics::ApplyDamage(Boss,10,Boss->GetController(),Boss,nullptr);
 		
 		// 파괴 이펙트 재생
 		PlayDestroyEffect();
@@ -339,7 +342,7 @@ void ABossProjectileActor::OnProjectileHit(UPrimitiveComponent* OverlappedCompon
 				1.0f,
 				1.0f,
 				0.0f,
-				SoundAttenuation,
+				nullptr,
 				nullptr
 			);
 		}

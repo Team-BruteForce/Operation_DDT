@@ -37,6 +37,10 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectile")
 	class USceneComponent* Root;
+	
+	// 오디오 컴포넌트 (발사 사운드용)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Audio")
+	class UAudioComponent* AudioComponent;
 
 public:
 	// 투사체 발사
@@ -130,7 +134,4 @@ public:
 
 	UPROPERTY(EditAnywhere,BlueprintReadWrite,meta=(ToolTip="투사체 착탄 사운드"))
 	class USoundBase* ImpactSound;
-
-	UPROPERTY(EditAnywhere,BlueprintReadWrite,meta=(ToolTip="사운드 감쇠 설정"))
-	class USoundAttenuation* SoundAttenuation;
 };

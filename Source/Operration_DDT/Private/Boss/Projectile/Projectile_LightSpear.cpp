@@ -186,7 +186,7 @@ void AProjectile_LightSpear::OnProjectileHit(UPrimitiveComponent* OverlappedComp
 		if (Player->GetName()!=GetOwner()->GetName())
 		{
 			// 플레이어에게 데미지
-			UGameplayStatics::ApplyDamage(Player, 10.0f, GetOwner()->GetInstigatorController(), GetOwner(), nullptr);
+			UGameplayStatics::ApplyDamage(Player, 40.0f, GetOwner()->GetInstigatorController(), GetOwner(), nullptr);
 			
 			// 충돌 후 콜리전 비활성화
 			if (Shape)
