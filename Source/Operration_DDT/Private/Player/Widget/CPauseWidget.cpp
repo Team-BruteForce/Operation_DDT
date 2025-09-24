@@ -34,6 +34,8 @@ void UCPauseWidget::NativeConstruct()
 	PC->SetInputMode(InputMode);
 	PC->bShowMouseCursor = true;
 	
+	SetKeyboardFocus();
+	SetIsFocusable(true);
 }
 
 void UCPauseWidget::OnHoverYesBtn()
@@ -65,11 +67,22 @@ void UCPauseWidget::OnClickYesBtn()
 
 void UCPauseWidget::OnClickNoBtn()
 {
+	SetIsFocusable(false);
+	
 	RemoveFromParent();
 	
 	FInputModeGameOnly InputMode;
 	PC->SetInputMode(InputMode);
 	PC->bShowMouseCursor = false;
 	PC->SetPause(false);
-	
+}
+
+FReply UCPauseWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
+{
+	if (InKeyEvent.GetKey() == EKeys::Escape)
+	{
+		OnClickNoBtn();
+		return FReply::Handled();
+	}
+	return Super::NativeOnKeyDown(InGeometry, InKeyEvent);
 }

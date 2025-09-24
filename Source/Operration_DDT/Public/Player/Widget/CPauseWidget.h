@@ -48,5 +48,7 @@ public:
 
 	UFUNCTION()
 	void OnClickNoBtn();
+
+	virtual FReply NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
 	
 };

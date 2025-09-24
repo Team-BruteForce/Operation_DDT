@@ -208,7 +208,10 @@ void UCRespawnComponent::RespawnPlayer()
 	{
 		Magazine->ResetMagazines();
 	}
-	
+	if (State)
+	{
+		State->SetIsHammerPulled(true);
+	}
 	// 4. 컨트롤러 회전 다시 활성화
 	if (OwnerCharacter->Movement)
 	{

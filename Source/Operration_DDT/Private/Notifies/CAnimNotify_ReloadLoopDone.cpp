@@ -20,7 +20,7 @@ void UCAnimNotify_ReloadLoopDone::Notify(USkeletalMeshComponent* MeshComp, UAnim
 	CheckNull(Magazine);
 
 	
-	if (Magazine->ReloadLoopCount < Magazine->MaxReloadLoopCount)
+	if (Magazine->ReloadLoopCount < Magazine->MaxReloadLoopCount || Magazine->TotalRifleBullets <= 0)
 	{
 		OwnerCharacter->PlayAnimMontage(LoopMontage, 1.2f);
 	}

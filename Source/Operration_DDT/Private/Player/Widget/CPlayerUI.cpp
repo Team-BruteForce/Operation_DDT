@@ -158,6 +158,7 @@ void UCPlayerUI::SetHealItem(int32 value)
 	if( value > 0 )
 	{
 		txt_HealItem->SetText(FText::FromString(FString::FromInt(value)));
+		txt_HealItem->SetVisibility(ESlateVisibility::Visible);
 		img_injection_full->SetVisibility(ESlateVisibility::Visible);
 		img_injection_empty->SetVisibility(ESlateVisibility::Hidden);
 	}
