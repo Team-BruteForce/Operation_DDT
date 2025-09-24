@@ -50,6 +50,7 @@ void UCRespawnComponent::BeginPlay()
 	Magazine = CHelpers::GetComponent<UCMagazineComponent>(OwnerCharacter);
 	Stamina = CHelpers::GetComponent<UCStaminaComponent>(OwnerCharacter);
 	UIComp = CHelpers::GetComponent<UCUIComponent>(OwnerCharacter);
+	OwnerController = Cast<APlayerController>(OwnerCharacter->GetController());
 	
 	// DieDelegate 구독
 	if (OwnerCharacter && OwnerCharacter->Montages)
@@ -114,17 +115,21 @@ void UCRespawnComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAc
 
 void UCRespawnComponent::OnPlayerDied() 
 {
-	if (OwnerCharacter && UIComp && UIComp->playerUI)
+	CLog::Log("RespawnComp) OnPlayerDied Called");
+	if (UIComp && UIComp->playerUI)
 	{
-		CLog::Log("OnPlayerDied) Owner, UIComp, PlayerUI");
-		ADDTGameMode* GM = GetWorld()->GetAuthGameMode<ADDTGameMode>();
-		if (GM)
-		{
-			CLog::Log("OnPlayerDied)  GM Successed");
-			UIComp->playerUI->OnAnimFinishedDelegate.AddDynamic(GM, &ADDTGameMode::LinkedMaintoLoading);
-			CLog::Log("OnPlayerDied)  AddDynamic");
-		}
+		if (UIComp->playerUI->OnAnimFinishedDelegate.IsBound())
+			UIComp->playerUI->OnAnimFinishedDelegate.RemoveDynamic( GetWorld()->GetAuthGameMode<ADDTGameMode>(), &ADDTGameMode::LinkedMaintoLoading);
 		
+		UIComp->playerUI->OnAnimFinishedDelegate.AddDynamic( GetWorld()->GetAuthGameMode<ADDTGameMode>(), &ADDTGameMode::LinkedMaintoLoading);
+		if (UIComp->playerUI->OnAnimFinishedDelegate.IsBound())
+		{
+			CLog::Log("RespawnComponent: OnAnimFinishedDelegate called");
+		}
+	}
+	else
+	{
+		CLog::Log("RespawnComponent: Cannot find UIComp in level");
 	}
 	
 	// 플레이어가 사망했을 때 호출되는 함수
@@ -133,6 +138,9 @@ void UCRespawnComponent::OnPlayerDied()
 	Capsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	Movement->Stop();
 	OwnerCharacter->GetCharacterMovement()->StopActiveMovement();
+	
+	OwnerController->DisableInput(OwnerController);
+	
 
 	// Call Animation
 	OnPlayerDeath.Broadcast();
@@ -174,6 +182,7 @@ void UCRespawnComponent::RespawnPlayer()
 		return;
 	}
 	OwnerCharacter->GetCharacterMovement()->StopActiveMovement();
+	Movement->ResetDirection();
 	
 	CLog::Log("RespawnComponent: Starting respawn process...");
 	
@@ -187,6 +196,8 @@ void UCRespawnComponent::RespawnPlayer()
 	CLog::Log("RespawnComponent: Player state set to Idle and dead state reset");
 
 	Movement->Move();
+
+	OwnerController->EnableInput(OwnerController);
 	
 	// 3. HP를 최대치로 복구 (Status 컴포넌트가 있다면)
 	if (Status)
@@ -222,11 +233,10 @@ void UCRespawnComponent::RespawnPlayer()
 	if (CombatEncounterManager)
 	{
 		CombatEncounterManager->AllEnemyRestart();
-		CLog::Log("RespawnComponent: All enemies restarted via CombatEncounterManager");
 	}
 	else
 	{
-		CLog::Log("RespawnComponent: CombatEncounterManager is null, cannot restart enemies");
+
 	}
 }
 

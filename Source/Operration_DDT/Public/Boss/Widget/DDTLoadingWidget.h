@@ -9,6 +9,7 @@
 /**
  * 
  */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnLoadingFadeOutEnd);
 UCLASS()
 class OPERRATION_DDT_API UDDTLoadingWidget : public UUserWidget
 {
@@ -16,6 +17,8 @@ class OPERRATION_DDT_API UDDTLoadingWidget : public UUserWidget
 
 public:
 	FWidgetAnimationDynamicEvent FLoadingFadeOutEvent;
+	FWidgetAnimationDynamicEvent FLoadingStartEvent;
+	FOnLoadingFadeOutEnd OnLoadingFadeoutEnd;
 	
 public:
 	virtual void NativeConstruct() override;
@@ -23,9 +26,17 @@ public:
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,meta=(BindWidgetAnim),Transient)
 	class UWidgetAnimation* OrbLoopAnimation;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta=(BindWidget))
+	class UCanvasPanel* CanvasPanel_32;
+	
 	void PlayLoadingAnimation();
 
 	UFUNCTION()
 	void EndLoading();
+
+	void Reset();
+
+	UFUNCTION()
+	void StartLoading();
 	
 };

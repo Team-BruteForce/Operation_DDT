@@ -39,7 +39,7 @@ void UCMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	// ...
-	//CLog::Log("Movement) Direction " + Direction.ToString());
+	CLog::Log("Movement) Direction " + Direction.ToString());
 	if (!bCanMove) return;
 	
 	if (!Direction.IsNearlyZero())
@@ -182,6 +182,11 @@ void UCMovementComponent::SprintEnd()
 }
 
 
+void UCMovementComponent::ResetDirection()
+{
+	Direction = FVector::ZeroVector;
+	OwnerCharacter->GetCharacterMovement()->Velocity = Direction;
+}
 
 void UCMovementComponent::SetSpeed(ESpeedType InType)
 {

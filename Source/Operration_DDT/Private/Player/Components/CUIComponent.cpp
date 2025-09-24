@@ -62,7 +62,8 @@ void UCUIComponent::BeginPlay()
 		{
 			RespawnComp->OnPlayerDeath.AddDynamic(this, &UCUIComponent::OnPlayerDeathCallAnimation);
 		}
-		playerUI->OnAnimFinishedDelegate.AddDynamic(this,&UCUIComponent::OnDeathAnimationEnd );
+		
+		//playerUI->OnAnimFinishedDelegate.AddDynamic(this,&UCUIComponent::OnDeathAnimationEnd );
 	}
 	
 }
@@ -80,7 +81,6 @@ void UCUIComponent::InitUIWidget()
 {
 	if (UCPlayerUIWidget)
 	{
-		
 		playerUI->AddToViewport();
 		playerUI->ShowCrosshair(false);
 	}
