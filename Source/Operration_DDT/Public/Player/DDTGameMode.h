@@ -50,6 +50,8 @@ public:
 	// 드랍 아이템 이펙트 풀 매니저
 	UPROPERTY()
 	class ACDropItemEffectPoolManager* DropItemEffectPoolManager;
+	UPROPERTY()
+	bool IsEnd=false;
 	
 
 	UFUNCTION()
@@ -60,6 +62,13 @@ public:
 	UFUNCTION()
 	void DamageUIAnimationFinished();
 
-	
+	UFUNCTION()
+	void RestartGame();
+
+	UPROPERTY()
+	FTimerHandle RestartTimerHandle;
+
+	UFUNCTION()
+	void ExecuteRestart();
 	
 };

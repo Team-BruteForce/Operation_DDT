@@ -35,8 +35,6 @@ void UBossStateComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 			CachedStateTree = AIC->GetComponentByClass<UStateTreeComponent>();
 			if (CachedStateTree)
 			{
-				UE_LOG(LogTemp, Warning, TEXT("BossStateComponent: AI 컴포넌트 초기화 완료"));
-				
 				// 초기 상태 설정
 				if (!CurrentState.IsValid() && Tag_State_Idle.IsValid())
 				{

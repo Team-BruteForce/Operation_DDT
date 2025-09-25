@@ -128,6 +128,7 @@ void AGateOfBabylon::ActivateGate()
 
 void AGateOfBabylon::DeactivateGate()
 {
+	CheckNull(this);
 	SetActorHiddenInGame(true);
 	SetActorEnableCollision(false);
 	SetActorTickEnabled(false);

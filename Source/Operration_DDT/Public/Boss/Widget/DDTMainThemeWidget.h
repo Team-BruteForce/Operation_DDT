@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "Components/AudioComponent.h"
+#include "Sound/SoundBase.h"
 #include "DDTMainThemeWidget.generated.h"
 
 /**
@@ -25,11 +27,44 @@ public:
 
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,meta = (BindWidgetAnim),Transient)
 	class UWidgetAnimation* PressButtonClickAnimation;
+	
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,meta = (BindWidget))
+	class UImage* FadeIn;
 
 	UFUNCTION()
 	void PlayClickEvent();
 
 	UPROPERTY()
 	bool IsClick=true;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	class UAudioComponent* BGMComponent;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	class USoundBase* BGMSound;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	class USoundBase* ClickSound;
+
+	UPROPERTY()
+	FTimerHandle FadeInTimerHandle;
+
+	UPROPERTY()
+	FTimerHandle FadeOutTimerHandle;
+
+	UPROPERTY()
+	float CurrentBGMVolume = 0.0f;
+
+	UPROPERTY()
+	float TargetBGMVolume = 1.0f;
+
+	UFUNCTION()
+	void UpdateBGMVolume();
+
+	UFUNCTION()
+	void StartBGM();
+
+	UFUNCTION()
+	void FadeOutBGM();
 	
 };

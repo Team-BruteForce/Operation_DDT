@@ -46,6 +46,8 @@ namespace AssetPaths
     constexpr const TCHAR* Boss_Widget = TEXT ("/Script/UMGEditor.WidgetBlueprint'/Game/LHW/Widget/WBP/WBP_BossStatus.WBP_BossStatus_C'");
     constexpr const TCHAR* Boss_Dissolve = TEXT ("/Script/Engine.Blueprint'/Game/LHW/Asset/AbsorbVFX/ExampleBlueprints/BP_Absorb_SK_7.BP_Absorb_SK_7_C'");
     constexpr const TCHAR* Boss_FlySpline = TEXT("/Script/Engine.Blueprint'/Game/LHW/Blueprint/Actor/BP_FlySpline.BP_FlySpline_C'");
+    constexpr const TCHAR* Boss_VictorySound = TEXT("/Script/Engine.SoundWave'/Game/LHW/Widget/Res/female-horror-ghost-sound-5-vol-001-138135.female-horror-ghost-sound-5-vol-001-138135'");
+    constexpr const TCHAR* Boss_BGM = TEXT("/Script/Engine.SoundWave'/Game/LHW/Asset/Magic_Whooshes_Sounds_Spells/Make/_-_Endless_Storm._-_Endless_Storm'");
 
 #pragma endregion BossAsset
     constexpr const TCHAR* UI_Main = TEXT("/Script/UMGEditor.WidgetBlueprint'/Game/LHW/Widget/WBP/WBP_MainTheme.WBP_MainTheme_C'");

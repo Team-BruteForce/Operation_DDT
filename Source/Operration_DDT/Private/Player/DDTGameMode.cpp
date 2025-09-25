@@ -11,6 +11,7 @@
 #include "Player/Widget/CPlayerUI.h"
 #include "Boss/Widget/DDTLoadingWidget.h"
 #include "Boss/Widget/DDTMainThemeWidget.h"
+#include "Components/Image.h"
 #include "Player/Components/CRespawnComponent.h"
 #include "Player/Widget/CDamageWidget_Normal.h"
 
@@ -58,6 +59,12 @@ void ADDTGameMode::BeginPlay()
 void ADDTGameMode::LinkedMaintoLoading()
 {
 	CLog::Log("ADDTGameMode::LinkedMaintoLoading");
+	
+	if (MainUI)
+	{
+		MainUI->FadeOutBGM();
+	}
+	
 	if (MainUI->IsInViewport())
 		MainUI->RemoveFromParent();
 	LoadingUI->AddToViewport();
@@ -84,4 +91,17 @@ void ADDTGameMode::DamageUIAnimationFinished()
 {
 	DamageUI->RemoveFromParent();
 	DamageUI->ResetTextPosition();
+}
+
+void ADDTGameMode::RestartGame()
+{
+	IsEnd=true;
+	LoadingUI->AddToViewport();
+	LoadingUI->PlayLoadingAnimation();
+	
+}
+
+void ADDTGameMode::ExecuteRestart()
+{
+	UGameplayStatics::OpenLevel(this, FName(*GetWorld()->GetName()));
 }

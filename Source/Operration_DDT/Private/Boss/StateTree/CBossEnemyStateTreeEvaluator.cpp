@@ -2,8 +2,6 @@
 
 #include "Boss/StateTree/CBossEnemyStateTreeEvaluator.h"
 #include "Global.h"
-#include "MotionWarpingComponent.h"
-#include "Boss/CBoss.h"
 #include "Boss/Component/BossStateComponent.h"
 #include "Boss/Component/CBossStatusComponent.h"
 #include "Boss/Component/CBossTargetingComponent.h"
@@ -11,7 +9,6 @@
 #include "Boss/Component/BossDebugComponent.h"
 #include "DrawDebugHelpers.h"
 #include "Engine/Engine.h"
-#include "NavigationSystem.h"
 #include "Boss/Component/BossProjectileComponent.h"
 #include "Boss/Component/CBossWeaponComponent.h"
 #include "Boss/Component/FlyingComponent.h"
@@ -61,8 +58,6 @@ void UCBossEnemyStateTreeEvaluator::Tick(FStateTreeExecutionContext& Context, co
 	CanTakeoff = FlyingComponent->bCanTakeoff;
 	CanLanding = FlyingComponent->bCanLanding;
 	LastActiveTag=State->LastActiveTag;
-
-	
 }
 
 void UCBossEnemyStateTreeEvaluator::TreeStart(FStateTreeExecutionContext& Context)

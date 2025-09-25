@@ -16,6 +16,7 @@ class OPERRATION_DDT_API UBossStatusWidget : public UUserWidget
 public:
 	FWidgetAnimationDynamicEvent FCompleteUIFadeIn;
 	FWidgetAnimationDynamicEvent FCompleteUIFadeOut;
+	FWidgetAnimationDynamicEvent FBlackFadeIn;
 public:
 	UPROPERTY(EditAnywhere,BlueprintReadOnly,meta = (BindWidget))
 	class UWidgetSwitcher* BossWidgetSwitcher;
@@ -37,6 +38,12 @@ public:
 
 	UPROPERTY(EditAnywhere,BlueprintReadOnly,meta = (BindWidgetAnim),Transient)
 	class UWidgetAnimation* FadeOut;
+
+	UPROPERTY(EditAnywhere,BlueprintReadOnly,meta = (BindWidgetAnim),Transient)
+	class UWidgetAnimation* BlackBoard;
+	
+	UPROPERTY(EditAnywhere,BlueprintReadOnly)
+	class USoundBase* VictorySound;
 
 	UPROPERTY()
 	FTimerHandle Hander;
@@ -74,6 +81,9 @@ public:
 	void FadeOutHandler();
 	UFUNCTION()
 	void EndWidget();
+
+	UFUNCTION()
+	void RestartReady();
 
 	UFUNCTION()
 	void SmoothUpdateDelayHP();

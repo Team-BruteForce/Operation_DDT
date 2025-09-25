@@ -160,6 +160,31 @@ public:
 
 	UPROPERTY()
 	bool flag=false;
+
+	/**
+	 * @brief 보스 배경음악
+	 */
+	UPROPERTY(EditAnywhere)
+	class USoundBase* BossBGM;
+
+	/**
+	 * @brief 배경음악 재생용 사운드 컴포넌트
+	 */
+	UPROPERTY(EditAnywhere,BlueprintReadOnly)
+	class UAudioComponent* BossBGMComponent;
+
+	/**
+	 * @brief 배경음악 재생 중인지 확인하는 플래그
+	 */
+	UPROPERTY()
+	bool bIsBGMPlaying = false;
+
+	/**
+	 * @brief 볼륨 페이드아웃 타이머
+	 */
+	UPROPERTY()
+	FTimerHandle VolumeFadeTimer;
+
 	/**
 	 * @brief 게임 시작 시 호출되는 함수
 	 */
@@ -173,7 +198,26 @@ public:
 
 	UFUNCTION()
 	void HPUpdate();
-	
-	
+
+	UFUNCTION()
+	void RestartUI();
+
+	/**
+	 * @brief 보스 배경음악 재생
+	 */
+	UFUNCTION()
+	void PlayBossBGM();
+
+	/**
+	 * @brief 보스 배경음악 정지
+	 */
+	UFUNCTION()
+	void StopBossBGM();
+
+	/**
+	 * @brief 보스 배경음악 볼륨 감소 (죽음 시)
+	 */
+	UFUNCTION()
+	void LowerBossBGMVolume();
 	
 };
