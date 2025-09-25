@@ -142,24 +142,6 @@ void ACSkeletonEnemy::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	{
 		GetWorldTimerManager().ClearTimer(DeathTimerHandle);
 	}
-	
-    // Encounter Manager 해제
-    if (HasAuthority())
-    {
-        UWorld* World = GetWorld();
-        if (World)
-        {
-            TArray<AActor*> Found;
-            UGameplayStatics::GetAllActorsOfClass(World, ACCombatEncounterManager::StaticClass(), Found);
-            if (Found.Num() > 0)
-            {
-                if (ACCombatEncounterManager* Mgr = Cast<ACCombatEncounterManager>(Found[0]))
-                {
-                    Mgr->UnregisterEnemy(this);
-                }
-            }
-        }
-    }
 
     Super::EndPlay(EndPlayReason);
 }
@@ -762,24 +744,6 @@ void ACSkeletonEnemy::OnDeath()
 
 	// 모든 콜리전 비활성화 (사망 시 충돌 방지)
 	DisableAllCollisions();
-
-    // Encounter Manager 해제(사망 즉시)
-    if (HasAuthority())
-    {
-        UWorld* World = GetWorld();
-        if (World)
-        {
-            TArray<AActor*> Found;
-            UGameplayStatics::GetAllActorsOfClass(World, ACCombatEncounterManager::StaticClass(), Found);
-            if (Found.Num() > 0)
-            {
-                if (ACCombatEncounterManager* Mgr = Cast<ACCombatEncounterManager>(Found[0]))
-                {
-                    Mgr->UnregisterEnemy(this);
-                }
-            }
-        }
-    }
 
 	// 이동/AI 즉시 정지
 	if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())

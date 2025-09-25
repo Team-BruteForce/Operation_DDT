@@ -7,6 +7,8 @@
 #include "Perception/AIPerceptionSystem.h"
 #include "GenericTeamAgentInterface.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "BrainComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Engine/Engine.h"
 #include "Kismet/GameplayStatics.h"
 #include "ODH/ODH_Enemy/Component/CEnemyHealthBarComponent.h"
@@ -133,6 +135,49 @@ void ACEnemyAIController::SetNowPlayerDead()
 void ACEnemyAIController::ClearNowPlayerDead()
 {
     bIsNowPlayerDead = false;
+    
+    // 비헤이비어트리 재시작
+    if (UBrainComponent* Brain = GetBrainComponent())
+    {
+        Brain->RestartLogic();
+    }
+    
+    // 블랙보드 초기화
+    if (UBlackboardComponent* BlackboardComp = GetBlackboardComponent())
+    {
+        static const FName KeyIsInCombat = TEXT("IsInCombat");
+        static const FName KeyTargetPlayer = TEXT("TargetPlayer");
+        static const FName KeyLastSeenLocation = TEXT("LastSeenLocation");
+        
+        BlackboardComp->SetValueAsBool(KeyIsInCombat, false);
+        BlackboardComp->ClearValue(KeyTargetPlayer);
+        BlackboardComp->ClearValue(KeyLastSeenLocation);
+    }
+    
+    // 감지 목록 초기화
+    DetectedEnemies.Empty();
+    DetectedAllies.Empty();
+    
+    // AIPerception 재설정 - 감지된 모든 액터를 잊어버리기
+    if (AIPerceptionComponent)
+    {
+        AIPerceptionComponent->ForgetAll();
+    }
+    
+    // 이동 기능 재활성화
+    if (APawn* MyPawn = GetPawn())
+    {
+        if (UCharacterMovementComponent* MoveComp = MyPawn->GetComponentByClass<UCharacterMovementComponent>())
+        {
+            // 이동 컴포넌트 재활성화
+            MoveComp->SetMovementMode(MOVE_Walking);
+            
+            // AI 컨트롤러 이동 재시작
+            StopMovement();
+        }
+    }
+    
+    UE_LOG(LogTemp, Log, TEXT("AI Controller restarted after player respawn: %s"), *GetName());
 }
 
 AActor* ACEnemyAIController::GetNearestEnemy() const

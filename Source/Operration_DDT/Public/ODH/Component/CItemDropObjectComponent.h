@@ -98,7 +98,7 @@ protected:
 private:
     // 체력 관련
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health", meta = (AllowPrivateAccess = "true"))
-    float MaxHealth = 100.0f;
+    float MaxHealth = 50.0f;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Health", meta = (AllowPrivateAccess = "true"))
     float CurrentHealth;
@@ -149,4 +149,27 @@ private:
     // 파괴 타이머 핸들
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Destroy", meta = (AllowPrivateAccess = "true"))
     FTimerHandle DestroyTimerHandle;
+
+    // 하강 연출 설정 (에디터에서 조절)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sink", meta = (AllowPrivateAccess = "true"))
+    float SinkDistanceOnDestroy = 100.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sink", meta = (AllowPrivateAccess = "true"))
+    float SinkDurationOnDestroy = 1.5f;
+
+    // 아이템 드랍이 이미 수행되었는지 여부
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State", meta = (AllowPrivateAccess = "true"))
+    bool bItemDropped = false;
+
+    // 누적 타격 횟수 (홀수일 때 드랍)
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State", meta = (AllowPrivateAccess = "true"))
+    int32 HitCount = 0;
+
+    // 초기 위치 저장 (BeginPlay에서 저장됨)
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Initial State", meta = (AllowPrivateAccess = "true"))
+    FVector InitialLocation = FVector::ZeroVector;
+
+    // 초기 회전 저장 (BeginPlay에서 저장됨)
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Initial State", meta = (AllowPrivateAccess = "true"))
+    FRotator InitialRotation = FRotator::ZeroRotator;
 };

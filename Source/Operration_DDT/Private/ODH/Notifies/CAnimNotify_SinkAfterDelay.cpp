@@ -29,7 +29,7 @@ void UCAnimNotify_SinkAfterDelay::Notify(USkeletalMeshComponent* MeshComp, UAnim
 
 	if (EffectComp)
 	{
-		EffectComp->StartEffect(DelaySeconds, SinkDistance, SinkDuration, ShakeAmplitude, ShakeFrequency);
+		EffectComp->StartEffect(DelaySeconds, SinkDistance, SinkDuration, 0.0f, 0.0f);
 	}
 }
 

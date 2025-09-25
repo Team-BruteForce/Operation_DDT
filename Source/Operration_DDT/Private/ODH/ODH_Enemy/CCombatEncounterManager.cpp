@@ -124,17 +124,39 @@ void ACCombatEncounterManager::AllEnemyRestart()
 void ACCombatEncounterManager::DoAllEnemyRestart()
 {
     int32 RestartCount = 0;
+    int32 TotalEnemies = RegisteredEnemies.Num();
+    
+    UE_LOG(LogTemp, Log, TEXT("DoAllEnemyRestart: Total registered enemies: %d"), TotalEnemies);
 
     for (const TWeakObjectPtr<APawn>& WeakPawn : RegisteredEnemies)
     {
         APawn* Pawn = WeakPawn.Get();
-        if (!Pawn || Pawn->IsActorBeingDestroyed())
+        
+        if (!Pawn)
+        {
+            UE_LOG(LogTemp, Warning, TEXT("DoAllEnemyRestart: Pawn is NULL"));
             continue;
+        }
+        
+        // 안전한 이름 가져오기
+        FString PawnName = IsValid(Pawn) ? Pawn->GetName() : TEXT("Invalid");
+        UE_LOG(LogTemp, Log, TEXT("DoAllEnemyRestart: Checking enemy: %s"), *PawnName);
+        
+        if (Pawn->IsActorBeingDestroyed())
+        {
+            UE_LOG(LogTemp, Warning, TEXT("DoAllEnemyRestart: Skipping %s - IsBeingDestroyed"), *PawnName);
+            continue;
+        }
 
         if (Pawn->Implements<UAllEnemyRestart>())
         {
+            UE_LOG(LogTemp, Log, TEXT("DoAllEnemyRestart: Calling EnemyRestart on %s"), *PawnName);
             IAllEnemyRestart::Execute_EnemyRestart(Pawn);
             RestartCount++;
+        }
+        else
+        {
+            UE_LOG(LogTemp, Warning, TEXT("DoAllEnemyRestart: %s does not implement IAllEnemyRestart"), *PawnName);
         }
     }
 

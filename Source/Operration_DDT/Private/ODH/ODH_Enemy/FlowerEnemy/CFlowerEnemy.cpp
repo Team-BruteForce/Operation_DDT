@@ -879,25 +879,6 @@ void ACFlowerEnemy::OnDeath()
 
 	// 소켓 기반 데미지 콜리전 비활성화
 	DisableDamageCollisions();
-
-	// Encounter Manager 해제(사망 즉시)
-	if (HasAuthority())
-	{
-		UWorld* World = GetWorld();
-		if (World)
-		{
-			TArray<AActor*> Found;
-			UGameplayStatics::GetAllActorsOfClass(World, ACCombatEncounterManager::StaticClass(), Found);
-			if (Found.Num() > 0)
-			{
-				if (ACCombatEncounterManager* Mgr = Cast<ACCombatEncounterManager>(Found[0]))
-				{
-					Mgr->UnregisterEnemy(this);
-				}
-			}
-		}
-	}
-
 }
 
 void ACFlowerEnemy::OnMeleeAttackHit(AActor* HitActor)

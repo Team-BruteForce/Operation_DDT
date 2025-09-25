@@ -15,6 +15,7 @@
 #include "UObject/UnrealType.h"
 #include "Player/DDTPlayer.h"
 #include "NiagaraFunctionLibrary.h"
+#include "ODH/Component/CSoundCollectionComponent.h"
 
 namespace
 {
@@ -293,13 +294,10 @@ void UCEnemyProjectileComp::DealProjectileDamage(AActor* HitActor)
 		UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), HitEffect, EffectLocation);
 	}
 	
-	// 히트 사운드 재생
-	if (HitSound)
+	if (UCSoundCollectionComponent* SoundComp = OwnerActor->FindComponentByClass<UCSoundCollectionComponent>())
 	{
-		UGameplayStatics::PlaySoundAtLocation(GetWorld(), HitSound, HitActor->GetActorLocation());
+		SoundComp->PlayRangedAttackHitSound();
 	}
-
-
 }
 
 void UCEnemyProjectileComp::RegisterCollisionComponent(UPrimitiveComponent* CollisionComponent)
