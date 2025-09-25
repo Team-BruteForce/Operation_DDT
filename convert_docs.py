@@ -510,7 +510,7 @@ def generate_document(prompt, filename):
         print(f"오류 상세: {str(e)}")
         
         # 오류가 발생하면 더 작은 토큰으로 재시도
-        print("더 작은 토큰 수로 재시도합니다...")
+        print("더 작은 토큰 수로 재시도합니다..")
         try:
             generation_config = genai.types.GenerationConfig(
                 max_output_tokens=4096,   # 4K 토큰으로 재시도
