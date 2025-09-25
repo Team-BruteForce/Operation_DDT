@@ -1,267 +1,38 @@
 # ⚔️ 언리얼 엔진 C++ 보스 전투 시스템 포트폴리오 ⚔️
 
-## 🎉 프로젝트 개요 🎉
+## ✨ 프로젝트 개요
 
-🎮 **장르**: 3인칭 액션 어드벤처 게임
+이 프로젝트는 언리얼 엔진 5를 기반으로 개발된 **액션 어드벤처 게임**의 핵심 요소인 **보스 전투 시스템**을 구현한 것입니다. 고대 신화 속 보스를 모티브로 한 강력한 적과의 전투를 통해 플레이어에게 도전적이고 몰입감 넘치는 경험을 제공하는 것을 목표로 합니다.
 
-🏞️ **배경**: 고대 신화 속 세계관을 배경으로, 강력한 보스 몬스터와의 전투를 중심으로 전개되는 게임입니다. 플레이어는 영웅이 되어 다양한 스킬과 전략을 활용하여 보스를 공략해야 합니다.
+### 🎮 게임 장르, 배경, 목표
 
-🎯 **목표**: 이 프로젝트는 언리얼 엔진 C++를 사용하여 고품질의 보스 전투 시스템을 구현하는 것을 목표로 합니다. 특히, StateTree 기반의 AI, 페이즈 전환 시스템, 투사체 시스템, 애니메이션 노티파이 시스템, 이펙트 관리 시스템 등 다양한 기술적 요소를 통합하여 몰입감 있는 전투 경험을 제공하는 데 중점을 두었습니다.
+*   **장르**: 3인칭 액션 어드벤처
+*   **배경**: 고대 신화와 전설을 바탕으로 한 판타지 세계
+*   **목표**: 플레이어는 주인공이 되어 강력한 보스 몬스터를 물리치고 세계를 구원하는 여정을 떠납니다. 각 보스는 고유한 공격 패턴과 약점을 가지고 있으며, 플레이어는 전략적인 전투를 통해 이를 극복해야 합니다.
 
-⭐ **주요 기능 및 특징 (상세 설명)**:
+### ⭐ 주요 기능 및 특징 (상세 설명)
 
-1.  **StateTree 기반 AI 시스템**:
-    *   보스의 행동 패턴을 정의하고 관리하기 위해 StateTree를 사용했습니다. StateTree는 복잡한 AI 로직을 시각적으로 표현하고 관리할 수 있게 해주어, 개발 과정에서 AI의 동작을 쉽게 수정하고 확장할 수 있도록 합니다.
-    *   각 State는 보스의 특정 행동 (예: 공격, 이동, 방어)을 나타내며, Transition은 특정 조건 (예: 플레이어와의 거리, 보스의 HP)에 따라 State 간 전환을 정의합니다.
-    *   StateTree Evaluator를 통해 매 프레임마다 StateTree를 평가하고, 현재 State에 따라 보스의 행동을 결정합니다.
-    *   **장점**:
-        *   **유연성**: StateTree는 새로운 행동 패턴을 추가하거나 기존 행동 패턴을 수정하는 데 매우 유연합니다.
-        *   **가시성**: StateTree는 AI 로직을 시각적으로 표현하므로, 개발자가 AI의 동작을 쉽게 이해하고 디버깅할 수 있습니다.
-        *   **확장성**: StateTree는 복잡한 AI 로직을 계층적으로 구성할 수 있으므로, AI의 복잡도가 증가하더라도 쉽게 확장할 수 있습니다.
-    *   **예시**:
-        *   보스가 플레이어와의 거리가 멀어지면 원거리 공격 State로 전환하고, 가까워지면 근접 공격 State로 전환합니다.
-        *   보스의 HP가 특정 값 이하로 떨어지면 페이즈 전환 State로 전환합니다.
-    *   **코드 예제 (UCBossEnemyStateTreeEvaluator::Tick)**:
+*   **다양한 보스 패턴**: 각 보스는 고유한 공격 패턴, 스킬, 페이즈 변화를 가집니다.
+*   **StateTree 기반 AI**: 복잡한 보스 AI를 효율적으로 관리하고 확장하기 위해 StateTree를 사용했습니다.
+*   **애니메이션 노티파이**: 애니메이션과 게임 로직을 동기화하여 자연스럽고 반응성 높은 전투 경험을 제공합니다.
+*   **이펙트 시스템**: 화려하고 강력한 시각 효과를 통해 전투의 몰입감을 높입니다.
+*   **투사체 시스템**: 다양한 투사체를 생성하고 관리하여 보스의 공격 패턴을 다채롭게 만듭니다.
+*   **장비 시스템**: 보스가 다양한 무기를 장착하고 활용할 수 있도록 합니다.
+*   **상태 위젯**: 보스의 HP, 페이즈 정보 등을 표시하여 플레이어가 전투 상황을 파악하는 데 도움을 줍니다.
+*   **데이터 동기화 플러그인**: GameplayTags 및 보스 스탯을 외부 데이터 소스(예: 스프레드시트)와 동기화하여 콘텐츠 업데이트를 용이하게 합니다.
 
-```cpp
-void UCBossEnemyStateTreeEvaluator::Tick(float DeltaTime)
-{
-    Super::Tick(DeltaTime);
+### 🛠️ 기술적 특징 및 사용된 라이브러리/프레임워크
 
-    // StateTree 평가 및 행동 결정
-    if (StateTreeComponent)
-    {
-        StateTreeComponent->StepTree();
-    }
-}
-```
+*   **언리얼 엔진 5**: 게임 엔진
+*   **C++**: 주요 게임 로직 구현
+*   **StateTree**: 보스 AI 구현
+*   **애니메이션 노티파이**: 애니메이션 이벤트 처리
+*   **Niagara**: 파티클 이펙트 시스템
+*   **Object Pool**: 투사체 및 이펙트 성능 최적화
+*   **HTTP API**: 외부 데이터 동기화
+*   **GameplayTags**: 게임플레이 요소 태깅 및 관리
 
-2.  **페이즈 전환 시스템**:
-    *   보스 전투를 더욱 흥미롭게 만들기 위해 페이즈 전환 시스템을 구현했습니다. 보스의 HP가 특정 값 이하로 떨어지거나 특정 조건을 만족하면 보스의 행동 패턴과 외형이 변화합니다.
-    *   각 페이즈는 보스의 난이도와 공격 패턴을 조절하여, 플레이어에게 새로운 도전 과제를 제시합니다.
-    *   페이즈 전환 시에는 애니메이션, 이펙트, 사운드 등을 사용하여 시각적, 청각적으로 변화를 강조합니다.
-    *   **장점**:
-        *   **전투 다양성**: 페이즈 전환은 전투의 단조로움을 줄이고, 플레이어에게 새로운 전략을 요구합니다.
-        *   **난이도 조절**: 페이즈 전환을 통해 전투의 난이도를 동적으로 조절할 수 있습니다.
-        *   **몰입감 향상**: 시각적, 청각적 효과를 통해 페이즈 전환을 강조하여 전투의 몰입감을 높입니다.
-    *   **예시**:
-        *   1페이즈: 보스가 일반적인 공격 패턴을 사용합니다.
-        *   2페이즈: 보스의 공격 속도가 빨라지고, 새로운 공격 패턴을 추가합니다.
-        *   3페이즈: 보스의 외형이 변화하고, 더욱 강력한 공격 패턴을 사용합니다.
-    *   **코드 예제 (UTask_SwitchPase::EnterState)**:
-
-```cpp
-EStateTreeRunStatus UTask_SwitchPase::EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
-{
-    Super::EnterState(Context, Transition);
-
-    // 보스 페이즈 전환 로직
-    ACBoss* Boss = Cast<ACBoss>(Context.GetOwner());
-    if (Boss)
-    {
-        Boss->SwitchToNextPhase();
-    }
-
-    return EStateTreeRunStatus::Succeeded;
-}
-```
-
-3.  **투사체 시스템과 오브젝트 풀링**:
-    *   보스의 다양한 공격 패턴을 구현하기 위해 투사체 시스템을 구축했습니다. 투사체는 보스의 공격을 나타내는 오브젝트로, 다양한 형태와 속성 (예: 속도, 데미지, 범위)을 가질 수 있습니다.
-    *   투사체 시스템의 성능을 최적화하기 위해 오브젝트 풀링 기법을 사용했습니다. 오브젝트 풀링은 투사체를 생성하고 파괴하는 대신, 미리 생성된 투사체를 재사용하여 메모리 할당 및 해제 비용을 줄입니다.
-    *   **장점**:
-        *   **성능 향상**: 오브젝트 풀링은 투사체 시스템의 성능을 크게 향상시킵니다.
-        *   **메모리 관리**: 오브젝트 풀링은 메모리 누수를 방지하고, 메모리 사용량을 최적화합니다.
-        *   **유연성**: 투사체 시스템은 다양한 형태와 속성을 가진 투사체를 생성할 수 있도록 설계되었습니다.
-    *   **예시**:
-        *   보스가 화염구를 발사하거나, 레이저를 발사하는 공격 패턴을 구현합니다.
-        *   보스가 여러 개의 투사체를 동시에 발사하는 공격 패턴을 구현합니다.
-    *   **코드 예제 (UBossProjectileComponent::ShotProjectile)**:
-
-```cpp
-void UBossProjectileComponent::ShotProjectile(TSubclassOf<ABossProjectileActor> ProjectileClass, FVector StartLocation, FRotator StartRotation)
-{
-    // 오브젝트 풀에서 투사체 가져오기
-    ABossProjectileActor* Projectile = GetBossProjectileFromPool(ProjectileClass);
-    if (Projectile)
-    {
-        // 투사체 위치 및 회전 설정
-        Projectile->SetActorLocation(StartLocation);
-        Projectile->SetActorRotation(StartRotation);
-
-        // 투사체 발사
-        Projectile->FireProjectile();
-    }
-}
-```
-
-4.  **애니메이션 노티파이 시스템**:
-    *   애니메이션 노티파이를 사용하여 애니메이션의 특정 시점에 이벤트 (예: 공격 시작, 이펙트 재생, 사운드 재생)를 트리거합니다.
-    *   애니메이션 노티파이는 애니메이션과 게임 로직을 분리하여, 애니메이션의 변경이 게임 로직에 미치는 영향을 최소화합니다.
-    *   **장점**:
-        *   **애니메이션 동기화**: 애니메이션 노티파이는 애니메이션과 게임 로직을 정확하게 동기화합니다.
-        *   **코드 유지보수성**: 애니메이션 노티파이는 애니메이션과 게임 로직을 분리하여, 코드의 유지보수성을 높입니다.
-        *   **유연성**: 애니메이션 노티파이는 다양한 이벤트 (예: 공격 시작, 이펙트 재생, 사운드 재생)를 트리거할 수 있습니다.
-    *   **예시**:
-        *   보스가 공격 애니메이션을 재생할 때, 애니메이션 노티파이를 사용하여 공격 판정을 활성화합니다.
-        *   보스가 피격 애니메이션을 재생할 때, 애니메이션 노티파이를 사용하여 피격 이펙트를 재생합니다.
-    *   **코드 예제 (UAnimNotify_PlayEffect::Notify)**:
-
-```cpp
-void UAnimNotify_PlayEffect::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation)
-{
-    Super::Notify(MeshComp, Animation);
-
-    // 이펙트 재생 로직
-    if (MeshComp && MeshComp->GetOwner())
-    {
-        ACBoss* Boss = Cast<ACBoss>(MeshComp->GetOwner());
-        if (Boss)
-        {
-            Boss->PlayEffect(EffectTag);
-        }
-    }
-}
-```
-
-5.  **이펙트 관리 시스템**:
-    *   보스 전투의 시각적 효과를 극대화하기 위해 이펙트 관리 시스템을 구축했습니다. 이펙트 관리 시스템은 다양한 이펙트 (예: 파티클, 사운드, 머티리얼)를 생성하고 관리합니다.
-    *   이펙트 관리 시스템은 오브젝트 풀링 기법을 사용하여 이펙트의 성능을 최적화합니다.
-    *   **장점**:
-        *   **시각적 효과 극대화**: 이펙트 관리 시스템은 보스 전투의 시각적 효과를 극대화합니다.
-        *   **성능 향상**: 오브젝트 풀링은 이펙트 시스템의 성능을 크게 향상시킵니다.
-        *   **유연성**: 이펙트 관리 시스템은 다양한 이펙트 (예: 파티클, 사운드, 머티리얼)를 생성하고 관리할 수 있습니다.
-    *   **예시**:
-        *   보스가 공격할 때, 화려한 파티클 이펙트를 재생합니다.
-        *   보스가 피격될 때, 피격 사운드를 재생합니다.
-        *   보스의 HP가 낮아질수록, 보스의 외형이 점점 더 흉측하게 변화합니다.
-    *   **코드 예제 (UBossEffectManager::PlayEffect)**:
-
-```cpp
-void UBossEffectManager::PlayEffect(FName EffectTag)
-{
-    // 이펙트 풀에서 이펙트 가져오기
-    ABossEffect* Effect = GetEffectFromPool(EffectTag);
-    if (Effect)
-    {
-        // 이펙트 활성화
-        Effect->ActivateEffect();
-    }
-}
-```
-
-6.  **보스 상태 관리 시스템**:
-    *   보스의 상태 (예: 일반, 그로기, 스턴, 사망)를 관리하기 위해 상태 관리 시스템을 구축했습니다. 상태 관리 시스템은 보스의 행동 패턴과 외형을 상태에 따라 변화시킵니다.
-    *   **장점**:
-        *   **행동 패턴 제어**: 상태 관리 시스템은 보스의 행동 패턴을 상태에 따라 제어합니다.
-        *   **외형 변화**: 상태 관리 시스템은 보스의 외형을 상태에 따라 변화시킵니다.
-        *   **유연성**: 상태 관리 시스템은 다양한 상태 (예: 일반, 그로기, 스턴, 사망)를 관리할 수 있습니다.
-    *   **예시**:
-        *   보스가 그로기 상태에 빠지면, 플레이어가 공격할 기회를 제공합니다.
-        *   보스가 스턴 상태에 빠지면, 보스의 움직임을 멈추고 무방비 상태로 만듭니다.
-        *   보스가 사망하면, 사망 애니메이션을 재생하고 보스를 제거합니다.
-    *   **코드 예제 (CBossStateComponent::SetState)**:
-
-```cpp
-void CBossStateComponent::SetState(FName NewState)
-{
-    // 상태 변경 이벤트 발생
-    OnStateChanged.Broadcast(CurrentState, NewState);
-
-    // 현재 상태 업데이트
-    CurrentState = NewState;
-}
-```
-
-7.  **데이터 동기화 시스템**:
-    *   게임 데이터 (예: 보스 스탯, 아이템 정보)를 중앙 서버와 동기화하기 위해 데이터 동기화 시스템을 구축했습니다. 데이터 동기화 시스템은 HTTP API를 사용하여 데이터를 주고받습니다.
-    *   **장점**:
-        *   **데이터 일관성**: 데이터 동기화 시스템은 게임 데이터의 일관성을 유지합니다.
-        *   **확장성**: 데이터 동기화 시스템은 중앙 서버를 통해 데이터를 관리하므로, 게임의 규모가 커지더라도 쉽게 확장할 수 있습니다.
-        *   **유연성**: 데이터 동기화 시스템은 다양한 데이터 (예: 보스 스탯, 아이템 정보)를 동기화할 수 있습니다.
-    *   **예시**:
-        *   보스의 스탯을 변경하면, 변경된 스탯이 중앙 서버에 저장되고, 다른 클라이언트에도 동기화됩니다.
-        *   새로운 아이템을 추가하면, 아이템 정보가 중앙 서버에 저장되고, 모든 클라이언트에서 사용할 수 있게 됩니다.
-    *   **코드 예제 (FEditorPlugin_DataSyncModule::SyncBossStats)**:
-
-```cpp
-void FEditorPlugin_DataSyncModule::SyncBossStats()
-{
-    // HTTP API 요청 생성
-    FHttpRequestRef Request = FHttpModule::Get().CreateRequest();
-    Request->SetVerb("GET");
-    Request->SetURL("https://example.com/api/bossstats");
-    Request->OnProcessRequestComplete().BindRaw(this, &FEditorPlugin_DataSyncModule::OnDataReceived);
-
-    // HTTP 요청 전송
-    Request->ProcessRequest();
-}
-```
-
-8.  **UI 연동 시스템**:
-    *   보스의 HP, 상태, 페이즈 등을 표시하기 위해 UI 연동 시스템을 구축했습니다. UI 연동 시스템은 위젯을 사용하여 게임 정보를 표시합니다.
-    *   **장점**:
-        *   **정보 제공**: UI 연동 시스템은 플레이어에게 게임 정보를 제공합니다.
-        *   **가시성**: UI 연동 시스템은 게임 정보를 시각적으로 표현하여, 플레이어가 쉽게 이해할 수 있도록 합니다.
-        *   **유연성**: UI 연동 시스템은 다양한 위젯을 사용하여 다양한 게임 정보를 표시할 수 있습니다.
-    *   **예시**:
-        *   보스의 HP를 HP 바 형태로 표시합니다.
-        *   보스의 상태를 아이콘 형태로 표시합니다.
-        *   보스의 페이즈를 텍스트 형태로 표시합니다.
-    *   **코드 예제 (UBossStatusWidget::UpdateBossHP)**:
-
-```cpp
-void UBossStatusWidget::UpdateBossHP(float CurrentHP, float MaxHP)
-{
-    // HP 바 업데이트
-    float HPPercentage = CurrentHP / MaxHP;
-    HPBar->SetPercent(HPPercentage);
-}
-```
-
-9.  **사운드 관리 시스템**:
-    *   보스 전투의 분위기를 고조시키기 위해 사운드 관리 시스템을 구축했습니다. 사운드 관리 시스템은 다양한 사운드 (예: 배경 음악, 효과음)를 재생하고 관리합니다.
-    *   **장점**:
-        *   **분위기 고조**: 사운드 관리 시스템은 보스 전투의 분위기를 고조시킵니다.
-        *   **정보 제공**: 사운드 관리 시스템은 플레이어에게 게임 정보를 제공합니다.
-        *   **유연성**: 사운드 관리 시스템은 다양한 사운드 (예: 배경 음악, 효과음)를 재생하고 관리할 수 있습니다.
-    *   **예시**:
-        *   보스 전투 시작 시, 웅장한 배경 음악을 재생합니다.
-        *   보스가 공격할 때, 강력한 효과음을 재생합니다.
-        *   보스가 피격될 때, 피격 효과음을 재생합니다.
-    *   **코드 예제 (ACBoss::PlayBossBGM)**:
-
-```cpp
-void ACBoss::PlayBossBGM()
-{
-    // 배경 음악 재생
-    UGameplayStatics::PlaySound2D(this, BossBGM);
-}
-```
-
-10. **렌더링 최적화**:
-    *   보스 전투의 성능을 최적화하기 위해 다양한 렌더링 최적화 기법을 적용했습니다.
-    *   **기법**:
-        *   **오클루전 컬링**: 화면에 보이지 않는 오브젝트를 렌더링하지 않습니다.
-        *   **LOD (Level of Detail)**: 오브젝트의 거리에 따라 디테일 수준을 조절합니다.
-        *   **섀도우 캐스팅 최적화**: 섀도우 캐스팅에 필요한 리소스를 최소화합니다.
-        *   **파티클 최적화**: 파티클의 개수와 디테일 수준을 조절합니다.
-    *   **장점**:
-        *   **프레임 속도 향상**: 렌더링 최적화는 프레임 속도를 향상시킵니다.
-        *   **GPU 부하 감소**: 렌더링 최적화는 GPU 부하를 감소시킵니다.
-        *   **메모리 사용량 감소**: 렌더링 최적화는 메모리 사용량을 감소시킵니다.
-
-🛠️ **기술적 특징 및 사용된 라이브러리/프레임워크**:
-
-*   **언리얼 엔진 5**: 게임 엔진으로 언리얼 엔진 5를 사용했습니다.
-*   **C++**: 게임 로직 구현에 C++를 사용했습니다.
-*   **StateTree**: AI 시스템 구현에 StateTree를 사용했습니다.
-*   **HTTP API**: 데이터 동기화 시스템 구현에 HTTP API를 사용했습니다.
-*   **위젯**: UI 시스템 구현에 위젯을 사용했습니다.
-*   **오브젝트 풀링**: 투사체 및 이펙트 시스템 성능 최적화에 오브젝트 풀링을 사용했습니다.
-*   **애니메이션 노티파이**: 애니메이션과 게임 로직 동기화에 애니메이션 노티파이를 사용했습니다.
-
-📋 **클래스 구조 및 시스템 개요**:
+### 📋 클래스 구조 및 시스템 개요
 
 ```mermaid
 classDiagram
@@ -304,7 +75,7 @@ classDiagram
     }
     class AHolySwordMagic {
         +StartFirstNiagara()
-        +StartSecondNiagara()
+        +EnableCollision()
     }
     class AProjectile_LightSpear {
         +FireProjectile()
@@ -380,9 +151,11 @@ classDiagram
     class UBossProjectileComponent {
         +ShotProjectile()
         +SpawnOrb()
+        +DestroyOrb()
     }
     class UBossStatusWidget {
         +UpdateBossHP()
+        +SwitchBossCompleteUI()
     }
     class UCBossDoAction {
         +DoAction()
@@ -391,19 +164,33 @@ classDiagram
         +Equip()
         +Unequip()
     }
-    class UCBossEnemyStateTreeEvaluator {
-        +Tick()
+    class UCBossWeaponAsset {
+        +GetBossWeapon()
+    }
+    class UDDTLoadingWidget {
+        +PlayLoadingAnimation()
+    }
+    class UDDTMainThemeWidget {
+        +PlayClickEvent()
+    }
+    class USTC_CheckPase {
+        +TestCondition()
+    }
+    class USTC_DistanceCheck {
+        +TestCondition()
+    }
+    class USTC_IsBossActionInProgress {
+        +TestCondition()
     }
     class UTask_BossChase {
-        +EnterState()
         +Tick()
+        +EnterState()
     }
     class UTask_Dead {
         +EnterState()
     }
     class UTask_FlyKeepingDistance {
         +EnterState()
-        +Tick()
     }
     class UTask_FlySetLocation {
         +EnterState()
@@ -411,18 +198,37 @@ classDiagram
     class UTask_Hovering {
         +EnterState()
     }
+    class UTask_IncreaseAP {
+        +EnterState()
+    }
     class UTask_KeepingDistance {
         +EnterState()
-        +Tick()
+    }
+    class UTask_Log {
+        +EnterState()
     }
     class UTask_PlayMontage {
         +EnterState()
-        +Tick()
+    }
+    class UTask_ResetAP {
+        +EnterState()
     }
     class UTask_RotateTowardsPlayer {
         +Tick()
     }
+    class UTask_SetCurrentAction {
+        +EnterState()
+    }
+    class UTask_SetVectorTargetLocation {
+        +Tick()
+    }
+    class UTask_SideMoveGetLocation {
+        +EnterState()
+    }
     class UTask_SwitchPase {
+        +EnterState()
+    }
+    class UTask_SwitchState {
         +EnterState()
     }
     class UTask_TargetLocationFeet {
@@ -432,244 +238,312 @@ classDiagram
         +Tick()
     }
 
-    ABossManager -- ACBoss : Manages
+    ABossManager -- ACBoss : Spawns
     ACBoss -- ACBossAIC : Controlled by
-    ACBoss -- UBossStatusWidget : Displays status
-    ACBoss -- UBossAnimInstance : Animates
-    ACBoss -- UBossEffectComponent : Plays effects
-    ACBoss -- UBossProjectileComponent : Fires projectiles
+    ACBoss -- ACBossWeapon : Equips
+    ACBossWeapon -- UCBossDoAction : Uses
+    ACBoss -- UBossStatusWidget : Displays Status
+    ACBoss -- UBossProjectileComponent : Uses Projectiles
+    ACBoss -- UBossEffectComponent : Uses Effects
     ACBossAIC -- UCBossEnemyStateTreeEvaluator : Evaluates StateTree
-    UBossEffectComponent -- UBossEffectManager : Manages effects
-    UBossProjectileComponent -- ABossProjectileActor : Spawns projectiles
-    UBossProjectileComponent -- ABossProjectileOrb : Spawns orbs
-    UBossEnemyStateTreeEvaluator -- UTask_BossChase : Uses chase task
-    UBossEnemyStateTreeEvaluator -- UTask_Dead : Uses dead task
-    UBossEnemyStateTreeEvaluator -- UTask_FlyKeepingDistance : Uses fly keeping distance task
-    UBossEnemyStateTreeEvaluator -- UTask_FlySetLocation : Uses fly set location task
-    UBossEnemyStateTreeEvaluator -- UTask_Hovering : Uses hovering task
-    UBossEnemyStateTreeEvaluator -- UTask_KeepingDistance : Uses keeping distance task
-    UBossEnemyStateTreeEvaluator -- UTask_PlayMontage : Uses play montage task
-    UBossEnemyStateTreeEvaluator -- UTask_RotateTowardsPlayer : Uses rotate towards player task
-    UBossEnemyStateTreeEvaluator -- UTask_SwitchPase : Uses switch phase task
-    UBossEnemyStateTreeEvaluator -- UTask_TargetLocationFeet : Uses target location feet task
-    UBossEnemyStateTreeEvaluator -- UTask_TargetLocatonGap : Uses target location gap task
+    UCBossEnemyStateTreeEvaluator -- UTask_BossChase : Executes Tasks
+    UCBossEnemyStateTreeEvaluator -- USTC_CheckPase : Checks Conditions
+    UBossProjectileComponent -- ABossProjectileActor : Spawns
+    UBossProjectileComponent -- ABossProjectileOrb : Spawns
+    UBossEffectComponent -- ABossEffect : Plays
+    AGateOfBabylon -- AGateOfBabyonProjectile : Spawns
+    ACBoss -- UBossAnimInstance : Animates
+
 ```
 
-## 📚 목차 📚
+## 📚 목차
 
-1.  **프로젝트 개요**
-    *   게임 장르, 배경, 목표
-    *   주요 기능과 특징
-    *   기술적 특징과 사용된 라이브러리/프레임워크
-    *   클래스 구조와 시스템 개요
-2.  **클래스별 상세 분석**
-    *   `ABossEffect`
-        *   클래스 목적 및 핵심 기능
-        *   클래스 간 상호작용 및 의존성
-        *   주요 메서드 및 프로퍼티 상세 설명
-        *   실제 사용 예제 및 완전한 코드
-        *   성능 특성 및 최적화 포인트
-        *   다른 클래스와의 상호작용
-    *   `ABossManager`
-        *   클래스 목적 및 핵심 기능
-        *   클래스 간 상호작용 및 의존성
-        *   주요 메서드 및 프로퍼티 상세 설명
-        *   실제 사용 예제 및 완전한 코드
-        *   성능 특성 및 최적화 포인트
-        *   다른 클래스와의 상호작용
-    *   `ABossProjectileActor`
-        *   클래스 목적 및 핵심 기능
-        *   클래스 간 상호작용 및 의존성
-        *   주요 메서드 및 프로퍼티 상세 설명
-        *   실제 사용 예제 및 완전한 코드
-        *   성능 특성 및 최적화 포인트
-        *   다른 클래스와의 상호작용
-    *   `ABossProjectileOrb`
-        *   클래스 목적 및 핵심 기능
-        *   클래스 간 상호작용 및 의존성
-        *   주요 메서드 및 프로퍼티 상세 설명
-        *   실제 사용 예제 및 완전한 코드
-        *   성능 특성 및 최적화 포인트
-        *   다른 클래스와의 상호작용
-    *   `ACBoss`
-        *   클래스 목적 및 핵심 기능
-        *   클래스 간 상호작용 및 의존성
-        *   주요 메서드 및 프로퍼티 상세 설명
-        *   실제 사용 예제 및 완전한 코드
-        *   성능 특성 및 최적화 포인트
-        *   다른 클래스와의 상호작용
-    *   `ACBossAIC`
-        *   클래스 목적 및 핵심 기능
-        *   클래스 간 상호작용 및 의존성
-        *   주요 메서드 및 프로퍼티 상세 설명
-        *   실제 사용 예제 및 완전한 코드
-        *   성능 특성 및 최적화 포인트
-        *   다른 클래스와의 상호작용
-    *   `ACBossWeapon`
-        *   클래스 목적 및 핵심 기능
-        *   클래스 간 상호작용 및 의존성
-        *   주요 메서드 및 프로퍼티 상세 설명
-        *   실제 사용 예제 및 완전한 코드
-        *   성능 특성 및 최적화 포인트
-        *   다른 클래스와의 상호작용
-    *   `AFlySpline`
-        *   클래스 목적 및 핵심 기능
-        *   클래스 간 상호작용 및 의존성
-        *   주요 메서드 및 프로퍼티 상세 설명
-        *   실제 사용 예제 및 완전한 코드
-        *   성능 특성 및 최적화 포인트
-        *   다른 클래스와의 상호작용
-    *   `AGateOfBabylon`
-        *   클래스 목적 및 핵심 기능
-        *   클래스 간 상호작용 및 의존성
-        *   주요 메서드 및 프로퍼티 상세 설명
-        *   실제 사용 예제 및 완전한 코드
-        *   성능 특성 및 최적화 포인트
-        *   다른 클래스와의 상호작용
-    *   `AGateOfBabyonProjectile`
-        *   클래스 목적 및 핵심 기능
-        *   클래스 간 상호작용 및 의존성
-        *   주요 메서드 및 프로퍼티 상세 설명
-        *   실제 사용 예제 및 완전한 코드
-        *   성능 특성 및 최적화 포인트
-        *   다른 클래스와의 상호작용
-    *   `AHolySwordMagic`
-        *   클래스 목적 및 핵심 기능
-        *   클래스 간 상호작용 및 의존성
-        *   주요 메서드 및 프로퍼티 상세 설명
-        *   실제 사용 예제 및 완전한 코드
-        *   성능 특성 및 최적화 포인트
-        *   다른 클래스와의 상호작용
-    *   `AProjectile_LightSpear`
-        *   클래스 목적 및 핵심 기능
-        *   클래스 간 상호작용 및 의존성
-        *   주요 메서드 및 프로퍼티 상세 설명
-        *   실제 사용 예제 및 완전한 코드
-        *   성능 특성 및 최적화 포인트
-        *   다른 클래스와의 상호작용
-    *   `FEditorPlugin_DataSyncCommands`
-        *   클래스 목적 및 핵심 기능
-        *   클래스 간 상호작용 및 의존성
-        *   주요 메서드 및 프로퍼티 상세 설명
-        *   실제 사용 예제 및 완전한 코드
-        *   성능 특성 및 최적화 포인트
-        *   다른 클래스와의 상호작용
-    *   `FEditorPlugin_DataSyncModule`
-        *   클래스 목적 및 핵심 기능
-        *   클래스 간 상호작용 및 의존성
-        *   주요 메서드 및 프로퍼티 상세 설명
-        *   실제 사용 예제 및 완전한 코드
-        *   성능 특성 및 최적화 포인트
-        *   다른 클래스와의 상호작용
-    *   `FEditorPlugin_DataSyncStyle`
-        *   클래스 목적 및 핵심 기능
-        *   클래스 간 상호작용 및 의존성
-        *   주요 메서드 및 프로퍼티 상세 설명
-        *   실제 사용 예제 및 완전한 코드
-        *   성능 특성 및 최적화 포인트
-        *   다른 클래스와의 상호작용
-    *   `UAnimNotify_ArmorDissolve`
-        *   클래스 목적 및 핵심 기능
-        *   클래스 간 상호작용 및 의존성
-        *   주요 메서드 및 프로퍼티 상세 설명
-        *   실제 사용 예제 및 완전한 코드
-        *   성능 특성 및 최적화 포인트
-        *   다른 클래스와의 상호작용
-    *   `UAnimNotify_BeginFlying`
-        *   클래스 목적 및 핵심 기능
-        *   클래스 간 상호작용 및 의존성
-        *   주요 메서드 및 프로퍼티 상세 설명
-        *   실제 사용 예제 및 완전한 코드
-        *   성능 특성 및 최적화 포인트
-        *   다른 클래스와의 상호작용
-    *   `UAnimNotify_BossWeaponCollision`
-        *   클래스 목적 및 핵심 기능
-        *   클래스 간 상호작용 및 의존성
-        *   주요 메서드 및 프로퍼티 상세 설명
-        *   실제 사용 예제 및 완전한 코드
-        *   성능 특성 및 최적화 포인트
-        *   다른 클래스와의 상호작용
-    *   `UAnimNotify_ChaseRotation`
-        *   클래스 목적 및 핵심 기능
-        *   클래스 간 상호작용 및 의존성
-        *   주요 메서드 및 프로퍼티 상세 설명
-        *   실제 사용 예제 및 완전한 코드
-        *   성능 특성 및 최적화 포인트
-        *   다른 클래스와의 상호작용
-    *   `UAnimNotify_DeadDissolve`
-        *   클래스 목적 및 핵심 기능
-        *   클래스 간 상호작용 및 의존성
-        *   주요 메서드 및 프로퍼티 상세 설명
-        *   실제 사용 예제 및 완전한 코드
-        *   성능 특성 및 최적화 포인트
-        *   다른 클래스와의 상호작용
-    *   `UAnimNotify_DropSwordMagic`
-        *   클래스 목적 및 핵심 기능
-        *   클래스 간 상호작용 및 의존성
-        *   주요 메서드 및 프로퍼티 상세 설명
-        *   실제 사용 예제 및 완전한 코드
-        *   성능 특성 및 최적화 포인트
-        *   다른 클래스와의 상호작용
-    *   `UAnimNotify_EndFlying`
-        *   클래스 목적 및 핵심 기능
-        *   클래스 간 상호작용 및 의존성
-        *   주요 메서드 및 프로퍼티 상세 설명
-        *   실제 사용 예제 및 완전한 코드
-        *   성능 특성 및 최적화 포인트
-        *   다른 클래스와의 상호작용
-    *   `UAnimNotify_GateOfBabylonSpawn`
-        *   클래스 목적 및 핵심 기능
-        *   클래스 간 상호작용 및 의존성
-        *   주요 메서드 및 프로퍼티 상세 설명
-        *   실제 사용 예제 및 완전한 코드
-        *   성능 특성 및 최적화 포인트
-        *   다른 클래스와의 상호작용
-    *   `UAnimNotify_Groggying`
-        *   클래스 목적 및 핵심 기능
-        *   클래스 간 상호작용 및 의존성
-        *   주요 메서드 및 프로퍼티 상세 설명
-        *   실제 사용 예제 및 완전한 코드
-        *   성능 특성 및 최적화 포인트
-        *   다른 클래스와의 상호작용
-    *   `UAnimNotify_Landing`
-        *   클래스 목적 및 핵심 기능
-        *   클래스 간 상호작용 및 의존성
-        *   주요 메서드 및 프로퍼티 상세 설명
-        *   실제 사용 예제 및 완전한 코드
-        *   성능 특성 및 최적화 포인트
-        *   다른 클래스와의 상호작용
-    *   `UAnimNotify_LineTraceOnOff`
-        *   클래스 목적 및 핵심 기능
-        *   클래스 간 상호작용 및 의존성
-        *   주요 메서드 및 프로퍼티 상세 설명
-        *   실제 사용 예제 및 완전한 코드
-        *   성능 특성 및 최적화 포인트
-        *   다른 클래스와의 상호작용
-    *   `UAnimNotify_OrbSpawn`
-        *   클래스 목적 및 핵심 기능
-        *   클래스 간 상호작용 및 의존성
-        *   주요 메서드 및 프로퍼티 상세 설명
-        *   실제 사용 예제 및 완전한 코드
-        *   성능 특성 및 최적화 포인트
-        *   다른 클래스와의 상호작용
-    *   `UAnimNotify_PaseChangeDissolve`
-        *   클래스 목적 및 핵심 기능
-        *   클래스 간 상호작용 및 의존성
-        *   주요 메서드 및 프로퍼티 상세 설명
-        *   실제 사용 예제 및 완전한 코드
-        *   성능 특성 및 최적화 포인트
-        *   다른 클래스와의 상호작용
-    *   `UAnimNotify_PlayEffect`
-        *   클래스 목적 및 핵심 기능
-        *   클래스 간 상호작용 및 의존성
-        *   주요 메서드 및 프로퍼티 상세 설명
-        *   실제 사용 예제 및 완전한 코드
-        *   성능 특성 및 최적화 포인트
-        *   다른 클래스와의 상호작용
-    *   `UAnimNotify_SelectCollisionOnOff`
-        *   클래스 목적 및 핵심 기능
-        *   클래스 간 상호작용 및 의존성
-        *   주요 메서드 및 프로퍼티 상세 설명
-        *   실제 사용 예제 및 완전한 코드
-        *   성능 특성 및 최적화 포인트
-        *   다른 클래
+1.  [프로젝트 개요](#-프로젝트-개요)
+    *   [게임 장르, 배경, 목표](#-게임-장르-배경-목표)
+    *   [주요 기능 및 특징](#-주요-기능-및-특징-상세-설명)
+    *   [기술적 특징 및 사용된 라이브러리/프레임워크](#️-기술적-특징-및-사용된-라이브러리프레임워크)
+    *   [클래스 구조 및 시스템 개요](#-클래스-구조-및-시스템-개요)
+2.  [클래스별 상세 분석](#-클래스별-상세-분석)
+    *   [ABossEffect](#abosseffect)
+        *   [함수 `ABossEffect`](#함수-abosseffect)
+        *   [함수 `Tick`](#함수-tick)
+        *   [함수 `ActivateEffect`](#함수-activateeffect)
+        *   [함수 `ActivateEffectAttachedToSocket`](#함수-activateeffectattachedtosocket)
+        *   [함수 `DeactivateEffect`](#함수-deactivateeffect)
+        *   [함수 `IsActive`](#함수-isactive)
+        *   [함수 `GetCurrentEffectTag`](#함수-getcurrenteffecttag)
+        *   [함수 `BeginPlay`](#함수-beginplay-1)
+        *   [함수 `AttachToBoss`](#함수-attachtoboss)
+        *   [함수 `AttachToSocket`](#함수-attachtosocket)
+        *   [함수 `PlaceInWorld`](#함수-placeinworld)
+    *   [ABossManager](#abossmanager)
+        *   [함수 `ABossManager`](#함수-abossmanager-1)
+        *   [함수 `Tick`](#함수-tick-1)
+        *   [함수 `ResetBossCompletely`](#함수-resetbosscompletely)
+        *   [함수 `OpenDoor`](#함수-opendoor)
+        *   [함수 `FindBossInWorld`](#함수-findbossinworld)
+        *   [함수 `ResetAllBossComponents`](#함수-resetallbosscomponents)
+        *   [함수 `ResetBossStateTree`](#함수-resetbossstatetree)
+        *   [함수 `BeginPlay`](#함수-beginplay-2)
+        *   [함수 `OnTriggerBoxOverlapBegin`](#함수-ontriggerboxoverlapbegin)
+    *   [ABossProjectileActor](#abossprojectileactor)
+        *   [함수 `ABossProjectileActor`](#함수-abossprojectileactor-1)
+        *   [함수 `Tick`](#함수-tick-2)
+        *   [함수 `FireProjectile`](#함수-fireprojectile-1)
+        *   [함수 `FireProjectileToLocation`](#함수-fireprojectiletolocation)
+        *   [함수 `PlaySpawnEffect`](#함수-playspawneffect)
+        *   [함수 `PlayDestroyEffect`](#함수-playdestroyeffect)
+        *   [함수 `OnProjectileHit`](#함수-onprojectilehit)
+        *   [함수 `BeginPlay`](#함수-beginplay-3)
+    *   [ABossProjectileOrb](#abossprojectileorb)
+        *   [함수 `ABossProjectileOrb`](#함수-abossprojectileorb-1)
+        *   [함수 `Tick`](#함수-tick-3)
+        *   [함수 `SpawnProjectile`](#함수-spawnprojectile-2)
+        *   [함수 `DestroyOrb`](#함수-destroyorb-1)
+        *   [함수 `OnOverlap`](#함수-onoverlap)
+        *   [함수 `PlaySpawnSound`](#함수-playspawnsound)
+        *   [함수 `PlayReturnToPoolSound`](#함수-playreturntopoolsound)
+        *   [함수 `PlayCollisionSound`](#함수-playcollisionsound)
+        *   [함수 `PlaySpawnEffect`](#함수-playspawneffect-1)
+        *   [함수 `PlayReturnToPoolEffect`](#함수-playreturntopooleffect)
+        *   [함수 `PlayCollisionEffect`](#함수-playcollisioneffect)
+        *   [함수 `DestroyOrbWithDelay`](#함수-destroyorbwithdelay)
+        *   [함수 `ActivateOrb`](#함수-activateorb)
+        *   [함수 `BeginPlay`](#함수-beginplay-4)
+    *   [ACBoss](#acboss)
+        *   [함수 `ACBoss`](#함수-acboss-1)
+        *   [함수 `Tick`](#함수-tick-4)
+        *   [함수 `TakeDamage`](#함수-takedamage)
+        *   [함수 `BeginPlay`](#함수-beginplay-5)
+        *   [함수 `PlayHitMotion`](#함수-playhitmotion)
+        *   [함수 `ShowBossStatusWidget`](#함수-showbossstatuswidget)
+        *   [함수 `HPUpdate`](#함수-hpupdate)
+        *   [함수 `RestartUI`](#함수-restartui)
+        *   [함수 `PlayBossBGM`](#함수-playbossbgm)
+        *   [함수 `StopBossBGM`](#함수-stopbossbgm)
+        *   [함수 `LowerBossBGMVolume`](#함수-lowerbossbgmvolume)
+    *   [ACBossAIC](#acbossaic)
+        *   [함수 `ACBossAIC`](#함수-acbossaic-1)
+        *   [함수 `OnPossess`](#함수-onpossess)
+    *   [ACBossWeapon](#acbossweapon)
+        *   [함수 `ACBossWeapon`](#함수-acbossweapon-1)
+        *   [함수 `OnBossBeginEquip`](#함수-onbossbeginequip)
+        *   [함수 `OnBossUnequip`](#함수-onbossunequip)
+        *   [함수 `OnBossCollisions`](#함수-onbosscollisions)
+        *   [함수 `OnSelectCollision`](#함수-onselectcollision)
+        *   [함수 `OffBossCollisions`](#함수-offbosscollisions)
+        *   [함수 `BossAttachToCollision`](#함수-bossattachtocollision)
+        *   [함수 `StartCollisionAtSocket`](#함수-startcollisionatsocket)
+        *   [함수 `EndCollisionToOwner`](#함수-endcollisiontoowner)
+        *   [함수 `BeginPlay`](#함수-beginplay-6)
+        *   [함수 `Tick`](#함수-tick-5)
+        *   [함수 `BossAttachTo`](#함수-bossattachto)
+        *   [함수 `OnBossComponentBeginOverlap`](#함수-onbosscomponentbeginoverlap)
+        *   [함수 `OnBossComponentEndOverlap`](#함수-onbosscomponentendoverlap)
+    *   [AFlySpline](#aflyspline)
+        *   [함수 `AFlySpline`](#함수-aflyspline-1)
+        *   [함수 `OnConstruction`](#함수-onconstruction)
+        *   [함수 `BuildCylinderAndRims`](#함수-buildcylinderandrims)
+        *   [함수 `GetHorizontalSplines`](#함수-gethorizontalsplines)
+        *   [함수 `GetSplineAtIndex`](#함수-getsplineatindex)
+        *   [함수 `BuildRim`](#함수-buildrim)
+        *   [함수 `CreateHorizontalSplines`](#함수-createhorizontalsplines)
+    *   [AGateOfBabylon](#agateofbabylon)
+        *   [함수 `AGateOfBabylon`](#함수-agateofbabylon-1)
+        *   [함수 `Tick`](#함수-tick-6)
+        *   [함수 `ActivateGate`](#함수-activategate)
+        *   [함수 `DeactivateGate`](#함수-deactivategate)
+        *   [함수 `BeginPlay`](#함수-beginplay-7)
+        *   [함수 `InitializeProjectilePool`](#함수-initializeprojectilepool)
+        *   [함수 `GetProjectileFromPool`](#함수-getprojectilefrompool-1)
+        *   [함수 `SpawnProjectile`](#함수-spawnprojectile-3)
+        *   [함수 `UpdateLookAtPlayer`](#함수-updatelookatplayer)
+    *   [AGateOfBabyonProjectile](#agateofbabyonprojectile)
+        *   [함수 `AGateOfBabyonProjectile`](#함수-agateofbabyonprojectile-1)
+        *   [함수 `Tick`](#함수-tick-7)
+        *   [함수 `ActivateProjectile`](#함수-activateprojectile-1)
+        *   [함수 `DeactivateProjectile`](#함수-deactivateprojectile-1)
+        *   [함수 `BeginPlay`](#함수-beginplay-8)
+        *   [함수 `OnBeginOverlap`](#함수-onbeginoverlap)
+        *   [함수 `MoveToRandomLocationAroundPlayer`](#함수-movetorandomlocationaroundplayer)
+    *   [AHolySwordMagic](#aholyswordmagic)
+        *   [함수 `AHolySwordMagic`](#함수-aholyswordmagic-1)
+        *   [함수 `BeginPlay`](#함수-beginplay-9)
+        *   [함수 `Tick`](#함수-tick-8)
+        *   [함수 `StartFirstNiagara`](#함수-startfirstniagara)
+        *   [함수 `StartSecondNiagara`](#함수-startsecondniagara)
+        *   [함수 `EnableCollision`](#함수-enablecollision)
+        *   [함수 `DisableCollision`](#함수-disablecollision)
+        *   [함수 `CheckNiagaraCompletion`](#함수-checkniagaracompletion)
+        *   [함수 `ResetForPool`](#함수-resetforpool)
+        *   [함수 `OnOverlapBegin`](#함수-onoverlapbegin)
+    *   [AProjectile\_LightSpear](#aprojectile_lightspear)
+        *   [함수 `AProjectile_LightSpear`](#함수-aprojectile_lightspear-1)
+        *   [함수 `Tick`](#함수-tick-9)
+        *   [함수 `FireProjectile`](#함수-fireprojectile-2)
+        *   [함수 `PlayDestroyEffect`](#함수-playdestroyeffect-1)
+        *   [함수 `OnProjectileHit`](#함수-onprojectilehit-1)
+        *   [함수 `BeginPlay`](#함수-beginplay-10)
+    *   [FEditorPlugin\_DataSyncModule](#feditorplugin_datasyncmodule)
+        *   [함수 `StartupModule`](#함수-startupmodule)
+        *   [함수 `ShutdownModule`](#함수-shutdownmodule)
+        *   [함수 `SyncGameplayTags`](#함수-syncgameplaytags)
+        *   [함수 `SyncBossStats`](#함수-syncbossstats)
+        *   [함수 `MakeAPIRequest`](#함수-makeapirequest)
+        *   [함수 `OnDataReceived`](#함수-ondatareceived)
+        *   [함수 `UpdateGameplayTagsTable`](#함수-updategameplaytagstable)
+        *   [함수 `UpdateBossStatsTableSimple`](#함수-updatebossstatstablesimple)
+        *   [함수 `PluginButtonClicked`](#함수-pluginbuttonclicked)
+        *   [함수 `OnSpawnPluginTab`](#함수-onspawnplugintab)
+        *   [함수 `ParseGameplayTagData`](#함수-parsegameplaytagdata)
+        *   [함수 `RegisterMenus`](#함수-registermenus)
+        *   [함수 `RegisterToolbar`](#함수-registertoolbar)
+        *   [함수 `CreatePluginUI`](#함수-createpluginui)
+    *   [UAnimNotify\_ArmorDissolve](#uanimnotify_armordissolve)
+        *   [함수 `GetNotifyName_Implementation`](#함수-getnotifyname_implementation)
+        *   [함수 `Notify`](#함수-notify-1)
+    *   [UAnimNotify\_BeginFlying](#uanimnotify_beginflying)
+        *   [함수 `GetNotifyName_Implementation`](#함수-getnotifyname_implementation-1)
+        *   [함수 `Notify`](#함수-notify-2)
+    *   [UAnimNotify\_BossWeaponCollision](#uanimnotify_bossweaponcollision)
+        *   [함수 `GetNotifyName_Implementation`](#함수-getnotifyname_implementation-2)
+        *   [함수 `NotifyBegin`](#함수-notifybegin)
+        *   [함수 `NotifyEnd`](#함수-notifyend)
+    *   [UAnimNotify\_ChaseRotation](#uanimnotify_chaserotation)
+        *   [함수 `GetNotifyName_Implementation`](#함수-getnotifyname_implementation-3)
+        *   [함수 `NotifyBegin`](#함수-notifybegin-1)
+        *   [함수 `NotifyTick`](#함수-notifytick)
+        *   [함수 `NotifyEnd`](#함수-notifyend-1)
+    *   [UAnimNotify\_DeadDissolve](#uanimnotify_deaddissolve)
+        *   [함수 `GetNotifyName_Implementation`](#함수-getnotifyname_implementation-4)
+        *   [함수 `Notify`](#함수-notify-3)
+    *   [UAnimNotify\_DropSwordMagic](#uanimnotify_dropswordmagic)
+        *   [함수 `GetNotifyName_Implementation`](#함수-getnotifyname_implementation-5)
+        *   [함수 `Notify`](#함수-notify-4)
+    *   [UAnimNotify\_EndFlying](#uanimnotify_endflying)
+        *   [함수 `GetNotifyName_Implementation`](#함수-getnotifyname_implementation-6)
+        *   [함수 `Notify`](#함수-notify-5)
+    *   [UAnimNotify\_GateOfBabylonSpawn](#uanimnotify_gateofbabylonspawn)
+        *   [함수 `GetNotifyName_Implementation`](#함수-getnotifyname_implementation-7)
+        *   [함수 `Notify`](#함수-notify-6)
+    *   [UAnimNotify\_Groggying](#uanimnotify_groggying)
+        *   [함수 `GetNotifyName_Implementation`](#함수-getnotifyname_implementation-8)
+        *   [함수 `NotifyBegin`](#함수-notifybegin-2)
+        *   [함수 `NotifyEnd`](#함수-notifyend-2)
+    *   [UAnimNotify\_Landing](#uanimnotify_landing)
+        *   [함수 `GetNotifyName_Implementation`](#함수-getnotifyname_implementation-9)
+        *   [함수 `Notify`](#함수-notify-7)
+    *   [UAnimNotify\_LineTraceOnOff](#uanimnotify_linetraceonoff)
+        *   [함수 `GetNotifyName_Implementation`](#함수-getnotifyname_implementation-10)
+        *   [함수 `NotifyBegin`](#함수-notifybegin-3)
+        *   [함수 `NotifyEnd`](#함수-notifyend-3)
+    *   [UAnimNotify\_OrbSpawn](#uanimnotify_orbspawn)
+        *   [함수 `GetNotifyName_Implementation`](#함수-getnotifyname_implementation-11)
+        *   [함수 `Notify`](#함수-notify-8)
+    *   [UAnimNotify\_PaseChangeDissolve](#uanimnotify_pasechangedissolve)
+        *   [함수 `GetNotifyName_Implementation`](#함수-getnotifyname_implementation-12)
+        *   [함수 `Notify`](#함수-notify-9)
+    *   [UAnimNotify\_PlayEffect](#uanimnotify_playeffect)
+        *   [함수 `GetNotifyName_Implementation`](#함수-getnotifyname_implementation-13)
+        *   [함수 `Notify`](#함수-notify-10)
+    *   [UAnimNotify\_SelectCollisionOnOff](#uanimnotify_selectcollisiononoff)
+        *   [함수 `GetNotifyName_Implementation`](#함수-getnotifyname_implementation-14)
+        *   [함수 `NotifyBegin`](#함수-notifybegin-4)
+        *   [함수 `NotifyEnd`](#함수-notifyend-4)
+    *   [UAnimNotify\_SpawnLightningSpear](#uanimnotify_spawnlightningspear)
+        *   [함수 `GetNotifyName_Implementation`](#함수-getnotifyname_implementation-15)
+        *   [함수 `Notify`](#함수-notify-11)
+    *   [UAnimNotifyState\_PaseChange](#uanimnotifystate_pasechange)
+        *   [함수 `GetNotifyName_Implementation`](#함수-getnotifyname_implementation-16)
+        *   [함수 `NotifyBegin`](#함수-notifybegin-5)
+        *   [함수 `NotifyEnd`](#함수-notifyend-5)
+    *   [UBossAnimInstance](#ubossaniminstance)
+        *   [함수 `NativeBeginPlay`](#함수-nativebeginplay)
+    *   [UBossEffectExecute](#ubosseffectexecute)
+        *   [함수 `ExecuteEffect`](#함수-executeeffect)
+        *   [함수 `ExecuteEffects`](#함수-executefects)
+        *   [함수 `ExecuteEffectWithDelay`](#함수-executeeffectwithdelay)
+        *   [함수 `ExecuteEffectLoop`](#함수-executeeffectloop)
+        *   [함수 `ExecuteEffectAtSocket`](#함수-executeeffectatsocket)
+        *   [함수 `ExecuteEffectAttachedToSocket`](#함수-executeeffectattachedtosocket)
+        *   [함수 `ExecuteEffectAtSocketWithDelay`](#함수-executeeffectatsocketwithdelay)
+        *   [함수 `ExecuteEffectAtSocketLoop`](#함수-executeeffectatsocketloop)
+        *   [함수 `ExecuteEffectAttachedToSocketLoop`](#함수-executeeffectattachedtosocketloop)
+        *   [함수 `Begin_ExecuteEffect`](#함수-begin_executeeffect)
+        *   [함수 `End_ExecuteEffect`](#함수-end_executeeffect)
+    *   [UBossEffectManager](#ubosseffectmanager)
+        *   [함수 `PlayEffect`](#함수-playeffect)
+        *   [함수 `PlayEffectAttachedToSocket`](#함수-playeffectattachedtosocket)
+        *   [함수 `StopAllEffects`](#함수-stopallevents)
+        *   [함수 `StopEffect`](#함수-stopeffect)
+        *   [함수 `SetMaxPoolSize`](#함수-setmaxpoolsize)
+        *   [함수 `SetAutoExpandPool`](#함수-setautoexpandpool)
+        *   [함수 `OnEffectFinished`](#함수-oneffectfinished)
+        *   [함수 `GetActiveEffectCount`](#함수-getactiveeffectcount)
+        *   [함수 `GetAvailableEffectCount`](#함수-getavailableeffectcount)
+        *   [함수 `LoadDataFromTables`](#함수-loaddatafromtables)
+        *   [함수 `InitializeEffectPool`](#함수-initializeeffectpool)
+        *   [함수 `GetEffectFromPool`](#함수-geteffectfrompool)
+        *   [함수 `ReturnEffectToPool`](#함수-returneffecttopool)
+        *   [함수 `ExpandEffectPool`](#함수-expandeffectpool)
+    *   [UBossProjectileComponent](#ubossprojectilecomponent)
+        *   [함수 `ShotProjectile`](#함수-shotprojectile)
+        *   [함수 `SpawnOrb`](#함수-spawnorb)
+        *   [함수 `ShotProjectileToLocation`](#함수-shotprojectiletolocation)
+        *   [함수 `DestroyOrb`](#함수-destroyorb-2)
+        *   [함수 `SpawnOrbContinuously`](#함수-spawnorbcontinuously)
+        *   [함수 `CancelOrbContinuousSpawning`](#함수-cancelorbcontinuousspawning)
+        *   [함수 `SpawnProjectileContinuously`](#함수-spawnprojectilecontinuously)
+        *   [함수 `CancelProjectileContinuousSpawning`](#함수-cancelprojectilecontinuousspawning)
+        *   [함수 `SpawnHolySwordMagicRepeatedly`](#함수-spawnholyswordmagicrepeatedly)
+        *   [함수 `CancelHolySwordMagicSpawning`](#함수-cancelholyswordmagicspawning)
+        *   [함수 `ResetProjectileSystem`](#함수-resetprojectilesystem)
+        *   [함수 `SetRectangleRange`](#함수-setrectanglerange)
+        *   [함수 `ToggleRectangleRange`](#함수-togglerectanglerange)
+        *   [함수 `TestRectangleRange`](#함수-testrectanglerange)
+        *   [함수 `SpawnMagicCirclesAtCirclePositions`](#함수-spawnmagiccirclesatcirclepositions)
+        *   [함수 `SpawnHolySwordMagicAtLocation`](#함수-spawnholyswordmagicatlocation)
+        *   [함수 `SpawnHolySwordMagicAtCurrentPlayerLocation`](#함수-spawnholyswordmagicatcurrentplayerlocation)
+        *   [함수 `SpawnSingleOrb`](#함수-spawnsingleorb)
+        *   [함수 `SpawnSingleProjectile`](#함수-spawnsingleprojectile)
+    *   [UBossStatusWidget](#ubossstatuswidget)
+        *   [함수 `NativeConstruct`](#함수-nativeconstruct)
+        *   [함수 `UpdateBossHP`](#함수-updatebossup)
+        *   [함수 `SwitchBossCompleteUI`](#함수-switchbosscompleteui)
+        *   [함수 `FadeInHandler`](#함수-fadeinhandler)
+        *   [함수 `ShowCompleteUI`](#함수-showcompleteui)
+        *   [함수 `FadeOutHandler`](#함수-fadeouthandler)
+        *   [함수 `EndWidget`](#함수-endwidget)
+        *   [함수 `RestartReady`](#함수-restartready)
+        *   [함수 `SmoothUpdateDelayHP`](#함수-smoothupdatedelayhp)
+    *   [UCBossDoAction](#ucbossdoaction)
+        *   [함수 `DoAction`](#함수-doaction)
+        *   [함수 `HitAction`](#함수-hitaction)
+        *   [함수 `Begin_DoAction`](#함수-begin_doaction)
+        *   [함수 `End_DoAction`](#함수-end_doaction)
+        *   [함수 `OnBossWeaponBeginCollision`](#함수-onbossweaponbegincollision)
+        *   [함수 `OnBossWeaponEndCollision`](#함수-onbossweaponendcollision)
+        *   [함수 `OnBossWeaponBeginOverlap`](#함수-onbossweaponbeginoverlap)
+        *   [함수 `OnBossWeaponEndOverlap`](#함수-onbossweaponendoverlap)
+    *   [UCBossEquipment](#ucbossequipment)
+        *   [함수 `Equip`](#함수-equip)
+        *   [함수 `Begin_Equip`](#함수-begin_equip)
+        *   [함수 `End_Equip`](#함수-end_equip)
+        *   [함수 `Unequip`](#함수-unequip)
+    *   [UCBossEnemyStateTreeEvaluator](#ucbossenemystatetreeevaluator)
+        *   [함수 `Tick`](#함수-tick-10)
+        *   [함수 `TreeStart`](#함수-treestart)
+        *   [함수 `Get_Decision_Data`](#함수-get_decision_data)
+    *   [UCBossWeaponAsset](#ucbossweaponasset)
+        *   [함수 `GetBossWeapon`](#함수-getbossweapon)
+        *   [함수 `GetBossEquipment`](#함수-getbossequipment)
+        *   [함수 `GetBossDoAction`](#함수-getbossdoaction)
+    *   [UDDTLoadingWidget](#uddtloadingwidget)
+        *   [함수 `NativeConstruct`](#함수-nativeconstruct-1)
+        *   [함수 `PlayLoadingAnimation`](#함수-playloadinganimation)
+        *   [함수 `EndLoading`](#함수-endloading)
+        *   [함수 `Reset`](#함수-reset)
+        *   [함수 `StartLoading`](#함수-startloading)
+    *   [UDDTMainThemeWidget](#uddtmainthemewidget)
+        *   [함수 `NativeConstruct`](#함수-nativeconstruct-2)
+        *   [함수 `NativeOnKeyDown`](#함수-nativeonkeydown)
