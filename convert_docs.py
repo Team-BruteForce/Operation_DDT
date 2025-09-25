@@ -1,6 +1,6 @@
 ﻿# convert_docs.py (Gemini API 버전)
 import os
-import google.generativeai as genai # 변경된 부분: 라이브러리 변경
+import google.generativeai as genai
 from lxml import etree
 
 # 1. 환경변수에서 Gemini API 키 가져오기
