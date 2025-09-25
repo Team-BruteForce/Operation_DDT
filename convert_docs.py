@@ -37,56 +37,50 @@ def parse_doxygen_xml():
 
 # 3. AI에게 README.md 생성을 요청하는 프롬프트 만들기
 def create_prompt(docs_data):
-    prompt_content = """당신은 게임 개발과 C++ 전문가이자 기술 문서 작성 전문가입니다. 아래는 Unreal Engine C++ 프로젝트의 Doxygen에서 추출한 데이터입니다. 이 데이터를 바탕으로 개발자 포트폴리오 수준의 매우 상세하고 전문적인 README.md 파일을 한국어로 작성해주세요.
-
-## 중요 지침:
-- **가능한 한 최대한 상세한** 문서를 작성해주세요
-- **모든 클래스와 함수를 빠짐없이** 포함해주세요
-- **실제 코드 예제와 구현 세부사항**을 중심으로 설명해주세요
-- **노션 블로그처럼 이쁘게** 이모지와 마크다운을 활용해주세요
-- **기능 중심으로** "아 이 기능을 만들었구나!"를 알 수 있게 작성해주세요
-- **각 함수마다 상세한 설명과 예제**를 포함해주세요
-- **단어수 제한은 없습니다 최대한 상세하게 작성해주세요**
-
-## 요구사항:
-1. **프로젝트 개요**:
-   - 🎮 게임 장르, 배경, 목표
-   - ⭐ 주요 기능과 특징을 매우 상세히 설명
-   - 🛠️ 기술적 특징과 사용된 라이브러리/프레임워크
-   - 📋 클래스 구조와 시스템 개요
-
-2. **목차** (상세한 목차):
-   - 모든 섹션과 서브섹션을 포함한 완전한 목차
-   - 각 클래스별로 독립적인 섹션
-
-3. **클래스 또는 기능별 상세 분석**:
-   - 🎯 클래스의 목적과 핵심 기능
-   - 🔗 클래스 간 상호작용과 의존성
-   - ⚙️ 주요 메서드와 프로퍼티 상세 설명
-   - 💻 실제 사용 예제와 완전한 코드
-   - 🚀 성능 특성과 최적화 포인트
-   - 🔄 다른 클래스와의 상호작용
+    prompt_content = """당신은 게임 개발 기술 블로그 작가입니다. 아래 Unreal Engine C++ 프로젝트 데이터를 바탕으로 기술 블로그 스타일의 README.md를 작성해주세요.
 
 ## 작성 스타일:
-- 🎨 노션 블로그처럼 이쁘게 이모지와 마크다운 활용
-- 💻 코드 중심으로 실제 구현 세부사항 강조
-- 🎯 기능 중심으로 "이 기능을 만들었구나!"를 알 수 있게
-- 📊 다이어그램과 시각적 자료 적극 활용
-- 🔍 모든 클래스와 함수를 빠짐없이 포함
-- 📝 실제 사용 가능한 완전한 코드 예제
-- 🚀 기술적 깊이와 실무 경험 강조
+- 📝 **기술 블로그 스타일**로 작성
+- 🎨 **이모지와 마크다운**을 활용하여 가독성 향상
+- 💡 **프로젝트 요약과 기능 설명**에 집중
+- 🚫 **코드 예제는 포함하지 않음**
+- 📊 **간단하지만 전문적인** 설명
 
-## 특별 요구사항:
-- 모든 클래스의 모든 함수를 상세히 설명
-- 실제 코드 예제는 완전한 구현체로 작성
-- 다이어그램은 Mermaid 형식으로 작성
-- 이모지를 적절히 활용하여 가독성 향상
-- 기능별로 명확하게 구분하여 설명
-- 각 함수의 매개변수, 반환값, 예외 처리 상세 설명
-- 실제 사용 시나리오와 베스트 프랙티스 포함
-- 성능 특성과 최적화 포인트 명시
-- 디버깅과 트러블슈팅 가이드 포함
-- 확장성과 유지보수성 고려사항 포함
+## 구성:
+1. **프로젝트 소개** (500단어):
+   - 프로젝트명과 목적
+   - 게임 장르와 배경
+   - 개발 목표와 특징
+
+2. **주요 기능 소개** (각 기능당 200단어):
+   - StateTree 기반 AI 시스템
+   - 페이즈 전환 시스템
+   - 투사체 시스템
+   - 애니메이션 노티파이
+   - 이펙트 관리
+   - 데이터 동기화
+
+3. **기술 스택** (300단어):
+   - 사용된 기술과 도구
+   - 아키텍처 특징
+   - 성능 최적화 기법
+
+4. **프로젝트 구조** (400단어):
+   - 클래스 구조 개요
+   - 시스템 간 관계
+   - 확장성과 유지보수성
+
+5. **개발 과정** (300단어):
+   - 개발 중 겪은 도전
+   - 해결한 문제들
+   - 학습한 기술
+
+## 중요 지침:
+- 기술 블로그처럼 읽기 쉽게 작성
+- 전문적이지만 접근하기 쉬운 문체
+- 코드 없이 기능과 특징에 집중
+- 이모지로 시각적 효과 추가
+- 총 2000단어 내외로 작성
 
 [추출된 문서 데이터]
 """
@@ -411,87 +405,87 @@ def main():
         ("IMPLEMENTATION_GUIDE.md", create_implementation_guide_prompt)
     ]
     
-    print("모든 문서를 생성합니다...")
-    for filename, prompt_func in prompts:
-        print(f"\n{filename} 생성 중...")
+    print("모든 문서를 순차적으로 생성합니다...")
+    for i, (filename, prompt_func) in enumerate(prompts, 1):
+        print(f"\n[{i}/{len(prompts)}] {filename} 생성 중...")
         final_prompt = prompt_func(doxygen_data)
         generate_document(final_prompt, filename)
+        
+        # 각 문서 생성 후 잠시 대기 (API 제한 방지)
+        if i < len(prompts):
+            print("다음 문서 생성을 위해 잠시 대기 중...")
+            import time
+            time.sleep(2)  # 2초 대기
     
     print("\n모든 문서 생성이 완료되었습니다!")
 
-def generate_document(prompt, filename):
-    """문서 생성 함수"""
+def generate_document_multi_part(prompt, filename, max_parts=3):
+    """여러 번에 나누어서 문서 생성하는 함수"""
     print(f"Gemini API를 호출하여 {filename} 생성을 시작합니다...")
     print(f"프롬프트 길이: {len(prompt)} 문자")
+    print(f"최대 {max_parts}번에 나누어 생성합니다...")
     
     try:
-        # Gemini 2.0 Flash 모델 사용 (더 많은 토큰 지원)
         model = genai.GenerativeModel('gemini-2.0-flash-exp')
+        full_content = ""
         
-        # 최대한 많은 토큰으로 설정
-        generation_config = genai.types.GenerationConfig(
-            max_output_tokens=8192,   # 최대 출력 토큰 (8K)
-            temperature=0.7,          # 창의성과 일관성의 균형
-            top_p=0.8,                # 토큰 선택 범위
-            top_k=40,                 # 상위 k개 토큰에서 선택
-            candidate_count=1         # 후보 수
-        )
+        for part in range(1, max_parts + 1):
+            print(f"\n[{part}/{max_parts}] {filename} 생성 중...")
+            
+            # 각 파트별로 다른 프롬프트 추가
+            if part == 1:
+                part_prompt = prompt + "\n\n## 중요: 이 문서의 첫 번째 부분을 작성해주세요. 다음 부분과 자연스럽게 연결되도록 마무리해주세요."
+            elif part == max_parts:
+                part_prompt = f"이전 내용: {full_content[-1000:]}\n\n{prompt}\n\n## 중요: 이 문서의 마지막 부분을 작성해주세요. 이전 내용과 자연스럽게 연결하여 완성해주세요."
+            else:
+                part_prompt = f"이전 내용: {full_content[-1000:]}\n\n{prompt}\n\n## 중요: 이 문서의 중간 부분을 작성해주세요. 이전 내용과 자연스럽게 연결하고 다음 부분으로 이어지도록 마무리해주세요."
+            
+            generation_config = genai.types.GenerationConfig(
+                max_output_tokens=8192,   # 최대 출력 토큰
+                temperature=0.7,
+                top_p=0.8,
+                top_k=40,
+                candidate_count=1
+            )
+            
+            safety_settings = [
+                {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+                {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+                {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+                {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"}
+            ]
+            
+            response = model.generate_content(
+                part_prompt, 
+                generation_config=generation_config,
+                safety_settings=safety_settings
+            )
+            
+            part_content = response.text
+            full_content += part_content + "\n\n"
+            
+            print(f"[{part}/{max_parts}] 생성 완료! 길이: {len(part_content)} 문자")
+            
+            # 마지막 파트가 아니면 잠시 대기
+            if part < max_parts:
+                import time
+                time.sleep(3)
         
-        # 안전 설정 (필터링 최소화)
-        safety_settings = [
-            {
-                "category": "HARM_CATEGORY_HARASSMENT",
-                "threshold": "BLOCK_MEDIUM_AND_ABOVE"
-            },
-            {
-                "category": "HARM_CATEGORY_HATE_SPEECH", 
-                "threshold": "BLOCK_MEDIUM_AND_ABOVE"
-            },
-            {
-                "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-                "threshold": "BLOCK_MEDIUM_AND_ABOVE"
-            },
-            {
-                "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
-                "threshold": "BLOCK_MEDIUM_AND_ABOVE"
-            }
-        ]
-        
-        response = model.generate_content(
-            prompt, 
-            generation_config=generation_config,
-            safety_settings=safety_settings
-        )
-        
-        content = response.text
-
+        # 최종 파일 저장
         with open(filename, "w", encoding="utf-8") as f:
-            f.write(content)
-        print(f"{filename} 파일이 성공적으로 생성되었습니다!")
-        print(f"생성된 내용 길이: {len(content)} 문자")
-        print(f"예상 단어 수: 약 {len(content.split())} 단어")
+            f.write(full_content)
+        
+        print(f"\n{filename} 파일이 성공적으로 생성되었습니다!")
+        print(f"전체 생성된 내용 길이: {len(full_content)} 문자")
+        print(f"예상 단어 수: 약 {len(full_content.split())} 단어")
         
     except Exception as e:
         print(f"API 호출 중 오류 발생: {e}")
         print(f"오류 상세: {str(e)}")
-        
-        # 오류가 발생하면 더 작은 토큰으로 재시도
-        print("더 작은 토큰 수로 재시도합니다..")
-        try:
-            generation_config = genai.types.GenerationConfig(
-                max_output_tokens=4096,   # 4K 토큰으로 재시도
-                temperature=0.7
-            )
-            response = model.generate_content(prompt, generation_config=generation_config)
-            content = response.text
-            
-            with open(filename, "w", encoding="utf-8") as f:
-                f.write(content)
-            print(f"{filename} 파일이 재시도로 생성되었습니다!")
-            print(f"생성된 내용 길이: {len(content)} 문자")
-            
-        except Exception as e2:
-            print(f"재시도도 실패했습니다: {e2}")
+
+def generate_document(prompt, filename):
+    """기존 단일 문서 생성 함수 (호환성 유지)"""
+    generate_document_multi_part(prompt, filename, max_parts=8)
 
 if __name__ == "__main__":
     main()
