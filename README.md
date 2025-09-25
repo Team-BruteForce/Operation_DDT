@@ -1,549 +1,681 @@
-# ⚔️ 언리얼 엔진 C++ 보스 전투 시스템 포트폴리오 ⚔️
+# ⚔️ 언리얼 엔진 C++로 구현한 보스 전투 시스템 파헤치기 ⚔️
 
-## ✨ 프로젝트 개요
+안녕하세요! 게임 개발 기술 블로그에 오신 것을 환영합니다. 👋 오늘은 언리얼 엔진 C++로 개발한 흥미진진한 보스 전투 시스템에 대해 자세히 알아보는 시간을 가져보려고 합니다. 이 프로젝트는 단순히 보스 몬스터를 생성하고 공격하는 것을 넘어, **역동적인 AI**, **화려한 이펙트**, 그리고 **전략적인 페이즈 전환**을 통해 플레이어에게 잊을 수 없는 경험을 선사하는 것을 목표로 합니다. 🎮
 
-이 프로젝트는 언리얼 엔진 5를 기반으로 개발된 **액션 어드벤처 게임**의 핵심 요소인 **보스 전투 시스템**을 구현한 것입니다. 고대 신화 속 보스를 모티브로 한 강력한 적과의 전투를 통해 플레이어에게 도전적이고 몰입감 넘치는 경험을 제공하는 것을 목표로 합니다.
+## 프로젝트 소개: 불멸의 존재에 맞서는 영웅의 서사시
 
-### 🎮 게임 장르, 배경, 목표
+이 프로젝트의 핵심은 **"불멸의 존재에 맞서는 영웅의 서사시"**라는 테마를 중심으로, 플레이어가 강력한 보스 몬스터와 싸우면서 자신의 한계를 시험하고, 궁극적으로 승리하는 경험을 제공하는 것입니다. 게임 장르는 **3인칭 액션 RPG**로, 플레이어는 다양한 스킬과 장비를 사용하여 보스의 공격 패턴을 파악하고, 약점을 공략해야 합니다.
 
-*   **장르**: 3인칭 액션 어드벤처
-*   **배경**: 고대 신화와 전설을 바탕으로 한 판타지 세계
-*   **목표**: 플레이어는 주인공이 되어 강력한 보스 몬스터를 물리치고 세계를 구원하는 여정을 떠납니다. 각 보스는 고유한 공격 패턴과 약점을 가지고 있으며, 플레이어는 전략적인 전투를 통해 이를 극복해야 합니다.
+보스 몬스터는 고대 신화에서 영감을 받아 디자인되었으며, 각 보스는 고유한 배경 스토리와 강력한 능력을 가지고 있습니다. 예를 들어, "바빌론의 문"을 소환하여 무수한 투사체를 발사하는 보스, 혹은 성검 마법을 사용하여 강력한 공격을 퍼붓는 보스 등이 있습니다. 🏛️
 
-### ⭐ 주요 기능 및 특징 (상세 설명)
+**개발 목표**는 다음과 같습니다.
 
-*   **다양한 보스 패턴**: 각 보스는 고유한 공격 패턴, 스킬, 페이즈 변화를 가집니다.
-*   **StateTree 기반 AI**: 복잡한 보스 AI를 효율적으로 관리하고 확장하기 위해 StateTree를 사용했습니다.
-*   **애니메이션 노티파이**: 애니메이션과 게임 로직을 동기화하여 자연스럽고 반응성 높은 전투 경험을 제공합니다.
-*   **이펙트 시스템**: 화려하고 강력한 시각 효과를 통해 전투의 몰입감을 높입니다.
-*   **투사체 시스템**: 다양한 투사체를 생성하고 관리하여 보스의 공격 패턴을 다채롭게 만듭니다.
-*   **장비 시스템**: 보스가 다양한 무기를 장착하고 활용할 수 있도록 합니다.
-*   **상태 위젯**: 보스의 HP, 페이즈 정보 등을 표시하여 플레이어가 전투 상황을 파악하는 데 도움을 줍니다.
-*   **데이터 동기화 플러그인**: GameplayTags 및 보스 스탯을 외부 데이터 소스(예: 스프레드시트)와 동기화하여 콘텐츠 업데이트를 용이하게 합니다.
+*   **지능적인 AI**: StateTree를 기반으로 보스의 행동 패턴을 설계하여, 플레이어의 행동에 따라 유기적으로 반응하는 AI를 구현합니다.
+*   **다양한 공격 패턴**: 각 페이즈마다 변화하는 공격 패턴을 통해 플레이어에게 끊임없는 긴장감을 제공합니다.
+*   **화려한 시각 효과**: 이펙트 풀링 시스템을 사용하여 최적화된 환경에서 화려하고 역동적인 이펙트를 연출합니다.
+*   **전략적인 페이즈 전환**: 보스의 체력, 플레이어의 행동, 또는 특정 조건에 따라 페이즈가 전환되어, 전투의 흐름을 예측 불가능하게 만듭니다.
+*   **데이터 중심 설계**: Gameplay Tag와 데이터 테이블을 활용하여 보스의 스탯, 공격 패턴, 이펙트 등을 쉽게 관리하고 수정할 수 있도록 합니다.
 
-### 🛠️ 기술적 특징 및 사용된 라이브러리/프레임워크
+이 프로젝트의 **핵심 특징**은 다음과 같습니다.
 
-*   **언리얼 엔진 5**: 게임 엔진
-*   **C++**: 주요 게임 로직 구현
-*   **StateTree**: 보스 AI 구현
-*   **애니메이션 노티파이**: 애니메이션 이벤트 처리
-*   **Niagara**: 파티클 이펙트 시스템
-*   **Object Pool**: 투사체 및 이펙트 성능 최적화
-*   **HTTP API**: 외부 데이터 동기화
-*   **GameplayTags**: 게임플레이 요소 태깅 및 관리
+*   **StateTree 기반 AI 시스템**: 복잡한 보스 행동 패턴을 효율적으로 관리하고 확장할 수 있습니다.
+*   **페이즈 전환 시스템**: 전투의 흐름을 다이나믹하게 변화시켜 플레이어에게 새로운 도전 과제를 제시합니다.
+*   **이펙트 풀링 시스템**: 화려한 이펙트를 최적화하여 게임 성능을 향상시킵니다.
+*   **애니메이션 노티파이**: 애니메이션과 게임 로직을 긴밀하게 연결하여 더욱 자연스러운 전투 경험을 제공합니다.
+*   **데이터 동기화 플러그인**: 외부 데이터 소스와 게임 데이터를 동기화하여 개발 효율성을 높입니다.
 
-### 📋 클래스 구조 및 시스템 개요
+이제 이 프로젝트의 핵심 기능들을 좀 더 자세히 살펴보겠습니다. 다음 섹션에서는 StateTree 기반 AI 시스템, 페이즈 전환 시스템, 투사체 시스템, 애니메이션 노티파이, 이펙트 관리, 그리고 데이터 동기화에 대해 심층적으로 분석해 보겠습니다. 🧐
 
-```mermaid
-classDiagram
-    class ABossEffect {
-        +ActivateEffect()
-        +DeactivateEffect()
-    }
-    class ABossManager {
-        +ResetBossCompletely()
-        +OpenDoor()
-    }
-    class ABossProjectileActor {
-        +FireProjectile()
-    }
-    class ABossProjectileOrb {
-        +SpawnProjectile()
-        +DestroyOrb()
-    }
-    class ACBoss {
-        +TakeDamage()
-        +PlayHitMotion()
-    }
-    class ACBossAIC {
-        +OnPossess()
-    }
-    class ACBossWeapon {
-        +OnBossBeginEquip()
-        +OnBossUnequip()
-    }
-    class AFlySpline {
-        +BuildCylinderAndRims()
-    }
-    class AGateOfBabylon {
-        +ActivateGate()
-        +DeactivateGate()
-    }
-    class AGateOfBabyonProjectile {
-        +ActivateProjectile()
-        +DeactivateProjectile()
-    }
-    class AHolySwordMagic {
-        +StartFirstNiagara()
-        +EnableCollision()
-    }
-    class AProjectile_LightSpear {
-        +FireProjectile()
-    }
-    class UAnimNotify_ArmorDissolve {
-        +Notify()
-    }
-    class UAnimNotify_BeginFlying {
-        +Notify()
-    }
-    class UAnimNotify_BossWeaponCollision {
-        +NotifyBegin()
-        +NotifyEnd()
-    }
-    class UAnimNotify_ChaseRotation {
-        +NotifyBegin()
-        +NotifyTick()
-        +NotifyEnd()
-    }
-    class UAnimNotify_DeadDissolve {
-        +Notify()
-    }
-    class UAnimNotify_DropSwordMagic {
-        +Notify()
-    }
-    class UAnimNotify_EndFlying {
-        +Notify()
-    }
-    class UAnimNotify_GateOfBabylonSpawn {
-        +Notify()
-    }
-    class UAnimNotify_Groggying {
-        +NotifyBegin()
-        +NotifyEnd()
-    }
-    class UAnimNotify_Landing {
-        +Notify()
-    }
-    class UAnimNotify_LineTraceOnOff {
-        +NotifyBegin()
-        +NotifyEnd()
-    }
-    class UAnimNotify_OrbSpawn {
-        +Notify()
-    }
-    class UAnimNotify_PaseChangeDissolve {
-        +Notify()
-    }
-    class UAnimNotify_PlayEffect {
-        +Notify()
-    }
-    class UAnimNotify_SelectCollisionOnOff {
-        +NotifyBegin()
-        +NotifyEnd()
-    }
-    class UAnimNotify_SpawnLightningSpear {
-        +Notify()
-    }
-    class UAnimNotifyState_PaseChange {
-        +NotifyBegin()
-        +NotifyEnd()
-    }
-    class UBossAnimInstance {
-        +NativeBeginPlay()
-    }
-    class UBossEffectExecute {
-        +ExecuteEffect()
-    }
-    class UBossEffectManager {
-        +PlayEffect()
-        +StopAllEffects()
-    }
-    class UBossProjectileComponent {
-        +ShotProjectile()
-        +SpawnOrb()
-        +DestroyOrb()
-    }
-    class UBossStatusWidget {
-        +UpdateBossHP()
-        +SwitchBossCompleteUI()
-    }
-    class UCBossDoAction {
-        +DoAction()
-    }
-    class UCBossEquipment {
-        +Equip()
-        +Unequip()
-    }
-    class UCBossWeaponAsset {
-        +GetBossWeapon()
-    }
-    class UDDTLoadingWidget {
-        +PlayLoadingAnimation()
-    }
-    class UDDTMainThemeWidget {
-        +PlayClickEvent()
-    }
-    class USTC_CheckPase {
-        +TestCondition()
-    }
-    class USTC_DistanceCheck {
-        +TestCondition()
-    }
-    class USTC_IsBossActionInProgress {
-        +TestCondition()
-    }
-    class UTask_BossChase {
-        +Tick()
-        +EnterState()
-    }
-    class UTask_Dead {
-        +EnterState()
-    }
-    class UTask_FlyKeepingDistance {
-        +EnterState()
-    }
-    class UTask_FlySetLocation {
-        +EnterState()
-    }
-    class UTask_Hovering {
-        +EnterState()
-    }
-    class UTask_IncreaseAP {
-        +EnterState()
-    }
-    class UTask_KeepingDistance {
-        +EnterState()
-    }
-    class UTask_Log {
-        +EnterState()
-    }
-    class UTask_PlayMontage {
-        +EnterState()
-    }
-    class UTask_ResetAP {
-        +EnterState()
-    }
-    class UTask_RotateTowardsPlayer {
-        +Tick()
-    }
-    class UTask_SetCurrentAction {
-        +EnterState()
-    }
-    class UTask_SetVectorTargetLocation {
-        +Tick()
-    }
-    class UTask_SideMoveGetLocation {
-        +EnterState()
-    }
-    class UTask_SwitchPase {
-        +EnterState()
-    }
-    class UTask_SwitchState {
-        +EnterState()
-    }
-    class UTask_TargetLocationFeet {
-        +Tick()
-    }
-    class UTask_TargetLocatonGap {
-        +Tick()
-    }
 
-    ABossManager -- ACBoss : Spawns
-    ACBoss -- ACBossAIC : Controlled by
-    ACBoss -- ACBossWeapon : Equips
-    ACBossWeapon -- UCBossDoAction : Uses
-    ACBoss -- UBossStatusWidget : Displays Status
-    ACBoss -- UBossProjectileComponent : Uses Projectiles
-    ACBoss -- UBossEffectComponent : Uses Effects
-    ACBossAIC -- UCBossEnemyStateTreeEvaluator : Evaluates StateTree
-    UCBossEnemyStateTreeEvaluator -- UTask_BossChase : Executes Tasks
-    UCBossEnemyStateTreeEvaluator -- USTC_CheckPase : Checks Conditions
-    UBossProjectileComponent -- ABossProjectileActor : Spawns
-    UBossProjectileComponent -- ABossProjectileOrb : Spawns
-    UBossEffectComponent -- ABossEffect : Plays
-    AGateOfBabylon -- AGateOfBabyonProjectile : Spawns
-    ACBoss -- UBossAnimInstance : Animates
+# 🔥 언리얼 엔진 C++로 만드는 지능형 보스 AI: 개발 비하인드 스토리 ⚔️
 
-```
+안녕하세요, 게임 개발 기술 블로그 독자 여러분! 오늘은 언리얼 엔진 C++로 개발 중인 흥미진진한 프로젝트, 바로 **지능형 보스 AI 시스템** 개발기를 공유하려 합니다. 🏛️
 
-## 📚 목차
+## 🎮 프로젝트 소개: 심연의 지배자
 
-1.  [프로젝트 개요](#-프로젝트-개요)
-    *   [게임 장르, 배경, 목표](#-게임-장르-배경-목표)
-    *   [주요 기능 및 특징](#-주요-기능-및-특징-상세-설명)
-    *   [기술적 특징 및 사용된 라이브러리/프레임워크](#️-기술적-특징-및-사용된-라이브러리프레임워크)
-    *   [클래스 구조 및 시스템 개요](#-클래스-구조-및-시스템-개요)
-2.  [클래스별 상세 분석](#-클래스별-상세-분석)
-    *   [ABossEffect](#abosseffect)
-        *   [함수 `ABossEffect`](#함수-abosseffect)
-        *   [함수 `Tick`](#함수-tick)
-        *   [함수 `ActivateEffect`](#함수-activateeffect)
-        *   [함수 `ActivateEffectAttachedToSocket`](#함수-activateeffectattachedtosocket)
-        *   [함수 `DeactivateEffect`](#함수-deactivateeffect)
-        *   [함수 `IsActive`](#함수-isactive)
-        *   [함수 `GetCurrentEffectTag`](#함수-getcurrenteffecttag)
-        *   [함수 `BeginPlay`](#함수-beginplay-1)
-        *   [함수 `AttachToBoss`](#함수-attachtoboss)
-        *   [함수 `AttachToSocket`](#함수-attachtosocket)
-        *   [함수 `PlaceInWorld`](#함수-placeinworld)
-    *   [ABossManager](#abossmanager)
-        *   [함수 `ABossManager`](#함수-abossmanager-1)
-        *   [함수 `Tick`](#함수-tick-1)
-        *   [함수 `ResetBossCompletely`](#함수-resetbosscompletely)
-        *   [함수 `OpenDoor`](#함수-opendoor)
-        *   [함수 `FindBossInWorld`](#함수-findbossinworld)
-        *   [함수 `ResetAllBossComponents`](#함수-resetallbosscomponents)
-        *   [함수 `ResetBossStateTree`](#함수-resetbossstatetree)
-        *   [함수 `BeginPlay`](#함수-beginplay-2)
-        *   [함수 `OnTriggerBoxOverlapBegin`](#함수-ontriggerboxoverlapbegin)
-    *   [ABossProjectileActor](#abossprojectileactor)
-        *   [함수 `ABossProjectileActor`](#함수-abossprojectileactor-1)
-        *   [함수 `Tick`](#함수-tick-2)
-        *   [함수 `FireProjectile`](#함수-fireprojectile-1)
-        *   [함수 `FireProjectileToLocation`](#함수-fireprojectiletolocation)
-        *   [함수 `PlaySpawnEffect`](#함수-playspawneffect)
-        *   [함수 `PlayDestroyEffect`](#함수-playdestroyeffect)
-        *   [함수 `OnProjectileHit`](#함수-onprojectilehit)
-        *   [함수 `BeginPlay`](#함수-beginplay-3)
-    *   [ABossProjectileOrb](#abossprojectileorb)
-        *   [함수 `ABossProjectileOrb`](#함수-abossprojectileorb-1)
-        *   [함수 `Tick`](#함수-tick-3)
-        *   [함수 `SpawnProjectile`](#함수-spawnprojectile-2)
-        *   [함수 `DestroyOrb`](#함수-destroyorb-1)
-        *   [함수 `OnOverlap`](#함수-onoverlap)
-        *   [함수 `PlaySpawnSound`](#함수-playspawnsound)
-        *   [함수 `PlayReturnToPoolSound`](#함수-playreturntopoolsound)
-        *   [함수 `PlayCollisionSound`](#함수-playcollisionsound)
-        *   [함수 `PlaySpawnEffect`](#함수-playspawneffect-1)
-        *   [함수 `PlayReturnToPoolEffect`](#함수-playreturntopooleffect)
-        *   [함수 `PlayCollisionEffect`](#함수-playcollisioneffect)
-        *   [함수 `DestroyOrbWithDelay`](#함수-destroyorbwithdelay)
-        *   [함수 `ActivateOrb`](#함수-activateorb)
-        *   [함수 `BeginPlay`](#함수-beginplay-4)
-    *   [ACBoss](#acboss)
-        *   [함수 `ACBoss`](#함수-acboss-1)
-        *   [함수 `Tick`](#함수-tick-4)
-        *   [함수 `TakeDamage`](#함수-takedamage)
-        *   [함수 `BeginPlay`](#함수-beginplay-5)
-        *   [함수 `PlayHitMotion`](#함수-playhitmotion)
-        *   [함수 `ShowBossStatusWidget`](#함수-showbossstatuswidget)
-        *   [함수 `HPUpdate`](#함수-hpupdate)
-        *   [함수 `RestartUI`](#함수-restartui)
-        *   [함수 `PlayBossBGM`](#함수-playbossbgm)
-        *   [함수 `StopBossBGM`](#함수-stopbossbgm)
-        *   [함수 `LowerBossBGMVolume`](#함수-lowerbossbgmvolume)
-    *   [ACBossAIC](#acbossaic)
-        *   [함수 `ACBossAIC`](#함수-acbossaic-1)
-        *   [함수 `OnPossess`](#함수-onpossess)
-    *   [ACBossWeapon](#acbossweapon)
-        *   [함수 `ACBossWeapon`](#함수-acbossweapon-1)
-        *   [함수 `OnBossBeginEquip`](#함수-onbossbeginequip)
-        *   [함수 `OnBossUnequip`](#함수-onbossunequip)
-        *   [함수 `OnBossCollisions`](#함수-onbosscollisions)
-        *   [함수 `OnSelectCollision`](#함수-onselectcollision)
-        *   [함수 `OffBossCollisions`](#함수-offbosscollisions)
-        *   [함수 `BossAttachToCollision`](#함수-bossattachtocollision)
-        *   [함수 `StartCollisionAtSocket`](#함수-startcollisionatsocket)
-        *   [함수 `EndCollisionToOwner`](#함수-endcollisiontoowner)
-        *   [함수 `BeginPlay`](#함수-beginplay-6)
-        *   [함수 `Tick`](#함수-tick-5)
-        *   [함수 `BossAttachTo`](#함수-bossattachto)
-        *   [함수 `OnBossComponentBeginOverlap`](#함수-onbosscomponentbeginoverlap)
-        *   [함수 `OnBossComponentEndOverlap`](#함수-onbosscomponentendoverlap)
-    *   [AFlySpline](#aflyspline)
-        *   [함수 `AFlySpline`](#함수-aflyspline-1)
-        *   [함수 `OnConstruction`](#함수-onconstruction)
-        *   [함수 `BuildCylinderAndRims`](#함수-buildcylinderandrims)
-        *   [함수 `GetHorizontalSplines`](#함수-gethorizontalsplines)
-        *   [함수 `GetSplineAtIndex`](#함수-getsplineatindex)
-        *   [함수 `BuildRim`](#함수-buildrim)
-        *   [함수 `CreateHorizontalSplines`](#함수-createhorizontalsplines)
-    *   [AGateOfBabylon](#agateofbabylon)
-        *   [함수 `AGateOfBabylon`](#함수-agateofbabylon-1)
-        *   [함수 `Tick`](#함수-tick-6)
-        *   [함수 `ActivateGate`](#함수-activategate)
-        *   [함수 `DeactivateGate`](#함수-deactivategate)
-        *   [함수 `BeginPlay`](#함수-beginplay-7)
-        *   [함수 `InitializeProjectilePool`](#함수-initializeprojectilepool)
-        *   [함수 `GetProjectileFromPool`](#함수-getprojectilefrompool-1)
-        *   [함수 `SpawnProjectile`](#함수-spawnprojectile-3)
-        *   [함수 `UpdateLookAtPlayer`](#함수-updatelookatplayer)
-    *   [AGateOfBabyonProjectile](#agateofbabyonprojectile)
-        *   [함수 `AGateOfBabyonProjectile`](#함수-agateofbabyonprojectile-1)
-        *   [함수 `Tick`](#함수-tick-7)
-        *   [함수 `ActivateProjectile`](#함수-activateprojectile-1)
-        *   [함수 `DeactivateProjectile`](#함수-deactivateprojectile-1)
-        *   [함수 `BeginPlay`](#함수-beginplay-8)
-        *   [함수 `OnBeginOverlap`](#함수-onbeginoverlap)
-        *   [함수 `MoveToRandomLocationAroundPlayer`](#함수-movetorandomlocationaroundplayer)
-    *   [AHolySwordMagic](#aholyswordmagic)
-        *   [함수 `AHolySwordMagic`](#함수-aholyswordmagic-1)
-        *   [함수 `BeginPlay`](#함수-beginplay-9)
-        *   [함수 `Tick`](#함수-tick-8)
-        *   [함수 `StartFirstNiagara`](#함수-startfirstniagara)
-        *   [함수 `StartSecondNiagara`](#함수-startsecondniagara)
-        *   [함수 `EnableCollision`](#함수-enablecollision)
-        *   [함수 `DisableCollision`](#함수-disablecollision)
-        *   [함수 `CheckNiagaraCompletion`](#함수-checkniagaracompletion)
-        *   [함수 `ResetForPool`](#함수-resetforpool)
-        *   [함수 `OnOverlapBegin`](#함수-onoverlapbegin)
-    *   [AProjectile\_LightSpear](#aprojectile_lightspear)
-        *   [함수 `AProjectile_LightSpear`](#함수-aprojectile_lightspear-1)
-        *   [함수 `Tick`](#함수-tick-9)
-        *   [함수 `FireProjectile`](#함수-fireprojectile-2)
-        *   [함수 `PlayDestroyEffect`](#함수-playdestroyeffect-1)
-        *   [함수 `OnProjectileHit`](#함수-onprojectilehit-1)
-        *   [함수 `BeginPlay`](#함수-beginplay-10)
-    *   [FEditorPlugin\_DataSyncModule](#feditorplugin_datasyncmodule)
-        *   [함수 `StartupModule`](#함수-startupmodule)
-        *   [함수 `ShutdownModule`](#함수-shutdownmodule)
-        *   [함수 `SyncGameplayTags`](#함수-syncgameplaytags)
-        *   [함수 `SyncBossStats`](#함수-syncbossstats)
-        *   [함수 `MakeAPIRequest`](#함수-makeapirequest)
-        *   [함수 `OnDataReceived`](#함수-ondatareceived)
-        *   [함수 `UpdateGameplayTagsTable`](#함수-updategameplaytagstable)
-        *   [함수 `UpdateBossStatsTableSimple`](#함수-updatebossstatstablesimple)
-        *   [함수 `PluginButtonClicked`](#함수-pluginbuttonclicked)
-        *   [함수 `OnSpawnPluginTab`](#함수-onspawnplugintab)
-        *   [함수 `ParseGameplayTagData`](#함수-parsegameplaytagdata)
-        *   [함수 `RegisterMenus`](#함수-registermenus)
-        *   [함수 `RegisterToolbar`](#함수-registertoolbar)
-        *   [함수 `CreatePluginUI`](#함수-createpluginui)
-    *   [UAnimNotify\_ArmorDissolve](#uanimnotify_armordissolve)
-        *   [함수 `GetNotifyName_Implementation`](#함수-getnotifyname_implementation)
-        *   [함수 `Notify`](#함수-notify-1)
-    *   [UAnimNotify\_BeginFlying](#uanimnotify_beginflying)
-        *   [함수 `GetNotifyName_Implementation`](#함수-getnotifyname_implementation-1)
-        *   [함수 `Notify`](#함수-notify-2)
-    *   [UAnimNotify\_BossWeaponCollision](#uanimnotify_bossweaponcollision)
-        *   [함수 `GetNotifyName_Implementation`](#함수-getnotifyname_implementation-2)
-        *   [함수 `NotifyBegin`](#함수-notifybegin)
-        *   [함수 `NotifyEnd`](#함수-notifyend)
-    *   [UAnimNotify\_ChaseRotation](#uanimnotify_chaserotation)
-        *   [함수 `GetNotifyName_Implementation`](#함수-getnotifyname_implementation-3)
-        *   [함수 `NotifyBegin`](#함수-notifybegin-1)
-        *   [함수 `NotifyTick`](#함수-notifytick)
-        *   [함수 `NotifyEnd`](#함수-notifyend-1)
-    *   [UAnimNotify\_DeadDissolve](#uanimnotify_deaddissolve)
-        *   [함수 `GetNotifyName_Implementation`](#함수-getnotifyname_implementation-4)
-        *   [함수 `Notify`](#함수-notify-3)
-    *   [UAnimNotify\_DropSwordMagic](#uanimnotify_dropswordmagic)
-        *   [함수 `GetNotifyName_Implementation`](#함수-getnotifyname_implementation-5)
-        *   [함수 `Notify`](#함수-notify-4)
-    *   [UAnimNotify\_EndFlying](#uanimnotify_endflying)
-        *   [함수 `GetNotifyName_Implementation`](#함수-getnotifyname_implementation-6)
-        *   [함수 `Notify`](#함수-notify-5)
-    *   [UAnimNotify\_GateOfBabylonSpawn](#uanimnotify_gateofbabylonspawn)
-        *   [함수 `GetNotifyName_Implementation`](#함수-getnotifyname_implementation-7)
-        *   [함수 `Notify`](#함수-notify-6)
-    *   [UAnimNotify\_Groggying](#uanimnotify_groggying)
-        *   [함수 `GetNotifyName_Implementation`](#함수-getnotifyname_implementation-8)
-        *   [함수 `NotifyBegin`](#함수-notifybegin-2)
-        *   [함수 `NotifyEnd`](#함수-notifyend-2)
-    *   [UAnimNotify\_Landing](#uanimnotify_landing)
-        *   [함수 `GetNotifyName_Implementation`](#함수-getnotifyname_implementation-9)
-        *   [함수 `Notify`](#함수-notify-7)
-    *   [UAnimNotify\_LineTraceOnOff](#uanimnotify_linetraceonoff)
-        *   [함수 `GetNotifyName_Implementation`](#함수-getnotifyname_implementation-10)
-        *   [함수 `NotifyBegin`](#함수-notifybegin-3)
-        *   [함수 `NotifyEnd`](#함수-notifyend-3)
-    *   [UAnimNotify\_OrbSpawn](#uanimnotify_orbspawn)
-        *   [함수 `GetNotifyName_Implementation`](#함수-getnotifyname_implementation-11)
-        *   [함수 `Notify`](#함수-notify-8)
-    *   [UAnimNotify\_PaseChangeDissolve](#uanimnotify_pasechangedissolve)
-        *   [함수 `GetNotifyName_Implementation`](#함수-getnotifyname_implementation-12)
-        *   [함수 `Notify`](#함수-notify-9)
-    *   [UAnimNotify\_PlayEffect](#uanimnotify_playeffect)
-        *   [함수 `GetNotifyName_Implementation`](#함수-getnotifyname_implementation-13)
-        *   [함수 `Notify`](#함수-notify-10)
-    *   [UAnimNotify\_SelectCollisionOnOff](#uanimnotify_selectcollisiononoff)
-        *   [함수 `GetNotifyName_Implementation`](#함수-getnotifyname_implementation-14)
-        *   [함수 `NotifyBegin`](#함수-notifybegin-4)
-        *   [함수 `NotifyEnd`](#함수-notifyend-4)
-    *   [UAnimNotify\_SpawnLightningSpear](#uanimnotify_spawnlightningspear)
-        *   [함수 `GetNotifyName_Implementation`](#함수-getnotifyname_implementation-15)
-        *   [함수 `Notify`](#함수-notify-11)
-    *   [UAnimNotifyState\_PaseChange](#uanimnotifystate_pasechange)
-        *   [함수 `GetNotifyName_Implementation`](#함수-getnotifyname_implementation-16)
-        *   [함수 `NotifyBegin`](#함수-notifybegin-5)
-        *   [함수 `NotifyEnd`](#함수-notifyend-5)
-    *   [UBossAnimInstance](#ubossaniminstance)
-        *   [함수 `NativeBeginPlay`](#함수-nativebeginplay)
-    *   [UBossEffectExecute](#ubosseffectexecute)
-        *   [함수 `ExecuteEffect`](#함수-executeeffect)
-        *   [함수 `ExecuteEffects`](#함수-executefects)
-        *   [함수 `ExecuteEffectWithDelay`](#함수-executeeffectwithdelay)
-        *   [함수 `ExecuteEffectLoop`](#함수-executeeffectloop)
-        *   [함수 `ExecuteEffectAtSocket`](#함수-executeeffectatsocket)
-        *   [함수 `ExecuteEffectAttachedToSocket`](#함수-executeeffectattachedtosocket)
-        *   [함수 `ExecuteEffectAtSocketWithDelay`](#함수-executeeffectatsocketwithdelay)
-        *   [함수 `ExecuteEffectAtSocketLoop`](#함수-executeeffectatsocketloop)
-        *   [함수 `ExecuteEffectAttachedToSocketLoop`](#함수-executeeffectattachedtosocketloop)
-        *   [함수 `Begin_ExecuteEffect`](#함수-begin_executeeffect)
-        *   [함수 `End_ExecuteEffect`](#함수-end_executeeffect)
-    *   [UBossEffectManager](#ubosseffectmanager)
-        *   [함수 `PlayEffect`](#함수-playeffect)
-        *   [함수 `PlayEffectAttachedToSocket`](#함수-playeffectattachedtosocket)
-        *   [함수 `StopAllEffects`](#함수-stopallevents)
-        *   [함수 `StopEffect`](#함수-stopeffect)
-        *   [함수 `SetMaxPoolSize`](#함수-setmaxpoolsize)
-        *   [함수 `SetAutoExpandPool`](#함수-setautoexpandpool)
-        *   [함수 `OnEffectFinished`](#함수-oneffectfinished)
-        *   [함수 `GetActiveEffectCount`](#함수-getactiveeffectcount)
-        *   [함수 `GetAvailableEffectCount`](#함수-getavailableeffectcount)
-        *   [함수 `LoadDataFromTables`](#함수-loaddatafromtables)
-        *   [함수 `InitializeEffectPool`](#함수-initializeeffectpool)
-        *   [함수 `GetEffectFromPool`](#함수-geteffectfrompool)
-        *   [함수 `ReturnEffectToPool`](#함수-returneffecttopool)
-        *   [함수 `ExpandEffectPool`](#함수-expandeffectpool)
-    *   [UBossProjectileComponent](#ubossprojectilecomponent)
-        *   [함수 `ShotProjectile`](#함수-shotprojectile)
-        *   [함수 `SpawnOrb`](#함수-spawnorb)
-        *   [함수 `ShotProjectileToLocation`](#함수-shotprojectiletolocation)
-        *   [함수 `DestroyOrb`](#함수-destroyorb-2)
-        *   [함수 `SpawnOrbContinuously`](#함수-spawnorbcontinuously)
-        *   [함수 `CancelOrbContinuousSpawning`](#함수-cancelorbcontinuousspawning)
-        *   [함수 `SpawnProjectileContinuously`](#함수-spawnprojectilecontinuously)
-        *   [함수 `CancelProjectileContinuousSpawning`](#함수-cancelprojectilecontinuousspawning)
-        *   [함수 `SpawnHolySwordMagicRepeatedly`](#함수-spawnholyswordmagicrepeatedly)
-        *   [함수 `CancelHolySwordMagicSpawning`](#함수-cancelholyswordmagicspawning)
-        *   [함수 `ResetProjectileSystem`](#함수-resetprojectilesystem)
-        *   [함수 `SetRectangleRange`](#함수-setrectanglerange)
-        *   [함수 `ToggleRectangleRange`](#함수-togglerectanglerange)
-        *   [함수 `TestRectangleRange`](#함수-testrectanglerange)
-        *   [함수 `SpawnMagicCirclesAtCirclePositions`](#함수-spawnmagiccirclesatcirclepositions)
-        *   [함수 `SpawnHolySwordMagicAtLocation`](#함수-spawnholyswordmagicatlocation)
-        *   [함수 `SpawnHolySwordMagicAtCurrentPlayerLocation`](#함수-spawnholyswordmagicatcurrentplayerlocation)
-        *   [함수 `SpawnSingleOrb`](#함수-spawnsingleorb)
-        *   [함수 `SpawnSingleProjectile`](#함수-spawnsingleprojectile)
-    *   [UBossStatusWidget](#ubossstatuswidget)
-        *   [함수 `NativeConstruct`](#함수-nativeconstruct)
-        *   [함수 `UpdateBossHP`](#함수-updatebossup)
-        *   [함수 `SwitchBossCompleteUI`](#함수-switchbosscompleteui)
-        *   [함수 `FadeInHandler`](#함수-fadeinhandler)
-        *   [함수 `ShowCompleteUI`](#함수-showcompleteui)
-        *   [함수 `FadeOutHandler`](#함수-fadeouthandler)
-        *   [함수 `EndWidget`](#함수-endwidget)
-        *   [함수 `RestartReady`](#함수-restartready)
-        *   [함수 `SmoothUpdateDelayHP`](#함수-smoothupdatedelayhp)
-    *   [UCBossDoAction](#ucbossdoaction)
-        *   [함수 `DoAction`](#함수-doaction)
-        *   [함수 `HitAction`](#함수-hitaction)
-        *   [함수 `Begin_DoAction`](#함수-begin_doaction)
-        *   [함수 `End_DoAction`](#함수-end_doaction)
-        *   [함수 `OnBossWeaponBeginCollision`](#함수-onbossweaponbegincollision)
-        *   [함수 `OnBossWeaponEndCollision`](#함수-onbossweaponendcollision)
-        *   [함수 `OnBossWeaponBeginOverlap`](#함수-onbossweaponbeginoverlap)
-        *   [함수 `OnBossWeaponEndOverlap`](#함수-onbossweaponendoverlap)
-    *   [UCBossEquipment](#ucbossequipment)
-        *   [함수 `Equip`](#함수-equip)
-        *   [함수 `Begin_Equip`](#함수-begin_equip)
-        *   [함수 `End_Equip`](#함수-end_equip)
-        *   [함수 `Unequip`](#함수-unequip)
-    *   [UCBossEnemyStateTreeEvaluator](#ucbossenemystatetreeevaluator)
-        *   [함수 `Tick`](#함수-tick-10)
-        *   [함수 `TreeStart`](#함수-treestart)
-        *   [함수 `Get_Decision_Data`](#함수-get_decision_data)
-    *   [UCBossWeaponAsset](#ucbossweaponasset)
-        *   [함수 `GetBossWeapon`](#함수-getbossweapon)
-        *   [함수 `GetBossEquipment`](#함수-getbossequipment)
-        *   [함수 `GetBossDoAction`](#함수-getbossdoaction)
-    *   [UDDTLoadingWidget](#uddtloadingwidget)
-        *   [함수 `NativeConstruct`](#함수-nativeconstruct-1)
-        *   [함수 `PlayLoadingAnimation`](#함수-playloadinganimation)
-        *   [함수 `EndLoading`](#함수-endloading)
-        *   [함수 `Reset`](#함수-reset)
-        *   [함수 `StartLoading`](#함수-startloading)
-    *   [UDDTMainThemeWidget](#uddtmainthemewidget)
-        *   [함수 `NativeConstruct`](#함수-nativeconstruct-2)
-        *   [함수 `NativeOnKeyDown`](#함수-nativeonkeydown)
+저희 프로젝트는 핵 앤 슬래시 (Hack and Slash) 장르의 다크 판타지 게임을 목표로 합니다. 플레이어는 심연에서 솟아난 강력한 보스 몬스터에 맞서 싸우게 되며, 각 보스는 고유한 능력과 패턴, 그리고 숨겨진 스토리를 가지고 있습니다. ⚔️
+
+예를 들어, 고대 유물을 조종하여 강력한 마법 공격을 퍼붓는 보스, 혹은 거대한 검을 휘둘러 주변을 초토화시키는 보스 등이 등장합니다. 이러한 보스들은 단순한 패턴 반복이 아닌, 플레이어의 행동에 반응하며 끊임없이 변화하는 전투 경험을 제공하는 것을 목표로 합니다. 😈
+
+**개발 목표**는 다음과 같습니다.
+
+*   **지능적인 AI**: StateTree를 기반으로 보스의 행동 패턴을 설계하여, 플레이어의 행동에 따라 유기적으로 반응하는 AI를 구현합니다.
+*   **다양한 공격 패턴**: 각 페이즈마다 변화하는 공격 패턴을 통해 플레이어에게 끊임없는 긴장감을 제공합니다.
+*   **화려한 시각 효과**: 이펙트 풀링 시스템을 사용하여 최적화된 환경에서 화려하고 역동적인 이펙트를 연출합니다.
+*   **전략적인 페이즈 전환**: 보스의 체력, 플레이어의 행동, 또는 특정 조건에 따라 페이즈가 전환되어, 전투의 흐름을 예측 불가능하게 만듭니다.
+*   **데이터 중심 설계**: Gameplay Tag와 데이터 테이블을 활용하여 보스의 스탯, 공격 패턴, 이펙트 등을 쉽게 관리하고 수정할 수 있도록 합니다.
+
+이 프로젝트의 **핵심 특징**은 다음과 같습니다.
+
+*   **StateTree 기반 AI 시스템**: 복잡한 보스 행동 패턴을 효율적으로 관리하고 확장할 수 있습니다.
+*   **페이즈 전환 시스템**: 전투의 흐름을 다이나믹하게 변화시켜 플레이어에게 새로운 도전 과제를 제시합니다.
+*   **이펙트 풀링 시스템**: 화려한 이펙트를 최적화하여 게임 성능을 향상시킵니다.
+*   **애니메이션 노티파이**: 애니메이션과 게임 로직을 긴밀하게 연결하여 더욱 자연스러운 전투 경험을 제공합니다.
+*   **데이터 동기화 플러그인**: 외부 데이터 소스와 게임 데이터를 동기화하여 개발 효율성을 높입니다.
+
+이제 이 프로젝트의 핵심 기능들을 좀 더 자세히 살펴보겠습니다. 다음 섹션에서는 StateTree 기반 AI 시스템, 페이즈 전환 시스템, 투사체 시스템, 애니메이션 노티파이, 이펙트 관리, 그리고 데이터 동기화에 대해 심층적으로 분석해 보겠습니다. 🧐
+
+## ⚙️ 주요 기능 소개
+
+### 🧠 StateTree 기반 AI 시스템
+
+저희는 보스의 복잡한 행동 패턴을 효과적으로 관리하기 위해 언리얼 엔진의 **StateTree**를 적극 활용했습니다. StateTree는 계층적인 구조를 통해 AI의 의사 결정 과정을 시각적으로 표현하고, 다양한 조건과 액션을 조합하여 복잡한 행동 패턴을 쉽게 구현할 수 있도록 도와줍니다. 🌳
+
+각 State는 보스의 특정 상태 (예: 공격, 방어, 이동)를 나타내며, Transition을 통해 상태 간 전환 조건을 정의합니다. 이를 통해 플레이어의 행동, 보스의 체력 상태, 주변 환경 등 다양한 요인에 따라 보스가 유기적으로 반응하도록 설계할 수 있습니다. `UCBossEnemyStateTreeEvaluator` 클래스는 매 프레임 StateTree를 평가하여 보스의 행동을 결정하는 핵심 역할을 수행합니다. 또한, 다양한 조건 노드 (`USTC_...`) 들을 활용하여 State 전환 로직을 더욱 풍부하게 만들었습니다.
+
+### 🔄 페이즈 전환 시스템
+
+단순한 체력 기반 페이즈 전환은 이제 그만! 저희는 보스의 체력, 플레이어의 행동, 그리고 특정 조건 등 다양한 요소를 고려하여 페이즈 전환을 설계했습니다. 이를 통해 전투의 흐름을 예측 불가능하게 만들고, 플레이어에게 끊임없이 새로운 도전 과제를 제시합니다. ⚔️
+
+예를 들어, 플레이어가 특정 공격 패턴을 반복적으로 회피하면 보스가 새로운 공격 패턴을 사용하는 페이즈로 전환되거나, 특정 환경 요소 (예: 맵 중앙의 제단)를 파괴하면 보스가 강화되는 페이즈로 전환될 수 있습니다. `UTask_SwitchPase` 태스크는 페이즈 전환 로직을 담당하며, `UAnimNotifyState_PaseChange` 애니메이션 노티파이 상태를 통해 페이즈 전환 시 자연스러운 시각 효과를 연출합니다.
+
+### 🚀 투사체 시스템
+
+보스의 공격 패턴에서 빼놓을 수 없는 것이 바로 투사체입니다. 저희는 다양한 종류의 투사체를 생성하고 관리하기 위해 효율적인 투사체 시스템을 구축했습니다. `ABossProjectileActor`, `ABossProjectileOrb`, `AProjectile_LightSpear` 등의 클래스를 통해 각각 고유한 특성을 가진 투사체를 구현하고, `UBossProjectileComponent`를 통해 투사체 생성 및 관리를 담당합니다. 🎯
+
+특히, "바빌론의 문"과 같은 특수 능력을 구현하기 위해 `AGateOfBabylon` 액터와 `AGateOfBabyonProjectile` 클래스를 활용하여 무수한 투사체를 발사하는 화려한 시각 효과를 연출했습니다. 또한, 오브젝트 풀링을 통해 투사체 생성 및 소멸에 따른 성능 저하를 최소화했습니다.
+
+### 🎬 애니메이션 노티파이
+
+저희는 애니메이션과 게임 로직을 긴밀하게 연결하기 위해 애니메이션 노티파이를 적극 활용했습니다. 애니메이션 특정 프레임에서 특정 게임 로직을 실행하도록 설정하여, 더욱 자연스럽고 몰입감 있는 전투 경험을 제공합니다. 🎭
+
+예를 들어, 보스가 검을 휘두르는 애니메이션 중간에 `UAnimNotify_BossWeaponCollision` 노티파이를 통해 충돌 판정을 활성화하거나, 마법을 시전하는 애니메이션 마지막에 `UAnimNotify_PlayEffect` 노티파이를 통해 화려한 이펙트를 재생할 수 있습니다. 또한, `UAnimNotify_ArmorDissolve`, `UAnimNotify_DeadDissolve`, `UAnimNotify_PaseChangeDissolve` 등을 통해 아머 파괴, 사망, 페이즈 전환 시 디졸브 효과를 자연스럽게 연출합니다.
+
+### ✨ 이펙트 관리
+
+화려한 이펙트는 게임의 몰입도를 높이는 중요한 요소입니다. 하지만 과도한 이펙트는 성능 저하를 유발할 수 있습니다. 따라서 저희는 **이펙트 풀링 시스템**을 구축하여 이펙트 생성 및 소멸에 따른 성능 부담을 최소화했습니다. 💥
+
+`UBossEffectManager` 클래스는 이펙트 풀을 관리하고, `ABossEffect` 클래스는 개별 이펙트의 동작을 정의합니다. 이를 통해 필요한 이펙트를 미리 생성해두고 재활용하여, 실시간으로 이펙트를 생성하고 소멸시키는 데 드는 비용을 절감했습니다. 또한, `UBossEffectExecute` 클래스를 통해 다양한 방식으로 이펙트를 실행하고 제어할 수 있습니다.
+
+### 💽 데이터 동기화
+
+보스의 스탯, 공격 패턴, 이펙트 등 다양한 게임 데이터를 효율적으로 관리하기 위해 **데이터 중심 설계**를 채택했습니다. Gameplay Tag와 데이터 테이블을 활용하여 데이터를 체계적으로 관리하고, 외부 데이터 소스와 게임 데이터를 동기화하는 플러그인을 개발하여 개발 효율성을 높였습니다. 📊
+
+`FEditorPlugin_DataSyncModule` 클래스는 데이터 동기화 플러그인의 핵심 로직을 담당하며, HTTP API 요청을 통해 외부 데이터 소스에서 데이터를 가져오고, `UpdateGameplayTagsTable`, `UpdateBossStatsTableSimple` 함수를 통해 데이터 테이블을 업데이트합니다. 이를 통해 게임 데이터를 쉽게 수정하고 관리할 수 있으며, 다양한 환경에서 일관된 게임 경험을 제공할 수 있습니다.
+
+## 🛠️ 기술 스택
+
+저희 프로젝트는 언리얼 엔진 5를 기반으로 C++를 주요 개발 언어로 사용하고 있습니다. 🚀
+
+*   **언리얼 엔진 5 (Unreal Engine 5)**: 뛰어난 그래픽 품질과 다양한 기능을 제공하는 게임 엔진
+*   **C++**: 높은 성능과 유연성을 제공하는 프로그래밍 언어
+*   **StateTree**: 복잡한 AI 행동 패턴을 효과적으로 관리하기 위한 언리얼 엔진의 AI 시스템
+*   **Gameplay Tag**: 게임 데이터를 유연하게 분류하고 관리하기 위한 언리얼 엔진의 태깅 시스템
+*   **데이터 테이블**: 게임 데이터를 스프레드시트 형태로 관리하고 편집하기 위한 언리얼 엔진의 데이터 관리 시스템
+*   **HTTP API**: 외부 데이터 소스와 게임 데이터를 동기화하기 위한 통신 프로토콜
+
+저희는 또한 다음과 같은 아키텍처 특징을 가지고 있습니다.
+
+*   **컴포넌트 기반 아키텍처**: 각 기능들을 독립적인 컴포넌트로 분리하여 코드 재사용성을 높이고 유지보수를 용이하게 합니다.
+*   **오브젝트 풀링**: 투사체, 이펙트 등 자주 생성되고 소멸되는 오브젝트들을 미리 생성해두고 재활용하여 성능을 최적화합니다.
+*   **데이터 중심 설계**: Gameplay Tag와 데이터 테이블을 활용하여 게임 데이터를 체계적으로 관리하고, 외부 데이터 소스와 동기화하여 개발 효율성을 높입니다.
+
+성능 최적화를 위해 다음과 같은 기법들을 사용했습니다.
+
+*   **이펙트 풀링**: 화려한 이펙트를 최적화하여 게임 성능을 향상시킵니다.
+*   **Tick 최적화**: 불필요한 Tick 함수 호출을 최소화하고, 필요한 경우에만 Tick 함수를 실행합니다.
+*   **메모리 관리**: 메모리 누수를 방지하고, 효율적인 메모리 사용을 위해 노력합니다.
+
+## 🏗️ 프로젝트 구조
+
+저희 프로젝트는 다음과 같은 주요 클래스 구조를 가지고 있습니다.
+
+*   **`ACBoss`**: 보스 캐릭터의 기본 클래스입니다. 데미지 처리, 애니메이션 재생, UI 업데이트 등 보스의 기본적인 동작을 담당합니다.
+*   **`ACBossAIC`**: 보스 AI 컨트롤러 클래스입니다. StateTree를 통해 보스의 행동을 제어합니다.
+*   **`ABossManager`**: 보스 생성 및 관리 클래스입니다. 보스 스폰, 초기화, 리셋 등을 담당합니다.
+*   **`UBossProjectileComponent`**: 보스 투사체 시스템 컴포넌트 클래스입니다. 투사체 생성, 발사, 관리 등을 담당합니다.
+*   **`UBossEffectManager`**: 보스 이펙트 관리 클래스입니다. 이펙트 풀 관리, 이펙트 재생, 정지 등을 담당합니다.
+*   **`CBossMovementComponent`**: 보스 이동 관리 컴포넌트 클래스입니다. 보스 이동, 회전, 거리 유지 등을 담당합니다.
+
+각 시스템 간의 관계는 다음과 같습니다. `ACBossAIC`는 StateTree를 통해 `CBossMovementComponent`, `UBossProjectileComponent`, `UBossEffectManager` 등 다양한 컴포넌트들을 제어하여 보스의 행동을 결정합니다. `ABossManager`는 게임 시작 시 `ACBoss`를 스폰하고, 필요에 따라 보스를 리셋합니다.
+
+저희는 코드 재사용성을 높이고 유지보수를 용이하게 하기 위해 컴포넌트 기반 아키텍처를 채택했습니다. 각 컴포넌트들은 독립적으로 동작하며, 필요한 경우에만 서로 통신합니다. 또한, 데이터 중심 설계를 통해 게임 데이터를 쉽게 수정하고 관리할 수 있도록 했습니다. 이를 통해 프로젝트의 확장성과 유지보수성을 높였습니다.
+
+## 🧑‍💻 개발 과정
+
+저희는 이번 프로젝트를 진행하면서 다양한 도전에 직면했습니다. 😥
+
+*   **복잡한 AI 행동 패턴 구현**: StateTree를 처음 사용하면서 복잡한 AI 행동 패턴을 구현하는 데 어려움을 겪었습니다. 하지만 StateTree의 구조와 동작 원리를 이해하고, 다양한 시행착오를 거치면서 문제를 해결할 수 있었습니다.
+*   **성능 최적화**: 화려한 이펙트와 투사체를 사용하면서 성능 저하 문제가 발생했습니다. 이펙트 풀링, Tick 최적화 등 다양한 성능 최적화 기법들을 적용하여 문제를 해결했습니다.
+*   **데이터 동기화**: 외부 데이터 소스와 게임 데이터를 동기화하는 플러그인을 개발하는 데 어려움을 겪었습니다. HTTP API 통신, 데이터 파싱 등 다양한 기술들을 학습하고 적용하여 문제를 해결했습니다.
+
+이번 프로젝트를 통해 다음과 같은 기술들을 학습하고 숙달할 수 있었습니다.
+
+*   **언리얼 엔진 C++**: 언리얼 엔진의 핵심 기능을 C++로 제어하는 방법을 익혔습니다.
+*   **StateTree**: 복잡한 AI 행동 패턴을 효과적으로 관리하는 방법을 익혔습니다.
+*   **Gameplay Tag**: 게임 데이터를 유연하게 분류하고 관리하는 방법을 익혔습니다.
+*   **데이터 테이블**: 게임 데이터를 스프레드시트 형태로 관리하고 편집하는 방법을 익혔습니다.
+*   **HTTP API**: 외부 데이터 소스와 게임 데이터를 동기화하는 방법을 익혔습니다.
+
+이번 프로젝트는 저희에게 큰 도전이었지만, 그만큼 많은 것을 배우고 성장할 수 있는 기회였습니다. 앞으로도 꾸준히 기술력을 향상시켜 더욱 흥미롭고 완성도 높은 게임을 개발하도록 노력하겠습니다. 💪
+
+다음 섹션에서는... (이후 내용은 독자들의 흥미를 유발할 수 있는 내용으로 채워주세요. 예를 들어, 앞으로 개발할 기능, 현재 개발 중인 다른 시스템, 혹은 게임의 데모 영상 공개 예고 등)
+
+
+# 🔥 언리얼 엔진 C++로 구현하는 심층 보스 AI 시스템 🤖
+
+안녕하세요! 게임 개발 기술 블로그에 오신 것을 환영합니다. 오늘은 언리얼 엔진 C++를 사용하여 개발한 심층 보스 AI 시스템에 대해 자세히 알아보겠습니다. 저희는 이번 프로젝트를 통해 보스 몬스터의 행동 패턴을 더욱 다양하고 지능적으로 만들어 게임의 재미를 한층 끌어올리고자 했습니다.
+
+## 🎮 프로젝트 소개
+
+저희 프로젝트는 **"Project Chimera"**라는 이름으로, 언리얼 엔진 5를 기반으로 개발 중인 3인칭 액션 RPG입니다. 플레이어는 고대 신화 속 영웅이 되어, 강력한 보스 몬스터들과 맞서 싸우게 됩니다. 저희는 특히 보스 몬스터의 AI에 심혈을 기울여, 단순한 패턴 반복이 아닌, 플레이어의 행동에 따라 변화하는 지능적인 전투 경험을 제공하고자 했습니다.
+
+*   **장르**: 3인칭 액션 RPG
+*   **배경**: 고대 신화 속 세계관
+*   **목표**: 플레이어에게 도전적이고 몰입감 있는 전투 경험 제공
+*   **특징**: StateTree 기반의 지능적인 보스 AI, 화려한 이펙트와 연출
+
+## ⚙️ 주요 기능 소개
+
+### 🌳 StateTree 기반 AI 시스템
+
+저희는 복잡한 보스 AI를 구현하기 위해 언리얼 엔진의 **StateTree**를 적극 활용했습니다. StateTree는 계층적인 구조를 통해 AI의 상태와 행동을 시각적으로 관리할 수 있게 해줍니다. 이를 통해 보스의 다양한 행동 패턴을 쉽게 설계하고, 디버깅할 수 있었습니다.
+
+StateTree를 사용하여 보스는 다음과 같은 행동들을 수행할 수 있습니다.
+
+*   플레이어와의 거리 유지
+*   다양한 공격 패턴 (근접 공격, 원거리 공격, 특수 공격)
+*   페이즈 전환
+*   특정 조건 하에서의 회피 및 방어
+
+### 🎭 페이즈 전환 시스템
+
+보스 전투의 핵심은 예측 불가능성입니다. 저희는 보스의 **페이즈 전환 시스템**을 통해 전투의 흐름을 끊임없이 변화시키고자 했습니다. 보스는 특정 조건 (체력, 시간 경과 등)을 만족하면 다음 페이즈로 전환하며, 새로운 공격 패턴과 능력을 선보입니다.
+
+페이즈 전환은 다음과 같은 요소들을 포함합니다.
+
+*   새로운 공격 패턴 추가
+*   보스 능력치 변화 (공격력, 방어력, 이동 속도)
+*   전투 배경 변화
+*   특수 연출 효과
+
+### 🚀 투사체 시스템
+
+보스의 공격 패턴을 다양화하기 위해 **투사체 시스템**을 구축했습니다. 보스는 다양한 종류의 투사체를 발사하여 플레이어를 공격할 수 있습니다. 투사체의 종류에 따라 공격 속도, 데미지, 효과 등이 달라지며, 플레이어는 이에 맞춰 전략적으로 대응해야 합니다.
+
+투사체 시스템은 다음과 같은 기능들을 제공합니다.
+
+*   다양한 투사체 종류 (직선, 곡선, 유도)
+*   투사체 풀링을 통한 성능 최적화
+*   투사체 발사 패턴 (단발, 연사, 확산)
+*   투사체 특수 효과 (폭발, 감전, 중독)
+
+### 🎬 애니메이션 노티파이
+
+애니메이션 노티파이는 특정 애니메이션 프레임에서 특정 이벤트를 발생시키는 기능입니다. 저희는 애니메이션 노티파이를 활용하여 보스의 공격 타이밍에 맞춰 이펙트, 사운드, 데미지 등을 정확하게 발생시켰습니다.
+
+애니메이션 노티파이는 다음과 같은 용도로 사용됩니다.
+
+*   공격 판정 시작 및 종료
+*   이펙트 재생
+*   사운드 재생
+*   진동 효과 발생
+
+### ✨ 이펙트 관리
+
+화려한 이펙트는 전투의 몰입도를 높이는 중요한 요소입니다. 저희는 **이펙트 풀링**을 통해 이펙트 생성 및 소멸에 드는 비용을 최소화하고, 성능을 최적화했습니다. 또한, 보스의 다양한 행동 패턴에 맞춰 적절한 이펙트를 재생하여 시각적인 만족도를 높였습니다. `ABossEffect`, `UBossEffectManager`, `UBossEffectExecute` 클래스들이 이펙트 관리를 담당합니다.
+
+### 📡 데이터 동기화
+
+게임의 밸런스를 유지하고, 콘텐츠 업데이트를 용이하게 하기 위해 외부 데이터 소스와 게임 데이터를 동기화하는 플러그인을 개발했습니다. 이 플러그인을 통해 Gameplay Tag, 보스 스탯 등의 데이터를 간편하게 관리하고 업데이트할 수 있습니다. `FEditorPlugin_DataSyncModule` 클래스가 데이터 동기화 플러그인의 핵심 기능을 담당합니다. HTTP API 통신을 통해 외부 데이터를 가져오고, 데이터 테이블을 업데이트하는 방식으로 작동합니다.
+
+## 🛠️ 기술 스택
+
+저희는 이번 프로젝트를 진행하면서 다음과 같은 기술 스택을 사용했습니다.
+
+*   **언리얼 엔진 C++**: 게임 로직, AI, 시스템 개발
+*   **StateTree**: 복잡한 AI 행동 패턴 관리
+*   **Gameplay Tag**: 게임 데이터 분류 및 관리
+*   **데이터 테이블**: 게임 데이터 스프레드시트 형태 관리
+*   **HTTP API**: 외부 데이터 소스와 게임 데이터 동기화
+*   **Niagara**: 파티클 시스템
+*   **Git**: 버전 관리
+
+아키텍처적으로는, 각 기능별로 모듈화된 컴포넌트 기반 설계를 채택하여 코드의 재사용성과 유지보수성을 높였습니다. 또한, 이펙트 풀링, Tick 최적화 등 다양한 성능 최적화 기법들을 적용하여 쾌적한 게임 플레이 환경을 제공하고자 노력했습니다.
+
+## 🏗️ 프로젝트 구조
+
+프로젝트는 크게 다음과 같은 모듈로 구성되어 있습니다.
+
+*   **Boss**: 보스 몬스터의 AI, 행동 패턴, 스탯 등을 관리
+*   **Effect**: 이펙트 생성, 관리, 풀링 등을 담당
+*   **Projectile**: 투사체 생성, 발사, 충돌 등을 처리
+*   **Animation**: 애니메이션 재생, 노티파이 관리
+*   **DataSync**: 외부 데이터 소스와 게임 데이터 동기화
+*   **UI**: 보스 상태, UI 표시
+
+각 모듈은 독립적으로 작동하며, 서로 유기적으로 연결되어 있습니다. 예를 들어, 보스 모듈은 StateTree를 통해 AI를 제어하고, 애니메이션 모듈을 통해 애니메이션을 재생하며, 이펙트 모듈을 통해 시각적인 효과를 연출합니다. 이러한 모듈화된 구조는 코드의 가독성을 높이고, 유지보수를 용이하게 해줍니다.
+
+## 🧑‍💻 개발 과정
+
+저희는 이번 프로젝트를 진행하면서 다양한 도전에 직면했습니다. 😥
+
+*   **복잡한 AI 행동 패턴 구현**: StateTree를 처음 사용하면서 복잡한 AI 행동 패턴을 구현하는 데 어려움을 겪었습니다. 하지만 StateTree의 구조와 동작 원리를 이해하고, 다양한 시행착오를 거치면서 문제를 해결할 수 있었습니다.
+*   **성능 최적화**: 화려한 이펙트와 투사체를 사용하면서 성능 저하 문제가 발생했습니다. 이펙트 풀링, Tick 최적화 등 다양한 성능 최적화 기법들을 적용하여 문제를 해결했습니다.
+*   **데이터 동기화**: 외부 데이터 소스와 게임 데이터를 동기화하는 플러그인을 개발하는 데 어려움을 겪었습니다. HTTP API 통신, 데이터 파싱 등 다양한 기술들을 학습하고 적용하여 문제를 해결했습니다.
+
+이번 프로젝트를 통해 다음과 같은 기술들을 학습하고 숙달할 수 있었습니다.
+
+*   **언리얼 엔진 C++**: 언리얼 엔진의 핵심 기능을 C++로 제어하는 방법을 익혔습니다.
+*   **StateTree**: 복잡한 AI 행동 패턴을 효과적으로 관리하는 방법을 익혔습니다.
+*   **Gameplay Tag**: 게임 데이터를 유연하게 분류하고 관리하는 방법을 익혔습니다.
+*   **데이터 테이블**: 게임 데이터를 스프레드시트 형태로 관리하고 편집하는 방법을 익혔습니다.
+*   **HTTP API**: 외부 데이터 소스와 게임 데이터를 동기화하는 방법을 익혔습니다.
+
+이번 프로젝트는 저희에게 큰 도전이었지만, 그만큼 많은 것을 배우고 성장할 수 있는 기회였습니다. 앞으로도 꾸준히 기술력을 향상시켜 더욱 흥미롭고 완성도 높은 게임을 개발하도록 노력하겠습니다. 💪
+
+다음 섹션에서는 저희가 개발한 **보스 AI 데모 영상**을 공개할 예정입니다! 또한, 앞으로 보스 AI에 추가할 기능들과 현재 개발 중인 다른 시스템들에 대한 간략한 소개도 함께 준비되어 있으니 많은 기대 부탁드립니다! 🚀
+
+
+# 🔥 언리얼 엔진 C++로 구현한 보스 AI 시스템 개발기 🚀
+
+안녕하세요! 게임 개발 기술 블로그에 오신 것을 환영합니다. 오늘은 언리얼 엔진 C++를 사용하여 개발한 흥미진진한 보스 AI 시스템에 대해 이야기해보려 합니다. 저희 팀은 최근 언리얼 엔진 C++를 기반으로 한 프로젝트를 진행하면서, 복잡하고 역동적인 보스 AI를 구현하는 데 심혈을 기울였습니다. 이 과정에서 얻은 경험과 기술적인 노하우를 여러분과 공유하고자 합니다. 😎
+
+## 🎮 프로젝트 소개
+
+저희 프로젝트는 **다크 판타지 액션 RPG** 장르의 게임을 목표로 하고 있으며, 웅장하고 위협적인 보스 몬스터와의 전투를 핵심 콘텐츠로 합니다. 플레이어는 다양한 스킬과 전략을 사용하여 강력한 보스에 맞서 싸우게 되며, 각 보스는 고유한 공격 패턴과 페이즈 변화를 통해 끊임없이 새로운 도전을 제공합니다.
+
+이번 프로젝트의 주요 목표는 다음과 같습니다.
+
+*   **지능적인 AI**: 예측 불가능하고 전략적인 움직임을 보이는 보스 AI 구현
+*   **다양한 공격 패턴**: 플레이어에게 끊임없는 긴장감을 주는 다채로운 공격 패턴 설계
+*   **화려한 연출**: 시각적으로 압도적인 이펙트와 애니메이션을 통해 전투의 몰입도 극대화
+*   **최적화된 성능**: 많은 오브젝트와 이펙트에도 부드러운 게임 플레이 유지
+
+저희는 이러한 목표를 달성하기 위해 언리얼 엔진 C++를 적극적으로 활용하여 핵심 시스템을 구축하고, 다양한 기술적 시도를 통해 완성도를 높였습니다.
+
+## ⚙️ 주요 기능 소개
+
+저희가 개발한 보스 AI 시스템은 다음과 같은 주요 기능들을 포함하고 있습니다.
+
+### 🌳 StateTree 기반 AI 시스템
+
+저희는 복잡한 AI 행동 패턴을 효율적으로 관리하기 위해 언리얼 엔진의 **StateTree**를 적극적으로 활용했습니다. StateTree는 계층적인 구조를 통해 AI의 상태와 전환을 명확하게 정의하고, 시각적인 에디터를 통해 직관적으로 AI를 설계할 수 있도록 지원합니다. 이를 통해 보스의 다양한 행동 패턴 (공격, 이동, 방어 등)을 모듈화하고, 필요에 따라 쉽게 조합하거나 수정할 수 있었습니다. 또한, StateTree의 강력한 디버깅 기능을 통해 AI의 동작을 실시간으로 분석하고 문제점을 빠르게 파악할 수 있었습니다.
+
+### 🎭 페이즈 전환 시스템
+
+보스 전투의 핵심은 예측 불가능한 **페이즈 전환**입니다. 저희는 보스의 체력, 시간, 특정 조건 등 다양한 요인에 따라 페이즈가 전환되도록 설계했습니다. 각 페이즈마다 보스의 공격 패턴, 스킬, 외형 등이 변화하며, 플레이어는 이에 맞춰 새로운 전략을 세워야 합니다. 페이즈 전환 시에는 화려한 이펙트와 애니메이션을 사용하여 시각적인 변화를 강조하고, 전투의 분위기를 고조시켰습니다. `UAnimNotifyState_PaseChange`를 통해 애니메이션의 특정 시점에 페이즈 전환 로직을 실행하여 자연스러운 연출을 구현했습니다.
+
+### 🚀 투사체 시스템
+
+다양한 종류의 **투사체**는 보스 공격 패턴의 중요한 부분을 차지합니다. 저희는 보스의 콘셉트에 맞는 투사체를 디자인하고, 각각 고유한 속성 (속도, 데미지, 범위 등)을 부여했습니다. 투사체는 일직선으로 발사되거나, 플레이어를 추적하거나, 특정 위치에 폭발하는 등 다양한 방식으로 활용됩니다. 또한, 투사체 풀링을 통해 메모리 사용량을 최적화하고, 성능 저하를 방지했습니다. `ABossProjectileActor`, `ABossProjectileOrb` 클래스를 통해 투사체의 기본적인 동작을 정의하고, `UBossProjectileComponent`를 통해 투사체 생성 및 관리를 담당하도록 했습니다. `AGateOfBabylon`은 특별한 투사체 패턴을 생성하는 데 사용되었습니다.
+
+### 🎬 애니메이션 노티파이
+
+저희는 애니메이션의 특정 시점에 특정 기능을 실행하기 위해 **애니메이션 노티파이**를 적극적으로 활용했습니다. 예를 들어, 공격 애니메이션 도중 무기 콜리전을 활성화하거나, 이펙트를 재생하거나, 투사체를 발사하는 등의 작업을 노티파이를 통해 처리했습니다. 이를 통해 애니메이션과 게임 로직을 긴밀하게 연결하고, 자연스럽고 역동적인 전투 연출을 구현할 수 있었습니다. `UAnimNotify_BossWeaponCollision`, `UAnimNotify_PlayEffect`, `UAnimNotify_OrbSpawn` 등 다양한 커스텀 노티파이를 제작하여 사용했습니다.
+
+### ✨ 이펙트 관리
+
+화려한 **이펙트**는 보스 전투의 몰입도를 높이는 데 중요한 역할을 합니다. 저희는 다양한 파티클 시스템과 머티리얼을 사용하여 시각적으로 압도적인 이펙트를 제작했습니다. 또한, 이펙트 풀링을 통해 메모리 사용량을 최적화하고, 성능 저하를 방지했습니다. `ABossEffect` 클래스를 통해 이펙트의 활성화 및 비활성화 로직을 관리하고, `UBossEffectManager`를 통해 이펙트 풀을 관리했습니다.
+
+### 💾 데이터 동기화
+
+저희는 보스 스탯, GameplayTag 등 게임 데이터를 외부 데이터 소스 (스프레드시트, 데이터베이스 등)와 동기화하기 위한 **플러그인**을 개발했습니다. 이를 통해 데이터 관리의 효율성을 높이고, 게임 밸런스를 쉽게 조정할 수 있었습니다. HTTP API 통신을 통해 외부 데이터를 가져오고, 데이터 파싱을 통해 게임 데이터로 변환했습니다. `FEditorPlugin_DataSyncModule` 클래스를 통해 플러그인의 핵심 기능을 구현하고, 언리얼 엔진 에디터에 통합했습니다.
+
+## 🛠️ 기술 스택
+
+이번 프로젝트에서는 다음과 같은 기술과 도구를 사용했습니다.
+
+*   **언리얼 엔진 C++**: 게임 로직 구현 및 엔진 기능 확장에 사용
+*   **StateTree**: 복잡한 AI 행동 패턴 관리
+*   **Gameplay Tag**: 게임 데이터 분류 및 관리
+*   **데이터 테이블**: 게임 데이터 스프레드시트 형태로 관리
+*   **HTTP API**: 외부 데이터 소스와 게임 데이터 동기화
+*   **Visual Studio**: C++ 코드 작성 및 디버깅
+*   **Git**: 버전 관리
+
+저희는 **모듈화**와 **재사용성**을 고려하여 아키텍처를 설계했습니다. 각 시스템은 독립적인 모듈로 구성되어 있으며, 필요에 따라 쉽게 교체하거나 확장할 수 있습니다. 또한, 객체 지향 프로그래밍 원칙을 준수하여 코드의 가독성과 유지보수성을 높였습니다.
+
+성능 최적화를 위해 다음과 같은 기법들을 적용했습니다.
+
+*   **이펙트 풀링**: 메모리 할당 및 해제 비용 절감
+*   **Tick 최적화**: 불필요한 Tick 함수 호출 최소화
+*   **데이터 캐싱**: 자주 사용되는 데이터 캐싱
+*   **병렬 처리**: CPU 코어 활용률 향상
+
+## 🏗️ 프로젝트 구조
+
+프로젝트는 다음과 같은 주요 클래스와 시스템으로 구성되어 있습니다.
+
+*   **ACBoss**: 보스 캐릭터의 기본 클래스
+*   **ACBossAIC**: 보스 AI 컨트롤러
+*   **UBossAnimInstance**: 보스 애니메이션 인스턴스
+*   **UBossEffectManager**: 보스 이펙트 관리 시스템
+*   **UBossProjectileComponent**: 보스 투사체 관리 시스템
+*   **UCBossMovementComponent**: 보스 이동 관리 시스템
+*   **StateTree**: 보스 AI 행동 패턴 정의
+*   **AnimNotify**: 애니메이션 이벤트 처리
+
+각 시스템은 서로 유기적으로 연결되어 있으며, 메시지 큐, 델리게이트 등을 통해 통신합니다. 예를 들어, 보스 AI는 StateTree를 통해 행동을 결정하고, 결정된 행동에 따라 애니메이션을 재생하고, 이펙트를 실행하고, 투사체를 발사합니다. 이러한 과정은 모두 모듈화된 시스템을 통해 이루어지며, 필요에 따라 쉽게 수정하거나 확장할 수 있습니다.
+
+저희는 **확장성**과 **유지보수성**을 최우선으로 고려하여 프로젝트를 설계했습니다. 새로운 기능을 추가하거나 기존 기능을 수정할 때, 다른 시스템에 미치는 영향을 최소화하도록 노력했습니다. 또한, 코드 주석을 상세하게 작성하고, 명확한 네이밍 규칙을 적용하여 코드의 가독성을 높였습니다.
+
+## 🧑‍💻 개발 과정
+
+이번 프로젝트를 진행하면서 다양한 도전에 직면했습니다. 😥
+
+*   **복잡한 AI 행동 패턴 구현**: StateTree를 처음 사용하면서 복잡한 AI 행동 패턴을 구현하는 데 어려움을 겪었습니다. 하지만 StateTree의 구조와 동작 원리를 이해하고, 다양한 시행착오를 거치면서 문제를 해결할 수 있었습니다.
+*   **성능 최적화**: 화려한 이펙트와 투사체를 사용하면서 성능 저하 문제가 발생했습니다. 이펙트 풀링, Tick 최적화 등 다양한 성능 최적화 기법들을 적용하여 문제를 해결했습니다.
+*   **데이터 동기화**: 외부 데이터 소스와 게임 데이터를 동기화하는 플러그인을 개발하는 데 어려움을 겪었습니다. HTTP API 통신, 데이터 파싱 등 다양한 기술들을 학습하고 적용하여 문제를 해결했습니다.
+
+이번 프로젝트를 통해 다음과 같은 기술들을 학습하고 숙달할 수 있었습니다.
+
+*   **언리얼 엔진 C++**: 언리얼 엔진의 핵심 기능을 C++로 제어하는 방법을 익혔습니다.
+*   **StateTree**: 복잡한 AI 행동 패턴을 효과적으로 관리하는 방법을 익혔습니다.
+*   **Gameplay Tag**: 게임 데이터를 유연하게 분류하고 관리하는 방법을 익혔습니다.
+*   **데이터 테이블**: 게임 데이터를 스프레드시트 형태로 관리하고 편집하는 방법을 익혔습니다.
+*   **HTTP API**: 외부 데이터 소스와 게임 데이터를 동기화하는 방법을 익혔습니다.
+
+이번 프로젝트는 저희에게 큰 도전이었지만, 그만큼 많은 것을 배우고 성장할 수 있는 기회였습니다. 앞으로도 꾸준히 기술력을 향상시켜 더욱 흥미롭고 완성도 높은 게임을 개발하도록 노력하겠습니다. 💪
+
+다음 섹션에서는 저희가 개발한 **보스 AI 데모 영상**을 공개할 예정입니다! 또한, 앞으로 보스 AI에 추가할 기능들과 현재 개발 중인 다른 시스템들에 대한 간략한 소개도 함께 준비되어 있으니 많은 기대 부탁드립니다! 🚀
+
+
+# 🔥 언리얼 엔진 C++로 구현한 보스 AI 시스템: 개발 과정과 핵심 기술 🚀
+
+안녕하세요! 게임 개발 기술 블로그에 오신 것을 환영합니다. 👋 이번 포스팅에서는 언리얼 엔진 C++를 사용하여 개발한 보스 AI 시스템에 대한 심층적인 내용을 다루려고 합니다. 저희 팀은 최근 복잡하고 역동적인 보스 전투 경험을 제공하기 위해 언리얼 엔진의 강력한 기능들을 활용하여 프로젝트를 진행했습니다. 이번 프로젝트를 통해 얻은 경험과 핵심 기술들을 공유하고자 합니다.
+
+## 🎯 프로젝트 소개
+
+저희 프로젝트는 **"Project Chimera"**라는 가칭으로 진행되었으며, 핵 앤 슬래시 (Hack and Slash) 장르의 액션 RPG 게임을 목표로 하고 있습니다. ⚔️ 플레이어는 고대 신화 속 키메라와 같은 강력한 보스 몬스터와 전투를 벌이며, 화려한 액션과 전략적인 의사 결정을 통해 승리해야 합니다.
+
+저희의 핵심 개발 목표는 다음과 같습니다:
+
+*   **지능적인 보스 AI**: 예측 불가능하고 도전적인 전투 패턴을 가진 보스 AI 구현
+*   **화려한 시각 효과**: 몰입감 있는 전투 경험을 위한 고품질 이펙트 및 애니메이션
+*   **최적화된 성능**: 많은 수의 이펙트와 투사체가 사용되는 환경에서도 안정적인 프레임 유지
+
+이러한 목표를 달성하기 위해 언리얼 엔진 C++를 기반으로 다양한 시스템들을 구축하고 통합했습니다.
+
+## ⚙️ 주요 기능 소개
+
+### 🌳 StateTree 기반 AI 시스템
+
+저희는 복잡한 AI 행동 패턴을 효과적으로 관리하기 위해 StateTree를 도입했습니다. StateTree는 계층적인 구조를 통해 AI의 상태와 전환 조건을 시각적으로 정의할 수 있게 해줍니다. 이를 통해 보스의 다양한 공격 패턴, 이동 전략, 페이즈 전환 등을 체계적으로 구현할 수 있었습니다. ➡️ `CBossEnemyStateTreeEvaluator` 클래스는 매 프레임 StateTree를 평가하고, `USTC_`로 시작하는 다양한 Condition 클래스들을 통해 보스의 상태와 환경을 분석하여 적절한 행동을 결정합니다.
+
+### 🎭 페이즈 전환 시스템
+
+보스 전투의 흥미를 유지하기 위해 페이즈 전환 시스템을 구축했습니다. 보스의 체력이 특정 수준 이하로 떨어지거나, 특정 조건을 만족하면 다음 페이즈로 전환됩니다. 각 페이즈마다 새로운 공격 패턴, 스킬, 외형 변화 등이 적용되어 플레이어에게 끊임없는 도전을 제공합니다. 🔄 페이즈 전환은 `UTask_SwitchPase` 태스크를 통해 관리되며, `UAnimNotifyState_PaseChange` 애니메이션 노티파이 상태를 사용하여 자연스러운 전환 효과를 연출합니다.
+
+### 🏹 투사체 시스템
+
+보스의 다양한 공격 패턴을 구현하기 위해 정교한 투사체 시스템을 개발했습니다. 이 시스템은 다양한 종류의 투사체 (미사일, 오브, 레이저 등)를 생성하고 제어할 수 있도록 설계되었습니다. 투사체의 속도, 궤적, 데미지, 이펙트 등을 세밀하게 조정하여 보스 전투의 다양성을 높였습니다. ☄️ `UBossProjectileComponent` 컴포넌트는 투사체 생성 및 관리를 담당하며, `ABossProjectileActor`, `ABossProjectileOrb`, `AGateOfBabyonProjectile`, `AProjectile_LightSpear` 등의 액터 클래스들을 통해 다양한 투사체를 구현했습니다.
+
+### 🎬 애니메이션 노티파이
+
+애니메이션 노티파이는 특정 애니메이션 프레임에 맞춰 게임 로직을 실행할 수 있도록 해주는 강력한 도구입니다. 저희는 애니메이션 노티파이를 활용하여 보스의 공격 시점, 이펙트 발생 시점, 사운드 재생 시점 등을 정확하게 제어했습니다. 이를 통해 보스 전투의 타이밍과 리듬감을 향상시켰습니다. ⏱️ `UAnimNotify_`로 시작하는 다양한 클래스들을 통해 애니메이션 특정 시점에 필요한 로직들을 실행합니다. 예를 들어, `UAnimNotify_PlayEffect`는 애니메이션 재생 중 특정 이펙트를 재생하고, `UAnimNotify_BossWeaponCollision`은 보스 무기의 충돌 판정을 활성화/비활성화합니다.
+
+### ✨ 이펙트 관리
+
+화려하고 몰입감 있는 전투 경험을 제공하기 위해 다양한 이펙트들을 사용했습니다. 하지만 많은 수의 이펙트를 동시에 사용하면 성능 저하 문제가 발생할 수 있습니다. 이를 해결하기 위해 이펙트 풀링 기법을 적용하여 이펙트 객체를 재사용하고, 불필요한 메모리 할당을 줄였습니다. 💥 `UBossEffectManager` 클래스는 이펙트 풀을 관리하고, `ABossEffect` 클래스는 개별 이펙트의 동작을 정의합니다. 또한, `UBossEffectExecute` 클래스는 이펙트 실행 로직을 캡슐화하여 재사용성을 높였습니다.
+
+### 💾 데이터 동기화
+
+게임 데이터 (Gameplay Tag, 보스 스탯 등)를 외부 데이터 소스 (스프레드시트, 데이터베이스 등)와 동기화하기 위한 플러그인을 개발했습니다. 이 플러그인을 통해 게임 데이터를 효율적으로 관리하고, 데이터 변경 사항을 빠르게 적용할 수 있었습니다. 🌐 `FEditorPlugin_DataSyncModule` 클래스는 플러그인의 핵심 로직을 담당하며, HTTP API 통신을 통해 외부 데이터 소스와 데이터를 주고받습니다. `UpdateGameplayTagsTable` 및 `UpdateBossStatsTableSimple` 함수는 데이터 테이블을 업데이트하는 역할을 합니다.
+
+## 🛠️ 기술 스택
+
+이번 프로젝트에서는 다음과 같은 기술 스택을 사용했습니다.
+
+*   **언리얼 엔진 C++**: 게임 로직, AI, 시스템 구현
+*   **StateTree**: 복잡한 AI 행동 패턴 관리
+*   **Gameplay Tag**: 게임 데이터 분류 및 관리
+*   **데이터 테이블**: 게임 데이터 스프레드시트 형태 관리
+*   **HTTP API**: 외부 데이터 소스 연동
+
+저희는 모듈화된 아키텍처를 채택하여 각 시스템을 독립적으로 개발하고 통합할 수 있도록 했습니다. 또한, 이펙트 풀링, Tick 최적화 등 다양한 성능 최적화 기법들을 적용하여 안정적인 프레임을 유지했습니다. ⚙️
+
+## 🏛️ 프로젝트 구조
+
+프로젝트는 다음과 같은 주요 클래스 및 시스템으로 구성되어 있습니다.
+
+*   **`ACBoss`**: 보스 캐릭터의 기본 클래스입니다. 데미지 처리, UI 업데이트, BGM 재생 등을 담당합니다.
+*   **`ACBossAIC`**: 보스 AI 컨트롤러 클래스입니다. StateTree를 사용하여 보스의 행동을 제어합니다.
+*   **`UBossMovementComponent`**: 보스의 이동 로직을 담당하는 컴포넌트입니다. 플레이어 추적, 거리 유지, 궤도 이동 등을 수행합니다.
+*   **`UBossProjectileComponent`**: 투사체 생성 및 관리를 담당하는 컴포넌트입니다.
+*   **`UBossEffectManager`**: 이펙트 풀을 관리하고 이펙트 재생을 담당하는 클래스입니다.
+*   **`FEditorPlugin_DataSyncModule`**: 외부 데이터 소스와 게임 데이터를 동기화하는 플러그인입니다.
+
+각 시스템은 명확한 역할과 책임을 가지고 있으며, 서로 유기적으로 연결되어 있습니다. 이러한 구조는 코드의 가독성을 높이고, 유지보수성을 향상시키는 데 기여합니다. 🧩
+
+## 🧑‍💻 개발 과정
+
+이번 프로젝트를 진행하면서 다양한 도전에 직면했지만, 팀원들과 협력하여 문제를 해결하고 많은 것을 배울 수 있었습니다. StateTree를 처음 사용하면서 복잡한 AI 행동 패턴을 구현하는 데 어려움을 겪었지만, StateTree의 구조와 동작 원리를 이해하고 다양한 시행착오를 거치면서 문제를 해결할 수 있었습니다. 화려한 이펙트와 투사체를 사용하면서 성능 저하 문제가 발생했지만, 이펙트 풀링, Tick 최적화 등 다양한 성능 최적화 기법들을 적용하여 문제를 해결했습니다. 외부 데이터 소스와 게임 데이터를 동기화하는 플러그인을 개발하는 데 어려움을 겪었지만, HTTP API 통신, 데이터 파싱 등 다양한 기술들을 학습하고 적용하여 문제를 해결했습니다. 😥
+
+이번 프로젝트를 통해 언리얼 엔진 C++를 더욱 깊이 이해하고, StateTree, Gameplay Tag, 데이터 테이블, HTTP API 등 다양한 기술들을 숙달할 수 있었습니다. 앞으로도 꾸준히 기술력을 향상시켜 더욱 흥미롭고 완성도 높은 게임을 개발하도록 노력하겠습니다. 💪
+
+다음 섹션에서는 저희가 개발한 **보스 AI 데모 영상**을 공개할 예정입니다! 또한, 앞으로 보스 AI에 추가할 기능들과 현재 개발 중인 다른 시스템들에 대한 간략한 소개도 함께 준비되어 있으니 많은 기대 부탁드립니다! 🚀
+
+
+# 🔥 언리얼 엔진 C++로 만드는 역대급 보스 AI! 🔥
+
+안녕하세요, 게임 개발자 여러분! 오늘은 저희 팀이 언리얼 엔진 C++로 개발 중인 보스 AI 프로젝트에 대해 자세히 소개해 드리려고 합니다. ⚔️ 이 프로젝트는 단순히 몬스터를 만드는 것을 넘어, 플레이어에게 잊을 수 없는 경험을 선사하는 것을 목표로 합니다.
+
+## 🎮 프로젝트 소개
+
+저희 프로젝트는 **"Project Chimera"**라는 가칭으로 진행되고 있으며, 다크 판타지 세계관을 배경으로 하는 액션 RPG 게임의 핵심 콘텐츠인 보스 몬스터 AI를 개발하는 것을 목표로 합니다. 🐉 플레이어는 강력한 보스 몬스터와 맞서 싸우며 자신의 실력을 시험하고, 몬스터를 처치했을 때의 짜릿한 성취감을 느낄 수 있습니다.
+
+저희는 기존 게임에서 흔히 볼 수 있는 단순하고 예측 가능한 패턴의 보스 몬스터가 아닌, **다양한 공격 패턴과 페이즈 변화, 그리고 인상적인 연출**을 통해 플레이어에게 끊임없는 긴장감과 몰입감을 선사하는 보스 몬스터를 만들고자 합니다. 🤯 이를 위해 언리얼 엔진 C++를 기반으로 StateTree, Gameplay Tag, 데이터 테이블 등 다양한 기술들을 활용하여 고도화된 AI 시스템을 구축하고 있습니다.
+
+**핵심 개발 목표**는 다음과 같습니다.
+
+*   **다양하고 지능적인 AI 패턴**: StateTree를 활용하여 상황에 따라 유연하게 대처하는 AI 구현
+*   **화려하고 역동적인 연출**: 이펙트 풀링, 애니메이션 노티파이 등을 활용하여 시각적인 만족도 극대화
+*   **최적화된 성능**: 대규모 전투에서도 안정적인 프레임 유지를 위한 성능 최적화
+
+## ⚙️ 주요 기능 소개
+
+저희 보스 AI 프로젝트는 다음과 같은 주요 기능들을 포함하고 있습니다.
+
+### 🌳 StateTree 기반 AI 시스템
+
+저희는 보스 AI의 행동 패턴을 정의하기 위해 언리얼 엔진의 StateTree 시스템을 적극적으로 활용했습니다. StateTree는 복잡한 AI 로직을 시각적으로 표현하고 관리할 수 있도록 도와주는 강력한 도구입니다. 🛠️ StateTree를 통해 보스의 다양한 상태(대기, 공격, 회피 등)와 상태 간의 전환 조건을 정의하고, 각 상태에서 수행할 액션을 설정할 수 있습니다. 이를 통해 보스는 플레이어의 행동에 따라 다양한 패턴으로 공격하고, 예측 불가능한 움직임을 보여줄 수 있습니다.
+
+### 🎭 페이즈 전환 시스템
+
+저희 보스 몬스터는 단순히 공격 패턴만 바꾸는 것이 아니라, 체력이 일정 수준 이하로 떨어지면 완전히 새로운 모습과 능력을 갖춘 다음 페이즈로 전환합니다. 🔄 각 페이즈는 고유한 공격 패턴, 스킬, 그리고 시각 효과를 가지고 있으며, 플레이어는 각 페이즈에 맞춰 새로운 전략을 세워야 합니다. 페이즈 전환은 애니메이션 노티파이와 연동되어 더욱 극적이고 몰입감 있는 경험을 제공합니다.
+
+### 🚀 투사체 시스템
+
+저희 보스 몬스터는 다양한 종류의 투사체를 사용하여 원거리 공격을 수행합니다. 🎯 투사체는 단순히 직선으로 날아가는 것뿐만 아니라, 플레이어를 추적하거나, 특정 위치에 폭발을 일으키는 등 다양한 기능을 가지고 있습니다. 투사체 시스템은 `UBossProjectileComponent`를 통해 관리되며, 오브 풀링 기법을 사용하여 투사체 생성 및 소멸에 따른 성능 저하를 최소화했습니다.
+
+### 🎬 애니메이션 노티파이
+
+저희는 애니메이션 노티파이를 사용하여 애니메이션 재생 시 특정 시점에 이벤트를 발생시키고, 이를 통해 게임 로직을 제어합니다. 🎞️ 예를 들어, 공격 애니메이션의 특정 프레임에서 투사체를 발사하거나, 이펙트를 재생하는 등의 작업을 수행할 수 있습니다. 애니메이션 노티파이는 보스 몬스터의 움직임과 액션을 더욱 자연스럽고 조화롭게 만들어줍니다.
+
+### ✨ 이펙트 관리
+
+화려한 이펙트는 보스 몬스터 전투의 몰입도를 높이는 중요한 요소입니다. 💥 저희는 `UBossEffectManager` 클래스를 통해 이펙트 풀을 관리하고, 이펙트 재생을 담당합니다. 이펙트 풀링 기법을 사용하여 이펙트 생성 및 소멸에 따른 성능 저하를 최소화하고, 다양한 시각 효과를 효율적으로 관리할 수 있도록 했습니다.
+
+### 💽 데이터 동기화
+
+저희는 외부 데이터 소스(예: 스프레드시트)와 게임 데이터를 동기화하기 위해 `FEditorPlugin_DataSyncModule` 플러그인을 개발했습니다. 📤 이를 통해 게임 데이터(Gameplay Tag, 보스 스탯 등)를 쉽게 변경하고 관리할 수 있으며, 데이터 변경 사항을 실시간으로 게임에 반영할 수 있습니다. 데이터 동기화 플러그인은 개발 효율성을 높이고, 게임 데이터의 일관성을 유지하는 데 기여합니다.
+
+## 🛠️ 기술 스택
+
+저희 프로젝트는 다음과 같은 기술 스택을 기반으로 개발되었습니다.
+
+*   **언리얼 엔진 C++**: 게임 로직 구현 및 핵심 시스템 개발
+*   **StateTree**: AI 행동 패턴 정의 및 관리
+*   **Gameplay Tag**: 게임 오브젝트 및 액션 분류 및 필터링
+*   **데이터 테이블**: 게임 데이터 관리 및 로딩
+*   **HTTP API**: 외부 데이터 소스와의 통신
+*   **이펙트 풀링**: 이펙트 생성 및 소멸 성능 최적화
+*   **Tick 최적화**: 불필요한 Tick 함수 호출 최소화
+
+저희는 **모듈화된 아키텍처**를 채택하여 각 시스템이 독립적으로 동작하고, 서로 유기적으로 연결될 수 있도록 설계했습니다. 🧩 이를 통해 코드의 가독성을 높이고, 유지보수성을 향상시켰습니다. 또한, **다양한 성능 최적화 기법**을 적용하여 대규모 전투에서도 안정적인 프레임 유지를 목표로 개발하고 있습니다.
+
+## 🏗️ 프로젝트 구조
+
+저희 프로젝트는 다음과 같은 주요 클래스 및 컴포넌트로 구성되어 있습니다.
+
+*   **`ACBoss`**: 보스 캐릭터의 기본 클래스입니다. 체력, 공격력, 방어력 등 보스의 기본 스탯을 관리하고, 데미지 처리, 애니메이션 재생 등의 기능을 제공합니다.
+*   **`ACBossAIC`**: 보스 AI 컨트롤러 클래스입니다. StateTree를 실행하고, 보스의 행동을 제어합니다.
+*   **`UBossMovementComponent`**: 보스의 이동을 담당하는 컴포넌트입니다. 플레이어 추적, 거리 유지, 궤도 이동 등 다양한 이동 패턴을 제공합니다.
+*   **`UBossProjectileComponent`**: 투사체 생성 및 관리를 담당하는 컴포넌트입니다.
+*   **`UBossEffectManager`**: 이펙트 풀을 관리하고 이펙트 재생을 담당하는 클래스입니다.
+*   **`FEditorPlugin_DataSyncModule`**: 외부 데이터 소스와 게임 데이터를 동기화하는 플러그인입니다.
+
+각 시스템은 명확한 역할과 책임을 가지고 있으며, 서로 유기적으로 연결되어 있습니다. 이러한 구조는 코드의 가독성을 높이고, 유지보수성을 향상시키는 데 기여합니다. 🧩
+
+## 🧑‍💻 개발 과정
+
+이번 프로젝트를 진행하면서 다양한 도전에 직면했지만, 팀원들과 협력하여 문제를 해결하고 많은 것을 배울 수 있었습니다. StateTree를 처음 사용하면서 복잡한 AI 행동 패턴을 구현하는 데 어려움을 겪었지만, StateTree의 구조와 동작 원리를 이해하고 다양한 시행착오를 거치면서 문제를 해결할 수 있었습니다. 화려한 이펙트와 투사체를 사용하면서 성능 저하 문제가 발생했지만, 이펙트 풀링, Tick 최적화 등 다양한 성능 최적화 기법들을 적용하여 문제를 해결했습니다. 외부 데이터 소스와 게임 데이터를 동기화하는 플러그인을 개발하는 데 어려움을 겪었지만, HTTP API 통신, 데이터 파싱 등 다양한 기술들을 학습하고 적용하여 문제를 해결했습니다. 😥
+
+이번 프로젝트를 통해 언리얼 엔진 C++를 더욱 깊이 이해하고, StateTree, Gameplay Tag, 데이터 테이블, HTTP API 등 다양한 기술들을 숙달할 수 있었습니다. 앞으로도 꾸준히 기술력을 향상시켜 더욱 흥미롭고 완성도 높은 게임을 개발하도록 노력하겠습니다. 💪
+
+다음 섹션에서는 저희가 개발한 **보스 AI 데모 영상**을 공개할 예정입니다! 또한, 앞으로 보스 AI에 추가할 기능들과 현재 개발 중인 다른 시스템들에 대한 간략한 소개도 함께 준비되어 있으니 많은 기대 부탁드립니다! 🚀
+
+
+# ⚔️ 언리얼 엔진 C++로 구현하는 강력한 보스 AI ⚔️
+
+안녕하세요! 게임 개발 기술 블로그에 오신 것을 환영합니다. 🚀 오늘은 언리얼 엔진 C++를 사용하여 개발한 보스 AI 프로젝트에 대해 자세히 소개해 드리려고 합니다. 저희 팀은 ⚔️ **"불멸의 영웅"** ⚔️이라는 핵 앤 슬래시 장르의 게임을 개발하고 있으며, 그 핵심 요소 중 하나인 강력하고 지능적인 보스 AI를 구현하는 데 집중했습니다.
+
+## 🎯 프로젝트 소개
+
+저희 프로젝트의 목표는 단순한 패턴 반복이 아닌, 플레이어의 행동에 반응하고 끊임없이 변화하는 전투 경험을 제공하는 보스 AI를 만드는 것이었습니다. 이를 위해 StateTree를 기반으로 한 AI 시스템, 페이즈 전환 시스템, 다양한 투사체 시스템, 그리고 화려한 이펙트들을 유기적으로 결합했습니다. 저희는 단순히 "강한" 보스가 아닌, "재미있고 도전적인" 보스를 만드는 것을 목표로 삼았습니다. 🎮
+
+저희가 개발한 보스 AI는 다음과 같은 특징을 가지고 있습니다.
+
+*   **다양한 공격 패턴**: 근접 공격, 원거리 공격, 특수 공격 등 다양한 공격 패턴을 사용하여 플레이어를 끊임없이 압박합니다.
+*   **지능적인 행동**: 플레이어의 위치, 거리, 행동 패턴 등을 분석하여 가장 적절한 공격을 선택합니다.
+*   **페이즈 전환**: 보스의 체력이 특정 수준 이하로 떨어지면 새로운 공격 패턴과 능력을 사용하는 다음 페이즈로 전환합니다.
+*   **화려한 이펙트**: 다양한 시각 효과를 사용하여 전투를 더욱 흥미롭고 몰입감 있게 만듭니다.
+*   **데이터 기반 설계**: 외부 데이터 소스와 게임 데이터를 동기화하여 보스 AI의 행동 패턴과 스탯을 쉽게 변경하고 관리할 수 있습니다.
+
+## ⚙️ 주요 기능 소개
+
+### 🌳 StateTree 기반 AI 시스템
+
+저희 보스 AI의 핵심은 StateTree입니다. StateTree는 복잡한 AI 행동 패턴을 시각적으로 설계하고 관리할 수 있도록 해주는 강력한 도구입니다. 🌲 StateTree를 사용하여 보스의 상태를 정의하고, 각 상태에서 수행할 행동들을 연결함으로써, 유연하고 예측 불가능한 AI를 구현했습니다. `UCBossEnemyStateTreeEvaluator` 클래스는 매 프레임 StateTree를 평가하여 보스의 행동을 결정하는 역할을 합니다.
+
+### 🔄 페이즈 전환 시스템
+
+보스 전투의 재미를 더하기 위해 페이즈 전환 시스템을 도입했습니다. 보스의 체력이 특정 수준 이하로 떨어지면, `UTask_SwitchPase` 태스크를 통해 다음 페이즈로 전환됩니다. 🔥 각 페이즈는 새로운 공격 패턴, 능력, 그리고 시각 효과를 가지고 있어, 플레이어는 끊임없이 새로운 도전에 직면하게 됩니다. `UAnimNotifyState_PaseChange`와 `UAnimNotify_PaseChangeDissolve`는 페이즈 전환 시 자연스러운 디졸브 효과를 담당합니다.
+
+### 🚀 투사체 시스템
+
+다양한 투사체를 사용하여 보스의 공격 패턴을 다채롭게 만들었습니다. `UBossProjectileComponent`는 투사체 생성 및 관리를 담당하며, `ABossProjectileActor`, `ABossProjectileOrb`, `AGateOfBabylonProjectile`, `AProjectile_LightSpear` 등 다양한 종류의 투사체를 생성하고 발사합니다. 🌠 투사체들은 각기 다른 속도, 궤적, 그리고 효과를 가지고 있어, 플레이어는 끊임없이 움직이며 공격을 피해야 합니다.
+
+### 🎬 애니메이션 노티파이
+
+애니메이션 노티파이는 특정 애니메이션 프레임에서 특정 기능을 실행할 수 있도록 해주는 기능입니다. 🎬 저희는 애니메이션 노티파이를 사용하여 이펙트 재생, 투사체 발사, 콜리전 활성화 등 다양한 기능을 구현했습니다. 예를 들어, `UAnimNotify_PlayEffect`는 특정 애니메이션 프레임에서 이펙트를 재생하고, `UAnimNotify_BossWeaponCollision`은 보스 무기의 콜리전을 활성화합니다.
+
+### ✨ 이펙트 관리
+
+화려한 이펙트는 보스 전투를 더욱 흥미롭고 몰입감 있게 만들어줍니다. ✨ `UBossEffectManager`는 이펙트 풀을 관리하고 이펙트 재생을 담당합니다. 이펙트 풀링을 통해 이펙트 생성 및 소멸에 드는 비용을 최소화하고, 성능을 최적화했습니다. `ABossEffect` 클래스는 개별 이펙트의 활성화 및 비활성화를 담당합니다.
+
+### 💾 데이터 동기화
+
+보스 AI의 행동 패턴과 스탯을 쉽게 변경하고 관리하기 위해 외부 데이터 소스와 게임 데이터를 동기화하는 플러그인을 개발했습니다. 💾 `FEditorPlugin_DataSyncModule`은 HTTP API 통신을 통해 외부 데이터 소스에서 데이터를 가져오고, 데이터 테이블을 업데이트합니다. 이를 통해 게임 디자이너는 코드를 수정하지 않고도 보스 AI의 행동 패턴과 스탯을 쉽게 변경할 수 있습니다.
+
+## 🛠️ 기술 스택
+
+저희는 언리얼 엔진 C++를 사용하여 보스 AI를 개발했으며, 다음과 같은 기술과 도구를 사용했습니다.
+
+*   **언리얼 엔진 C++**: 게임 로직 구현
+*   **StateTree**: AI 행동 패턴 설계 및 관리
+*   **Gameplay Tag**: 게임 오브젝트 및 액션 분류
+*   **데이터 테이블**: 게임 데이터 관리
+*   **HTTP API**: 외부 데이터 소스와 통신
+*   **이펙트 풀링**: 이펙트 성능 최적화
+*   **Tick 최적화**: 게임 루프 성능 최적화
+
+저희 아키텍처는 모듈성을 극대화하고, 각 시스템이 독립적으로 작동하도록 설계되었습니다. 이를 통해 코드의 가독성을 높이고, 유지보수성을 향상시켰습니다. 또한, 이펙트 풀링, Tick 최적화 등 다양한 성능 최적화 기법을 적용하여 게임의 성능을 향상시켰습니다.
+
+## 🏛️ 프로젝트 구조
+
+저희 프로젝트는 다음과 같은 주요 클래스와 컴포넌트로 구성되어 있습니다.
+
+*   **`ACBoss`**: 보스 캐릭터의 기본 클래스입니다.
+*   **`ACBossAIC`**: 보스 AI 컨트롤러 클래스입니다.
+*   **`UBossAnimInstance`**: 보스 애니메이션 인스턴스 클래스입니다.
+*   **`CBossMovementComponent`**: 보스의 이동을 담당하는 컴포넌트입니다.
+*   **`UBossProjectileComponent`**: 투사체 생성 및 관리를 담당하는 컴포넌트입니다.
+*   **`UBossEffectManager`**: 이펙트 풀을 관리하고 이펙트 재생을 담당하는 클래스입니다.
+*   **`FEditorPlugin_DataSyncModule`**: 외부 데이터 소스와 게임 데이터를 동기화하는 플러그인입니다.
+
+각 시스템은 명확한 역할과 책임을 가지고 있으며, 서로 유기적으로 연결되어 있습니다. 이러한 구조는 코드의 가독성을 높이고, 유지보수성을 향상시키는 데 기여합니다. 🧩
+
+## 🧑‍💻 개발 과정
+
+이번 프로젝트를 진행하면서 다양한 도전에 직면했지만, 팀원들과 협력하여 문제를 해결하고 많은 것을 배울 수 있었습니다. StateTree를 처음 사용하면서 복잡한 AI 행동 패턴을 구현하는 데 어려움을 겪었지만, StateTree의 구조와 동작 원리를 이해하고 다양한 시행착오를 거치면서 문제를 해결할 수 있었습니다. 화려한 이펙트와 투사체를 사용하면서 성능 저하 문제가 발생했지만, 이펙트 풀링, Tick 최적화 등 다양한 성능 최적화 기법들을 적용하여 문제를 해결했습니다. 외부 데이터 소스와 게임 데이터를 동기화하는 플러그인을 개발하는 데 어려움을 겪었지만, HTTP API 통신, 데이터 파싱 등 다양한 기술들을 학습하고 적용하여 문제를 해결했습니다. 😥
+
+이번 프로젝트를 통해 언리얼 엔진 C++를 더욱 깊이 이해하고, StateTree, Gameplay Tag, 데이터 테이블, HTTP API 등 다양한 기술들을 숙달할 수 있었습니다. 앞으로도 꾸준히 기술력을 향상시켜 더욱 흥미롭고 완성도 높은 게임을 개발하도록 노력하겠습니다. 💪
+
+다음 섹션에서는 저희가 개발한 **보스 AI 데모 영상**을 공개할 예정입니다! 또한, 앞으로 보스 AI에 추가할 기능들과 현재 개발 중인 다른 시스템들에 대한 간략한 소개도 함께 준비되어 있으니 많은 기대 부탁드립니다! 🚀
+
+
+# 🔥 언리얼 엔진 C++로 구현한 보스 AI 시스템: 기술 블로그 스타일 README.md 🔥
+
+## 🎮 프로젝트 소개
+
+저희 팀은 언리얼 엔진 C++를 사용하여 혁신적인 보스 AI 시스템을 개발했습니다! ⚔️ 이 프로젝트는 단순한 몬스터가 아닌, 플레이어에게 끊임없이 도전과 재미를 선사하는 지능적인 보스를 만드는 것을 목표로 합니다. 저희가 개발한 보스 AI는 액션 RPG 장르에 최적화되어 있으며, 화려한 스킬과 예측 불가능한 패턴으로 플레이어의 아드레날린을 솟구치게 할 것입니다. 💥
+
+이 프로젝트의 핵심 목표는 다음과 같습니다.
+
+*   **다양하고 복잡한 AI 행동 패턴 구현**: StateTree를 활용하여 보스의 행동을 체계적으로 관리하고, 다양한 상황에 유연하게 대처할 수 있도록 설계했습니다.
+*   **최적화된 성능**: 화려한 이펙트와 투사체를 사용하면서도, 게임의 성능을 저하시키지 않도록 최적화 기법들을 적용했습니다.
+*   **확장 가능한 구조**: 새로운 기능과 콘텐츠를 쉽게 추가할 수 있도록 모듈화된 구조로 설계했습니다.
+*   **데이터 중심 설계**: 외부 데이터 소스와 게임 데이터를 동기화하여, 콘텐츠 업데이트를 용이하게 하고, 게임의 밸런스를 쉽게 조절할 수 있도록 했습니다.
+
+## ✨ 주요 기능 소개
+
+### 🧠 StateTree 기반 AI 시스템
+
+저희 보스 AI의 두뇌는 바로 StateTree입니다! 🌳 StateTree는 복잡한 AI 행동 패턴을 시각적으로 설계하고 관리할 수 있는 강력한 도구입니다. 저희는 StateTree를 사용하여 보스의 다양한 상태(공격, 방어, 이동 등)를 정의하고, 각 상태 간의 전환 조건을 설정했습니다. 이를 통해 보스는 플레이어의 행동에 따라 유기적으로 반응하며, 예측 불가능한 공격 패턴을 보여줍니다.
+
+### 🔄 페이즈 전환 시스템
+
+단순한 보스전은 이제 그만! 🙅‍♀️ 저희 보스 AI는 페이즈 전환 시스템을 통해 전투의 흐름을 끊임없이 변화시킵니다. 보스의 체력이 특정 수준 이하로 떨어지거나, 특정 조건을 만족하면 다음 페이즈로 전환됩니다. 각 페이즈마다 보스의 공격 패턴, 스킬, 외형 등이 변화하며, 플레이어는 새로운 전략을 세워야 합니다. 🤯
+
+### 🚀 투사체 시스템
+
+화려한 스킬은 보스전의 필수 요소죠! ✨ 저희는 다양한 투사체를 생성하고 관리하는 투사체 시스템을 개발했습니다. 이 시스템을 통해 보스는 플레이어에게 다양한 종류의 투사체를 발사하며, 예측 불가능한 공격 패턴을 만들어냅니다. 투사체의 종류, 속도, 발사 각도 등을 조절하여, 보스전의 난이도를 다양하게 설정할 수 있습니다.
+
+### 🎬 애니메이션 노티파이
+
+애니메이션과 게임 로직의 완벽한 조화! 👯‍♀️ 저희는 애니메이션 노티파이를 사용하여 애니메이션의 특정 시점에 게임 로직을 실행할 수 있도록 했습니다. 예를 들어, 보스가 공격 애니메이션을 시작할 때, 공격 판정을 활성화하고, 공격 애니메이션이 끝날 때, 공격 판정을 비활성화할 수 있습니다. 이를 통해 애니메이션과 게임 로직이 자연스럽게 연동되어, 더욱 실감나는 보스전을 구현할 수 있습니다.
+
+### 💥 이펙트 관리
+
+화려한 이펙트는 게임의 몰입도를 높이는 데 중요한 역할을 합니다. 🎇 저희는 이펙트 풀을 관리하고 이펙트 재생을 담당하는 `UBossEffectManager` 클래스를 개발했습니다. 이 클래스를 통해 이펙트를 재사용하여 성능을 최적화하고, 다양한 이펙트를 쉽게 생성하고 관리할 수 있습니다.
+
+### 💽 데이터 동기화
+
+게임 밸런스 조정, 이제 엑셀에서! 📊 저희는 외부 데이터 소스와 게임 데이터를 동기화하는 플러그인을 개발했습니다. 이 플러그인을 통해 Gameplay Tag, 보스 스탯 등의 게임 데이터를 외부 데이터 소스(예: 스프레드시트)에서 관리하고, 게임 내 데이터와 실시간으로 동기화할 수 있습니다. 이를 통해 콘텐츠 업데이트를 용이하게 하고, 게임의 밸런스를 쉽게 조절할 수 있습니다.
+
+## 🛠️ 기술 스택
+
+저희 프로젝트는 언리얼 엔진 C++를 기반으로 개발되었으며, 다음과 같은 기술과 도구를 사용했습니다.
+
+*   **언리얼 엔진 C++**: 게임 로직, AI, 시스템 등을 구현하는 데 사용되었습니다.
+*   **StateTree**: 복잡한 AI 행동 패턴을 설계하고 관리하는 데 사용되었습니다.
+*   **Gameplay Tag**: 게임 오브젝트의 속성을 정의하고 관리하는 데 사용되었습니다.
+*   **데이터 테이블**: 게임 데이터를 구조화하고 관리하는 데 사용되었습니다.
+*   **HTTP API**: 외부 데이터 소스와 게임 데이터를 동기화하는 데 사용되었습니다.
+
+저희 프로젝트는 모듈화된 아키텍처를 채택하여, 코드의 가독성을 높이고, 유지보수성을 향상시켰습니다. 또한, 이펙트 풀링, Tick 최적화 등 다양한 성능 최적화 기법들을 적용하여, 게임의 성능을 극대화했습니다. 🚀
+
+## 🏗️ 프로젝트 구조
+
+저희 프로젝트는 다음과 같은 주요 클래스와 시스템으로 구성되어 있습니다.
+
+*   **`ACBoss`**: 보스 캐릭터의 기본 클래스입니다. 보스의 외형, 애니메이션, 스탯 등을 관리합니다.
+*   **`ACBossAIC`**: 보스 AI 컨트롤러 클래스입니다. StateTree를 사용하여 보스의 행동을 제어합니다.
+*   **`CBossMovementComponent`**: 보스의 이동을 담당하는 컴포넌트입니다.
+*   **`UBossProjectileComponent`**: 투사체 생성 및 관리를 담당하는 컴포넌트입니다.
+*   **`UBossEffectManager`**: 이펙트 풀을 관리하고 이펙트 재생을 담당하는 클래스입니다.
+*   **`FEditorPlugin_DataSyncModule`**: 외부 데이터 소스와 게임 데이터를 동기화하는 플러그인입니다.
+
+각 시스템은 명확한 역할과 책임을 가지고 있으며, 서로 유기적으로 연결되어 있습니다. 이러한 구조는 코드의 가독성을 높이고, 유지보수성을 향상시키는 데 기여합니다. 🧩
+
+## 🧑‍💻 개발 과정
+
+이번 프로젝트를 진행하면서 다양한 도전에 직면했지만, 팀원들과 협력하여 문제를 해결하고 많은 것을 배울 수 있었습니다. StateTree를 처음 사용하면서 복잡한 AI 행동 패턴을 구현하는 데 어려움을 겪었지만, StateTree의 구조와 동작 원리를 이해하고 다양한 시행착오를 거치면서 문제를 해결할 수 있었습니다. 화려한 이펙트와 투사체를 사용하면서 성능 저하 문제가 발생했지만, 이펙트 풀링, Tick 최적화 등 다양한 성능 최적화 기법들을 적용하여 문제를 해결했습니다. 외부 데이터 소스와 게임 데이터를 동기화하는 플러그인을 개발하는 데 어려움을 겪었지만, HTTP API 통신, 데이터 파싱 등 다양한 기술들을 학습하고 적용하여 문제를 해결했습니다. 😥
+
+이번 프로젝트를 통해 언리얼 엔진 C++를 더욱 깊이 이해하고, StateTree, Gameplay Tag, 데이터 테이블, HTTP API 등 다양한 기술들을 숙달할 수 있었습니다. 앞으로도 꾸준히 기술력을 향상시켜 더욱 흥미롭고 완성도 높은 게임을 개발하도록 노력하겠습니다. 💪
+
+다음 섹션에서는 저희가 개발한 **보스 AI 데모 영상**을 공개할 예정입니다! 또한, 앞으로 보스 AI에 추가할 기능들과 현재 개발 중인 다른 시스템들에 대한 간략한 소개도 함께 준비되어 있으니 많은 기대 부탁드립니다! 🚀
+
+
