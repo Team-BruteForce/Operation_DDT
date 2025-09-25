@@ -39,5 +39,5 @@ jobs:
       - name: 7. Commit and push if changed
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: 'docs: ✨ 문서 자동 업데이트 (README, API, Architecture, Portfolio, Class Analysis, Implementation Guide)'
-          file_pattern: 'README.md API_DOCS.md ARCHITECTURE.md PORTFOLIO.md CLASS_ANALYSIS.md IMPLEMENTATION_GUIDE.md'
+          commit_message: 'docs: ✨ 문서 자동 업데이트 (README, API, Architecture)'
+          file_pattern: 'README.md API_DOCS.md ARCHITECTURE.md'
