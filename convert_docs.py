@@ -424,15 +424,15 @@ def main():
     if not doxygen_data:
         return
     
-        # 모든 문서 생성
-        prompts = [
-            ("README.md", create_prompt),
-            ("API_DOCS.md", create_api_docs_prompt),
-            ("ARCHITECTURE.md", create_architecture_prompt),
-            ("PORTFOLIO.md", create_portfolio_prompt),
-            ("CLASS_ANALYSIS.md", create_class_analysis_prompt),
-            ("IMPLEMENTATION_GUIDE.md", create_implementation_guide_prompt)
-        ]
+    # 모든 문서 생성
+    prompts = [
+        ("README.md", create_prompt),
+        ("API_DOCS.md", create_api_docs_prompt),
+        ("ARCHITECTURE.md", create_architecture_prompt),
+        ("PORTFOLIO.md", create_portfolio_prompt),
+        ("CLASS_ANALYSIS.md", create_class_analysis_prompt),
+        ("IMPLEMENTATION_GUIDE.md", create_implementation_guide_prompt)
+    ]
     
     print("모든 문서를 생성합니다...")
     for filename, prompt_func in prompts:
