@@ -446,37 +446,86 @@ def main():
     if not doxygen_data:
         return
     
-    # 모든 문서 생성
-    prompts = [
-        ("README.md", create_prompt),
-        ("API_DOCS.md", create_api_docs_prompt),
-        ("ARCHITECTURE.md", create_architecture_prompt),
-        ("PORTFOLIO.md", create_portfolio_prompt),
-        ("CLASS_ANALYSIS.md", create_class_analysis_prompt),
-        ("IMPLEMENTATION_GUIDE.md", create_implementation_guide_prompt)
-    ]
+    # README만 생성
+    print("README.md만 생성합니다...")
+    final_prompt = create_prompt(doxygen_data)
+    generate_document(final_prompt, "README.md")
     
-    print("모든 문서를 생성합니다...")
-    for filename, prompt_func in prompts:
-        print(f"\n{filename} 생성 중...")
-        final_prompt = prompt_func(doxygen_data)
-        generate_document(final_prompt, filename)
-    
-    print("\n모든 문서 생성이 완료되었습니다!")
+    print("\nREADME.md 생성이 완료되었습니다!")
 
 def generate_document(prompt, filename):
     """문서 생성 함수"""
     print(f"Gemini API를 호출하여 {filename} 생성을 시작합니다...")
+    print(f"프롬프트 길이: {len(prompt)} 문자")
+    
     try:
-        model = genai.GenerativeModel('gemini-1.5-pro-latest')
-        response = model.generate_content(prompt)
+        # Gemini 2.0 Flash 모델 사용 (더 많은 토큰 지원)
+        model = genai.GenerativeModel('gemini-2.0-flash-exp')
+        
+        # 최대한 많은 토큰으로 설정
+        generation_config = genai.types.GenerationConfig(
+            max_output_tokens=8192,   # 최대 출력 토큰 (8K)
+            temperature=0.7,          # 창의성과 일관성의 균형
+            top_p=0.8,                # 토큰 선택 범위
+            top_k=40,                 # 상위 k개 토큰에서 선택
+            candidate_count=1         # 후보 수
+        )
+        
+        # 안전 설정 (필터링 최소화)
+        safety_settings = [
+            {
+                "category": "HARM_CATEGORY_HARASSMENT",
+                "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+            },
+            {
+                "category": "HARM_CATEGORY_HATE_SPEECH", 
+                "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+            },
+            {
+                "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+            },
+            {
+                "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+                "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+            }
+        ]
+        
+        response = model.generate_content(
+            prompt, 
+            generation_config=generation_config,
+            safety_settings=safety_settings
+        )
+        
         content = response.text
 
         with open(filename, "w", encoding="utf-8") as f:
             f.write(content)
         print(f"{filename} 파일이 성공적으로 생성되었습니다!")
+        print(f"생성된 내용 길이: {len(content)} 문자")
+        print(f"예상 단어 수: 약 {len(content.split())} 단어")
+        
     except Exception as e:
         print(f"API 호출 중 오류 발생: {e}")
+        print(f"오류 상세: {str(e)}")
+        
+        # 오류가 발생하면 더 작은 토큰으로 재시도
+        print("더 작은 토큰 수로 재시도합니다...")
+        try:
+            generation_config = genai.types.GenerationConfig(
+                max_output_tokens=4096,   # 4K 토큰으로 재시도
+                temperature=0.7
+            )
+            response = model.generate_content(prompt, generation_config=generation_config)
+            content = response.text
+            
+            with open(filename, "w", encoding="utf-8") as f:
+                f.write(content)
+            print(f"{filename} 파일이 재시도로 생성되었습니다!")
+            print(f"생성된 내용 길이: {len(content)} 문자")
+            
+        except Exception as e2:
+            print(f"재시도도 실패했습니다: {e2}")
 
 if __name__ == "__main__":
     main()
