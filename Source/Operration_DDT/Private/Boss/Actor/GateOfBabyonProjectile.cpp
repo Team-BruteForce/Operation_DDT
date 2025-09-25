@@ -1,4 +1,14 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+/**
+ * @file GateOfBabyonProjectile.cpp
+ * @brief 바빌론의 문 프로젝타일 구현 파일
+ * 
+ * @details
+ * 바빌론의 문에서 발사되는 프로젝타일을 구현하는 파일입니다.
+ * 타겟팅 컴포넌트와 나이아가라 이펙트를 사용합니다.
+ * 
+ * @author 이효원
+ * @date 2024-12-19
+ */
 
 #include "Boss/Actor/GateOfBabyonProjectile.h"
 #include "Global.h"

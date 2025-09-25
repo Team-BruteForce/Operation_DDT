@@ -1,4 +1,14 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+/**
+ * @file FlyingComponent.cpp
+ * @brief 보스 비행 컴포넌트 구현 파일
+ * 
+ * @details
+ * 보스 캐릭터의 비행 기능을 관리하는 컴포넌트입니다.
+ * 이륙, 착륙, 호버링, 스플라인 비행 등의 기능을 제공합니다.
+ * 
+ * @author 이효원
+ * @date 2024-12-19
+ */
 
 #include "Boss/Component/FlyingComponent.h"
 

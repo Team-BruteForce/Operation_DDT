@@ -1,4 +1,14 @@
-
+/**
+ * @file CBossWeaponAsset.cpp
+ * @brief 보스 웨폰 에셋 구현 파일
+ * 
+ * @details
+ * 보스의 웨폰 에셋을 구현하는 파일입니다.
+ * 웨폰의 액션과 장비 데이터를 관리합니다.
+ * 
+ * @author 이효원
+ * @date 2024-12-19
+ */
 
 #include "Boss/BossWeapon/CBossWeaponAsset.h"
 

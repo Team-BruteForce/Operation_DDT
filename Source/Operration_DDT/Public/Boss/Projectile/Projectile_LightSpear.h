@@ -1,4 +1,14 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+/**
+ * @file Projectile_LightSpear.h
+ * @brief 번개 창 프로젝타일 헤더 파일
+ * 
+ * @details
+ * 보스의 번개 창 프로젝타일을 구현하는 액터입니다.
+ * 프로젝타일 이동 컴포넌트와 나이아가라 이펙트를 사용합니다.
+ * 
+ * @author 이효원
+ * @date 2024-12-19
+ */
 
 #pragma once
 
@@ -6,6 +16,12 @@
 #include "GameFramework/Actor.h"
 #include "Projectile_LightSpear.generated.h"
 
+/**
+ * @brief 번개 창 프로젝타일
+ * 
+ * 보스의 번개 창 프로젝타일을 구현하는 액터입니다.
+ * 프로젝타일 이동 컴포넌트와 나이아가라 이펙트를 사용합니다.
+ */
 UCLASS()
 class OPERRATION_DDT_API AProjectile_LightSpear : public AActor
 {

@@ -1,4 +1,14 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+/**
+ * @file BossEffect.cpp
+ * @brief 보스 이펙트 구현 파일
+ * 
+ * @details
+ * 보스의 이펙트 시스템을 구현하는 파일입니다.
+ * 나이아가라 컴포넌트와 이펙트 매니저를 통해 이펙트를 관리합니다.
+ * 
+ * @author 이효원
+ * @date 2024-12-19
+ */
 
 #include "Boss/Effect/BossEffect.h"
 #include "Global.h"

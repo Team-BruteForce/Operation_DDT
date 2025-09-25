@@ -1,5 +1,14 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+/**
+ * @file BossProjectileOrb.cpp
+ * @brief 보스 프로젝타일 오브 구현 파일
+ * 
+ * @details
+ * 보스의 오브 프로젝타일을 구현하는 파일입니다.
+ * 타겟팅 컴포넌트와 연동하여 플레이어를 추적합니다.
+ * 
+ * @author 이효원
+ * @date 2024-12-19
+ */
 
 #include "Boss/Projectile/BossProjectileOrb.h"
 #include "Global.h"

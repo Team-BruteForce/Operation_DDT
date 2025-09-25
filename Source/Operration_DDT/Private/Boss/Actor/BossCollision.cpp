@@ -1,5 +1,14 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+/**
+ * @file BossCollision.cpp
+ * @brief 보스 콜리전 액터 구현 파일
+ * 
+ * @details
+ * 보스의 공격 콜리전을 관리하는 액터입니다.
+ * 박스 컴포넌트를 통해 보스의 공격 범위를 정의합니다.
+ * 
+ * @author 이효원
+ * @date 2024-12-19
+ */
 
 #include "Boss/Actor/BossCollision.h"
 

@@ -7,7 +7,9 @@
 #include "Task_SetVectorTargetLocation.generated.h"
 
 /**
- * 
+ * @brief 보스의 벡터 타겟 위치를 설정하는 StateTree Task
+ * @details 보스가 특정 벡터 위치를 목표로 하여 이동할 때 사용됩니다.
+ * @author 이효원
  */
 UCLASS()
 class OPERRATION_DDT_API UTask_SetVectorTargetLocation : public UStateTreeTaskBlueprintBase

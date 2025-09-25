@@ -1,5 +1,14 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+/**
+ * @file CBossEquipment.cpp
+ * @brief 보스 장비 구현 파일
+ * 
+ * @details
+ * 보스의 장비 시스템을 구현하는 파일입니다.
+ * 보스의 장비 데이터와 장비 관리 기능을 제공합니다.
+ * 
+ * @author 이효원
+ * @date 2024-12-19
+ */
 
 #include "Boss/BossWeapon/CBossEquipment.h"
 

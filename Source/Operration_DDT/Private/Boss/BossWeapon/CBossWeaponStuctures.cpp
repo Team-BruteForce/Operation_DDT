@@ -1,5 +1,14 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+/**
+ * @file CBossWeaponStuctures.cpp
+ * @brief 보스 웨폰 구조체 구현 파일
+ * 
+ * @details
+ * 보스의 웨폰 관련 구조체들을 구현하는 파일입니다.
+ * 보스의 공격 패턴과 몽타주를 관리합니다.
+ * 
+ * @author 이효원
+ * @date 2024-12-19
+ */
 
 #include "Boss/BossWeapon/CBossWeaponStuctures.h"
 #include "Global.h"

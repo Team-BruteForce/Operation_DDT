@@ -1,5 +1,14 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+/**
+ * @file CBossWeapon.cpp
+ * @brief 보스 웨폰 구현 파일
+ * 
+ * @details
+ * 보스의 웨폰 시스템을 구현하는 파일입니다.
+ * 웨폰의 콜리전과 공격 로직을 처리합니다.
+ * 
+ * @author 이효원
+ * @date 2024-12-19
+ */
 
 #include "Boss/BossWeapon/CBossWeapon.h"
 #include "Global.h"

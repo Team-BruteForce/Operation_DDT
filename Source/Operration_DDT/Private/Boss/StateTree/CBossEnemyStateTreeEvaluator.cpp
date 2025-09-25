@@ -1,4 +1,14 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+/**
+ * @file CBossEnemyStateTreeEvaluator.cpp
+ * @brief 보스 적 StateTree 평가자 구현 파일
+ * 
+ * @details
+ * 보스 적의 StateTree에서 사용되는 평가자 클래스입니다.
+ * 보스와 플레이어 간의 거리 계산 및 의사결정 데이터를 관리합니다.
+ * 
+ * @author 이효원
+ * @date 2024-12-19
+ */
 
 #include "Boss/StateTree/CBossEnemyStateTreeEvaluator.h"
 #include "Global.h"

@@ -9,27 +9,77 @@
 #include "BossEffectComponent.generated.h"
 
 /**
- * @brief 보스 이펙트 컴포넌트
+ * @file BossEffectComponent.h
+ * @brief 보스 이펙트 컴포넌트 헤더 파일
+ * 
+ * @section overview 개요
+ * 이 파일은 보스 캐릭터의 이펙트 시스템을 관리하는 컴포넌트를 정의합니다.
+ * 이펙트 재생 요청을 받아서 적절한 이펙트를 실행합니다.
+ * 
+ * @section architecture 아키텍처
+ * - UBossEffectComponent: 보스 이펙트 관리 메인 컴포넌트
+ * - UBossEffectManager: 이펙트 매니저 시스템
+ * - UBossEffectExecute: 이펙트 실행 시스템
+ * - 오브젝트 풀링 시스템
+ * 
+ * @section features 주요 기능
+ * - 기본 이펙트 실행
+ * - 지연된 이펙트 실행
+ * - 루프 이펙트 실행
+ * - 소켓 기반 이펙트 실행
+ * - 이펙트 풀링 관리
+ * 
+ * @section effect_system 이펙트 시스템
+ * - PlayEffect: 기본 이펙트 실행
+ * - PlayEffectWithDelay: 지연 이펙트 실행
+ * - PlayEffectLoop: 루프 이펙트 실행
+ * - PlayEffectAtSocket: 소켓 기반 이펙트 실행
+ * 
+ * @author 이효원
+ * @date 2024-12-19
+ * @version 1.0
+ */
+/**
+ * @brief 보스 이펙트 컴포넌트 클래스
  * 
  * @details
  * 보스 캐릭터에 붙어서 이펙트 시스템을 관리하는 컴포넌트입니다.
  * 이펙트 재생 요청을 받아서 적절한 이펙트를 실행합니다.
+ * 
+ * @section design_patterns 설계 패턴
+ * - 컴포넌트 패턴: 언리얼 엔진 컴포넌트 시스템 활용
+ * - 팩토리 패턴: 다양한 이펙트 타입 생성
+ * - 풀 패턴: 이펙트 오브젝트 풀링
+ * - 전략 패턴: 다양한 이펙트 실행 전략
+ * 
+ * @section responsibilities 책임
+ * - 이펙트 재생 요청 처리
+ * - 이펙트 풀링 관리
+ * - 소켓 기반 이펙트 실행
+ * - 지연 및 루프 이펙트 관리
+ * - 이펙트 생명주기 관리
+ * 
+ * @section integration 연동 시스템
+ * - 이펙트 매니저: 이펙트 시스템 관리
+ * - 이펙트 실행기: 실제 이펙트 실행
+ * - 데이터 테이블: 이펙트 데이터 관리
+ * - 소켓 시스템: 소켓 기반 이펙트 위치
+ * 
+ * @section usage 사용법
+ * 1. 보스 블루프린트에 컴포넌트 추가
+ * 2. 이펙트 데이터 테이블 설정
+ * 3. 이펙트 재생 함수 호출
+ * 4. 풀 크기 및 설정 조정
  */
-UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class OPERRATION_DDT_API UBossEffectComponent : public UActorComponent
-{
-	GENERATED_BODY()
 
-public:	
-	UBossEffectComponent();
-
-protected:
+	//=== Public Functions ===
+	
+	// Lifecycle
 	virtual void BeginPlay() override;
-
-public:	
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 protected:
+	//=== Protected Variables ===
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effect Data")
 	class UDataTable* EffectDataTable;
 
@@ -39,6 +89,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effect Pool")
 	bool bAutoExpandPool = true;
 
+	//=== Public Variables ===
 	UPROPERTY(BlueprintReadOnly, Category = "Effect")
 	class UBossEffectManager* EffectManager;
 
@@ -245,25 +296,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Effect")
 	int32 GetAvailableEffectCount() const;
 
-protected:
-	/**
-	 * @brief 이펙트 매니저 초기화
-	 */
+private:
+	//=== Private Functions ===
 	void InitializeEffectManager();
-
-	/**
-	 * @brief 위치가 기본값인지 확인하고 보스 위치로 설정
-	 * 
-	 * @param InLocation 입력 위치
-	 * @return 실제 사용할 위치
-	 */
 	FVector GetEffectLocation(const FVector& InLocation);
-
-	/**
-	 * @brief 회전이 기본값인지 확인하고 보스 회전으로 설정
-	 * 
-	 * @param InRotation 입력 회전
-	 * @return 실제 사용할 회전
-	 */
 	FRotator GetEffectRotation(const FRotator& InRotation);
 };

@@ -1,5 +1,14 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+/**
+ * @file Task_Hovering.cpp
+ * @brief 호버링 태스크 구현 파일
+ * 
+ * @details
+ * StateTree에서 보스가 공중에서 호버링하는 태스크입니다.
+ * 비행 컴포넌트를 통해 호버링 상태를 시작하고 종료합니다.
+ * 
+ * @author 이효원
+ * @date 2024-12-19
+ */
 
 #include "Boss/Task/Task_Hovering.h"
 

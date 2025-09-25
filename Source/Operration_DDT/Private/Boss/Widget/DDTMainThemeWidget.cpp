@@ -1,5 +1,14 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+/**
+ * @file DDTMainThemeWidget.cpp
+ * @brief DDT 메인 테마 위젯 구현 파일
+ * 
+ * @details
+ * 게임의 메인 테마를 표시하는 위젯입니다.
+ * 오디오 컴포넌트를 통해 배경음악을 관리합니다.
+ * 
+ * @author 이효원
+ * @date 2024-12-19
+ */
 
 #include "Boss/Widget/DDTMainThemeWidget.h"
 #include "Components/AudioComponent.h"

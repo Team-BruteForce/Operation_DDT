@@ -1,4 +1,14 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+/**
+ * @file BossProjectileActor.h
+ * @brief 보스 프로젝타일 액터 헤더 파일
+ * 
+ * @details
+ * 보스의 프로젝타일을 구현하는 액터입니다.
+ * 나이아가라 이펙트와 프로젝타일 이동을 처리합니다.
+ * 
+ * @author 이효원
+ * @date 2024-12-19
+ */
 
 #pragma once
 
@@ -6,6 +16,12 @@
 #include "GameFramework/Actor.h"
 #include "BossProjectileActor.generated.h"
 
+/**
+ * @brief 보스 프로젝타일 액터
+ * 
+ * 보스의 프로젝타일을 구현하는 액터입니다.
+ * 나이아가라 이펙트와 프로젝타일 이동을 처리합니다.
+ */
 UCLASS()
 class OPERRATION_DDT_API ABossProjectileActor : public AActor
 {

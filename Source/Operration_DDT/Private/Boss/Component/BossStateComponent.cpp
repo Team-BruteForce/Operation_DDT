@@ -1,5 +1,14 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+/**
+ * @file BossStateComponent.cpp
+ * @brief 보스 상태 관리 컴포넌트 구현 파일
+ * 
+ * @details
+ * 보스 캐릭터의 상태를 관리하는 컴포넌트의 구현 파일입니다.
+ * StateTree와 연동하여 보스의 현재 상태를 추적하고 관리합니다.
+ * 
+ * @author 이효원
+ * @date 2024-12-19
+ */
 
 #include "Boss/Component/BossStateComponent.h"
 
@@ -7,11 +16,20 @@
 #include "Global.h"
 #include "Components/StateTreeComponent.h"
 
-// Sets default values for this component's properties
+/**
+ * @brief 보스 상태 컴포넌트 생성자
+ * 
+ * 컴포넌트의 기본 설정을 초기화합니다.
+ */
 UBossStateComponent::UBossStateComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
 }
+/**
+ * @brief 컴포넌트 시작 시 호출되는 함수
+ * 
+ * 소유자 Pawn을 캐스팅하고 초기화 작업을 수행합니다.
+ */
 void UBossStateComponent::BeginPlay()
 {
 	Super::BeginPlay();
@@ -22,6 +40,15 @@ void UBossStateComponent::BeginPlay()
 	// 초기 상태는 나중에 AI 컴포넌트가 준비되면 설정
 }
 
+/**
+ * @brief 컴포넌트 틱 함수
+ * 
+ * @param DeltaTime 델타 타임
+ * @param TickType 틱 타입
+ * @param ThisTickFunction 틱 함수
+ * 
+ * AI 컴포넌트 초기화 및 상태 업데이트를 처리합니다.
+ */
 void UBossStateComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);

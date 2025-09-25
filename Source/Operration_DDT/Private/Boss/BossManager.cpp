@@ -1,4 +1,14 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+/**
+ * @file BossManager.cpp
+ * @brief 보스 매니저의 핵심 로직을 구현하는 파일
+ * 
+ * @details
+ * 보스의 스폰, 초기화, 생명주기 관리를 담당합니다.
+ * 트리거 박스를 통해 플레이어 감지 및 보스 활성화 기능을 제공합니다.
+ * 
+ * @author 이효원
+ * @date 2024-12-19
+ */
 
 #include "Boss/BossManager.h"
 #include "Global.h"
@@ -16,6 +26,11 @@
 #include "Components/StateTreeAIComponent.h"
 #include "Engine/World.h"
 
+/**
+ * @brief 보스 매니저 생성자
+ * 
+ * 트리거 박스와 기본 설정을 초기화합니다.
+ */
 ABossManager::ABossManager()
 {
 	PrimaryActorTick.bCanEverTick = true;

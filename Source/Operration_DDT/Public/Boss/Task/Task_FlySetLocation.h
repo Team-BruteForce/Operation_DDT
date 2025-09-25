@@ -7,7 +7,9 @@
 #include "Task_FlySetLocation.generated.h"
 
 /**
- * 보스 호버링 관련 StateTree Task
+ * @brief 보스의 호버링 위치 설정을 담당하는 StateTree Task
+ * @details 보스가 공중에서 호버링할 때 목표 위치를 설정하고 관리합니다.
+ * @author 이효원
  */
 UCLASS()
 class OPERRATION_DDT_API UTask_FlySetLocation : public UStateTreeTaskBlueprintBase

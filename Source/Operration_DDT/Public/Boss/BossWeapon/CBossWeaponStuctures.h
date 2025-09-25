@@ -1,4 +1,14 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+/**
+ * @file CBossWeaponStuctures.h
+ * @brief 보스 웨폰 구조체 헤더 파일
+ * 
+ * @details
+ * 보스의 웨폰 관련 구조체들을 정의하는 파일입니다.
+ * 보스의 공격 패턴과 몽타주를 관리합니다.
+ * 
+ * @author 이효원
+ * @date 2024-12-19
+ */
 
 #pragma once
 

@@ -1,3 +1,15 @@
+/**
+ * @file STC_TimerCheck.cpp
+ * @brief 타이머 체크 조건 구현 파일
+ * 
+ * @details
+ * StateTree에서 타이머 기반 조건을 체크하는 조건입니다.
+ * 델타타임을 사용하여 시간 기반 조건을 확인합니다.
+ * 
+ * @author 이효원
+ * @date 2024-12-19
+ */
+
 #include "Boss/Condition/STC_TimerCheck.h"
 
 #include "StateTreeExecutionContext.h"

@@ -7,7 +7,9 @@
 #include "Task_TargetLocationFeet.generated.h"
 
 /**
- * 
+ * @brief 보스의 발 위치 기반 타겟 위치를 설정하는 StateTree Task
+ * @details 보스의 발 위치를 기준으로 타겟 위치를 계산하여 모션 매칭에 사용합니다.
+ * @author 이효원
  */
 UCLASS()
 class OPERRATION_DDT_API UTask_TargetLocationFeet : public UStateTreeTaskBlueprintBase

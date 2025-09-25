@@ -1,4 +1,14 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+/**
+ * @file BossEffectComponent.cpp
+ * @brief 보스 이펙트 컴포넌트 구현 파일
+ * 
+ * @details
+ * 보스의 이펙트 시스템을 관리하는 컴포넌트입니다.
+ * 이펙트 매니저와 실행기를 통해 다양한 이펙트를 처리합니다.
+ * 
+ * @author 이효원
+ * @date 2024-12-19
+ */
 
 #include "Boss/Component/BossEffectComponent.h"
 #include "Global.h"

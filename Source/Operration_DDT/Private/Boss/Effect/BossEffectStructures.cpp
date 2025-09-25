@@ -1,4 +1,14 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+/**
+ * @file BossEffectStructures.cpp
+ * @brief 보스 이펙트 구조체 구현 파일
+ * 
+ * @details
+ * 보스의 이펙트 관련 구조체들을 구현하는 파일입니다.
+ * 이펙트 데이터와 나이아가라 시스템을 관리합니다.
+ * 
+ * @author 이효원
+ * @date 2024-12-19
+ */
 
 #include "Boss/Effect/BossEffectStructures.h"
 #include "Global.h"

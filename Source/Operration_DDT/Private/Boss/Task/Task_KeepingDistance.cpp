@@ -1,4 +1,14 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+/**
+ * @file Task_KeepingDistance.cpp
+ * @brief 거리 유지 태스크 구현 파일
+ * 
+ * @details
+ * StateTree에서 보스가 플레이어와의 거리를 유지하는 태스크입니다.
+ * 이동 컴포넌트를 통해 적절한 거리를 유지하며 이동합니다.
+ * 
+ * @author 이효원
+ * @date 2024-12-19
+ */
 
 #include "Boss/Task/Task_KeepingDistance.h"
 #include "Global.h"

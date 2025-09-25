@@ -15,139 +15,130 @@
 #include "CBossMovementComponent.generated.h"
 
 /**
+ * @file CBossMovementComponent.h
+ * @brief 보스 이동 관리 컴포넌트 헤더 파일
+ * 
+ * @section overview 개요
+ * 이 파일은 보스 캐릭터의 이동 로직을 관리하는 컴포넌트를 정의합니다.
+ * 플레이어 추적, 부드러운 회전, 이동 패턴 등을 처리합니다.
+ * 
+ * @section architecture 아키텍처
+ * - UCBossMovementComponent: 보스 이동 관리 메인 컴포넌트
+ * - 플레이어 추적 시스템
+ * - 백스탭 위치 계산 시스템
+ * - 거리 유지 시스템
+ * 
+ * @section features 주요 기능
+ * - 플레이어 방향으로 부드러운 회전
+ * - 백스탭 위치 자동 계산
+ * - Nav Mesh 기반 안전 위치 검색
+ * - 거리 기반 이동 제어
+ * - 디버그 시각화
+ * 
+ * @section movement_system 이동 시스템
+ * - RotateTowardsPlayer: 플레이어 방향 회전
+ * - FindBackstepPosition: 백스탭 위치 계산
+ * - ExecuteSmartMovement: 거리 유지 이동
+ * - CalculatePlayerDistance: 거리 계산
+ * 
+ * @author 이효원
+ * @date 2024-12-19
+ * @version 1.0
+ */
+/**
  * @brief 보스 이동 관리 컴포넌트 클래스
  * 
+ * @details
  * 보스 캐릭터의 이동 로직을 관리하는 컴포넌트입니다.
  * 플레이어 추적, 부드러운 회전, 이동 패턴 등을 처리합니다.
+ * 
+ * @section design_patterns 설계 패턴
+ * - 컴포넌트 패턴: 언리얼 엔진 컴포넌트 시스템 활용
+ * - 전략 패턴: 다양한 이동 전략 지원
+ * - 옵저버 패턴: 디버그 정보 시각화
+ * 
+ * @section responsibilities 책임
+ * - 플레이어 방향 회전 관리
+ * - 백스탭 위치 계산 및 검증
+ * - Nav Mesh 기반 안전 위치 검색
+ * - 거리 기반 이동 제어
+ * - 디버그 정보 제공
+ * 
+ * @section integration 연동 시스템
+ * - AI 컨트롤러: 이동 명령 전달
+ * - 타겟팅 컴포넌트: 플레이어 위치 정보
+ * - 비행 컴포넌트: 공중 이동 지원
+ * - StateTree: 이동 상태 관리
+ * 
+ * @section usage 사용법
+ * 1. 보스 블루프린트에 컴포넌트 추가
+ * 2. 이동 관련 함수 호출
+ * 3. 디버그 정보 확인
+ * 4. StateTree와 연동
  */
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class OPERRATION_DDT_API UCBossMovementComponent : public UActorComponent
-{
-	GENERATED_BODY()
 
-public:	
-	/**
-	 * @brief 생성자
-	 */
-	UCBossMovementComponent();
-
-protected:
-	/**
-	 * @brief 게임 시작 시 호출되는 함수
-	 */
+	//=== Public Functions ===
+	
+	// Lifecycle
 	virtual void BeginPlay() override;
-
-public:	
-	/**
-	 * @brief 매 프레임 호출되는 틱 함수
-	 * 
-	 * @param DeltaTime 프레임 간 시간 간격
-	 * @param TickType 틱 타입
-	 * @param ThisTickFunction 틱 함수 정보
-	 */
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	/**
-	 * @brief 플레이어 방향으로 부드럽게 회전하는 함수
-	 * 
-	 * @param DeltaTime 델타 타임
-	 * @param RotationSpeed 회전 속도 (높을수록 빠름)
-	 */
+	// Player Tracking
 	UFUNCTION(BlueprintCallable, Category="Player Tracking")
 	void RotateTowardsPlayer(float DeltaTime, float RotationSpeed = 5.0f);
-
-	// ===== 백스탭 위치 찾기 함수들 =====
-	
-	/**
-	 * @brief 플레이어 기준 360도 영역에서 백스탭 가능한 위치를 찾습니다.
-	 * 
-	 * @param BackstepDistance 백스탭 거리
-	 * @return 백스탭 위치
-	 */
-	UFUNCTION(BlueprintCallable, Category="Backstep Movement")
-	FVector FindBackstepPosition();
-
-	/**
-	 * @brief Nav Mesh를 사용하여 특정 방향에서 안전한 위치를 찾습니다.
-	 * 
-	 * @param Direction 검색 방향
-	 * @param Distance 검색 거리
-	 * @return 안전한 위치
-	 */
-	FVector FindSafePositionOnNavMesh(const FVector& Direction, float Distance);
-
-	/**
-	 * @brief 위치가 플레이어로부터 충분히 떨어져 있는지 확인합니다.
-	 * 
-	 * @param Position 확인할 위치
-	 * @param MinDistanceFromPlayer 최소 거리
-	 * @return 안전 여부
-	 */
-	bool IsPositionFarFromPlayer(const FVector& Position, float MinDistanceFromPlayer);
-
-	/**
-	 * @brief 플레이어와의 거리를 계산합니다.
-	 * 
-	 * @param OutTargetLocation 타겟 위치
-	 * @param OutOwnerLocation 소유자 위치
-	 * @param OutDirectionToTarget 타겟으로의 방향
-	 * @param OutCurrentDistance 현재 거리
-	 */
-	UFUNCTION(BlueprintCallable, Category="Distance Calculation")
-	void CalculatePlayerDistance(FVector& OutTargetLocation, FVector& OutOwnerLocation, 
-		FVector& OutDirectionToTarget, float& OutCurrentDistance);
 	
 	UFUNCTION(BlueprintCallable, Category="Target Look")
 	void LookAtTarget(const FVector& DirectionToTarget);
 	
-	/**
-	 * @brief 거리 유지 기능을 수행하는 함수
-	 * 
-	 * @param DeltaTime 델타 타임
-	 * @param MinDistance 최소 거리
-	 * @param MaxDistance 최대 거리
-	 */
+	class APawn* FindPlayer();
+
+	// Movement Functions
+	UFUNCTION(BlueprintCallable, Category="Backstep Movement")
+	FVector FindBackstepPosition();
+	
 	UFUNCTION(BlueprintCallable, Category="Movement")
 	void ExecuteSmartMovement(float DeltaTime, float MinDistance, float MaxDistance);
+
+	// Distance Calculation
+	UFUNCTION(BlueprintCallable, Category="Distance Calculation")
+	void CalculatePlayerDistance(FVector& OutTargetLocation, FVector& OutOwnerLocation, 
+		FVector& OutDirectionToTarget, float& OutCurrentDistance);
+
+	// State Management
+	FGameplayTag GetPlayerMovementStateTag();
+	void SetMovementStateWalk();
+	void SetMovementStateFly();
+	
+	UFUNCTION(BlueprintCallable, Category = "Boss Reset")
+	void ResetMovementSystem();
+
+	// Debug Functions
 	FVector GetDebugTargetLocation() const;
 	FVector GetDebugOwnerLocation() const;
 	FVector GetDebugClosestPosition() const;
 	float GetDebugCurrentDistance() const;
 
-	/**
-	 * @brief 플레이어 움직임 상태 태그를 반환하는 함수
-	 * 
-	 * @return 플레이어 움직임에 따른 상태 태그
-	 */
-	FGameplayTag GetPlayerMovementStateTag();
+	//=== Public Variables ===
+	UPROPERTY()
+	FVector SafePosition;
 	
+	UPROPERTY(EditAnywhere)
+	bool IsFlying = false;
 
-	void SetMovementStateWalk();
-	void SetMovementStateFly();
-	
-	/**
-	 * @brief 플레이어를 찾는 함수
-	 * 
-	 * @return 찾은 플레이어 액터, 없으면 nullptr
-	 */
-public:
-	class APawn* FindPlayer();
+protected:
+	//=== Protected Functions ===
+	FVector FindSafePositionOnNavMesh(const FVector& Direction, float Distance);
+	bool IsPositionFarFromPlayer(const FVector& Position, float MinDistanceFromPlayer);
 
-	/**
-	 * @brief 보스 이동 시스템 완전 초기화 (매니저용)
-	 * 
-	 * @details
-	 * 모든 이동 관련 상태를 초기화하고 기본 이동 상태로 리셋합니다.
-	 * 보스 매니저에서 보스 리셋 시 사용됩니다.
-	 */
-	UFUNCTION(BlueprintCallable, Category = "Boss Reset")
-	void ResetMovementSystem();
+	//=== Protected Variables ===
+	UPROPERTY(EditAnywhere)
+	FBossTargetState TargetStateTag;
+
 private:
-	/** 소유자 액터 */
+	//=== Private Variables ===
 	UPROPERTY()
 	class ACharacter* Owner;
 	
-	/** AI 컨트롤러 */
 	UPROPERTY()
 	class AAIController* AIC;
 
@@ -157,16 +148,7 @@ private:
 	UPROPERTY()
 	class UFlyingComponent* FlyingComponent;
 
-	UPROPERTY(EditAnywhere)
-	FBossTargetState TargetStateTag;
-
-public:
-	UPROPERTY()
-	FVector SafePosition;
-	UPROPERTY(EditAnywhere)
-	bool IsFlying=false;
-private:
-	// 디버그 데이터 변수들
+	// Debug data
 	FVector DebugTargetLocation;
 	FVector DebugOwnerLocation;
 	FVector DebugClosestPosition;

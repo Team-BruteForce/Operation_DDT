@@ -1,4 +1,14 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+/**
+ * @file BossProjectileComponent.h
+ * @brief 보스 프로젝타일 컴포넌트 헤더 파일
+ * 
+ * @details
+ * 보스 캐릭터의 프로젝타일 발사 기능을 관리하는 컴포넌트입니다.
+ * 다양한 타입의 프로젝타일과 오브 생성 기능을 제공합니다.
+ * 
+ * @author 이효원
+ * @date 2024-12-19
+ */
 
 #pragma once
 
@@ -12,7 +22,9 @@
 #include "BossProjectileComponent.generated.h"
 
 /**
- * 
+ * @brief 보스 프로젝타일 컴포넌트
+ * @details 보스 캐릭터의 프로젝타일 발사 기능을 담당합니다. 다양한 타입의 프로젝타일과 오브 생성 기능을 제공합니다.
+ * @author 이효원
  */
 UCLASS(BlueprintType)
 class OPERRATION_DDT_API UBossProjectileComponent : public UActorComponent

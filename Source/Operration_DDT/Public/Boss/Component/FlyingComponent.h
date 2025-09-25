@@ -22,9 +22,8 @@ enum class EFlyingState : uint8
 
 /**
  * @brief 보스 비행 컴포넌트
- * 
- * 보스 캐릭터의 비행 기능을 담당합니다.
- * 이륙/착륙, 고도 유지, 스플라인 기반 궤도 이동을 제공합니다.
+ * @details 보스 캐릭터의 비행 기능을 담당합니다. 이륙/착륙, 고도 유지, 스플라인 기반 궤도 이동을 제공합니다.
+ * @author 이효원
  */
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class OPERRATION_DDT_API UFlyingComponent : public UActorComponent

@@ -2,12 +2,29 @@
  * @file Task_Action.h
  * @brief 보스 액션 태스크 헤더 파일
  * 
- * @details
- * 보스의 액션을 관리하는 태스크를 정의합니다.
+ * @section overview 개요
+ * 이 파일은 보스의 액션을 관리하는 태스크를 정의합니다.
  * StateTree 기반 태스크 시스템을 사용하여 액션 상태를 관리합니다.
  * 
- * @author [개발자명]
+ * @section architecture 아키텍처
+ * - UTask_Action: 보스 액션 관리 메인 태스크
+ * - StateTree 태스크 시스템
+ * - 액션 상태 관리 시스템
+ * 
+ * @section features 주요 기능
+ * - 액션 상태 관리
+ * - StateTree 연동
+ * - 블루프린트 기반 태스크
+ * - 액션 전환 처리
+ * 
+ * @section action_system 액션 시스템
+ * - 액션 상태 관리
+ * - StateTree 연동
+ * - 액션 전환 처리
+ * 
+ * @author 이효원
  * @date 2024-12-19
+ * @version 1.0
  */
 
 #pragma once
@@ -17,13 +34,35 @@
 #include "Task_Action.generated.h"
 
 /**
- * @brief 보스 액션 태스크
+ * @brief 보스 액션 태스크 클래스
  * 
+ * @details
  * 보스의 액션을 관리하는 태스크입니다.
  * StateTree 기반 태스크 시스템을 사용하여 액션 상태를 관리합니다.
+ * 
+ * @section design_patterns 설계 패턴
+ * - 태스크 패턴: StateTree 태스크 시스템 활용
+ * - 상태 패턴: 액션 상태 관리
+ * - 전략 패턴: 다양한 액션 전략 지원
+ * 
+ * @section responsibilities 책임
+ * - 액션 상태 관리
+ * - StateTree 연동
+ * - 액션 전환 처리
+ * - 블루프린트 기반 태스크 실행
+ * 
+ * @section integration 연동 시스템
+ * - StateTree: 태스크 실행 관리
+ * - 보스 캐릭터: 액션 실행
+ * - 액션 시스템: 액션 상태 관리
+ * - 블루프린트: 태스크 구현
+ * 
+ * @section usage 사용법
+ * 1. StateTree에 태스크 추가
+ * 2. 액션 상태 설정
+ * 3. 태스크 실행
+ * 4. 액션 전환 처리
  */
-UCLASS()
-class OPERRATION_DDT_API UTask_Action : public UStateTreeTaskBlueprintBase
 {
 	GENERATED_BODY()
 protected:

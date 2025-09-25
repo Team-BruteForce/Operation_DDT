@@ -1,4 +1,14 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+/**
+ * @file CBossWeapon.h
+ * @brief 보스 웨폰 헤더 파일
+ * 
+ * @details
+ * 보스의 웨폰 시스템을 구현하는 액터입니다.
+ * 웨폰의 콜리전과 공격 로직을 처리합니다.
+ * 
+ * @author 이효원
+ * @date 2024-12-19
+ */
 
 #pragma once
 
@@ -10,6 +20,12 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE ( FBossAttachmentEndCollision );
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams ( FBossAttachmentBeginOverlap , class ACharacter* , InAttacker , AActor* , InAttackCuaser , class ACharacter* , InOther );
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams ( FBossAttachmentEndOverlap , class ACharacter* , InAttacker , class ACharacter* , InOther );
+/**
+ * @brief 보스 웨폰
+ * 
+ * 보스의 웨폰 시스템을 구현하는 액터입니다.
+ * 웨폰의 콜리전과 공격 로직을 처리합니다.
+ */
 UCLASS()
 class OPERRATION_DDT_API ACBossWeapon : public AActor
 {

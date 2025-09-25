@@ -1,4 +1,14 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+/**
+ * @file BossProjectileOrb.h
+ * @brief 보스 프로젝타일 오브 헤더 파일
+ * 
+ * @details
+ * 보스의 오브 프로젝타일을 구현하는 액터입니다.
+ * 타겟팅 컴포넌트와 연동하여 플레이어를 추적합니다.
+ * 
+ * @author 이효원
+ * @date 2024-12-19
+ */
 
 #pragma once
 
@@ -7,6 +17,12 @@
 #include "BossProjectileActor.h"
 #include "BossProjectileOrb.generated.h"
 
+/**
+ * @brief 보스 프로젝타일 오브
+ * 
+ * 보스의 오브 프로젝타일을 구현하는 액터입니다.
+ * 타겟팅 컴포넌트와 연동하여 플레이어를 추적합니다.
+ */
 UCLASS()
 class OPERRATION_DDT_API ABossProjectileOrb : public AActor
 {

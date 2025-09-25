@@ -1,5 +1,14 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+/**
+ * @file BossDebugComponent.cpp
+ * @brief 보스 디버그 컴포넌트 구현 파일
+ * 
+ * @details
+ * 보스의 디버그 정보를 표시하는 컴포넌트입니다.
+ * 디버그 드로잉과 로그 출력을 통해 보스의 상태를 시각화합니다.
+ * 
+ * @author 이효원
+ * @date 2024-12-19
+ */
 
 #include "Boss/Component/BossDebugComponent.h"
 #include "DrawDebugHelpers.h"

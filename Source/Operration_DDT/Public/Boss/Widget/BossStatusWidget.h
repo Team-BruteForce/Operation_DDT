@@ -1,4 +1,14 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+/**
+ * @file BossStatusWidget.h
+ * @brief 보스 상태 위젯 헤더 파일
+ * 
+ * @details
+ * 보스의 상태를 표시하는 UI 위젯입니다.
+ * 보스의 체력과 페이즈 상태를 시각화합니다.
+ * 
+ * @author 이효원
+ * @date 2024-12-19
+ */
 
 #pragma once
 
@@ -7,7 +17,10 @@
 #include "BossStatusWidget.generated.h"
 
 /**
+ * @brief 보스 상태 위젯
  * 
+ * 보스의 상태를 표시하는 UI 위젯입니다.
+ * 보스의 체력과 페이즈 상태를 시각화합니다.
  */
 UCLASS()
 class OPERRATION_DDT_API UBossStatusWidget : public UUserWidget
@@ -41,9 +54,6 @@ public:
 
 	UPROPERTY(EditAnywhere,BlueprintReadOnly,meta = (BindWidgetAnim),Transient)
 	class UWidgetAnimation* BlackBoard;
-	
-	UPROPERTY(EditAnywhere,BlueprintReadOnly)
-	class USoundBase* VictorySound;
 
 	UPROPERTY()
 	FTimerHandle Hander;
@@ -62,6 +72,9 @@ public:
 
 	UPROPERTY()
 	FTimerHandle SmoothHPTimer;
+
+	UPROPERTY()
+	class USoundBase* VictorySound;
 
 	virtual void NativeConstruct() override;
 

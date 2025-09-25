@@ -7,7 +7,9 @@
 #include "Task_TargetLocatonGap.generated.h"
 
 /**
- * 
+ * @brief 보스와 타겟 간의 거리 유지를 위한 위치 계산 StateTree Task
+ * @details 보스가 타겟과 일정한 거리를 유지하면서 위치를 조정할 때 사용됩니다.
+ * @author 이효원
  */
 UCLASS()
 class OPERRATION_DDT_API UTask_TargetLocatonGap : public UStateTreeTaskBlueprintBase

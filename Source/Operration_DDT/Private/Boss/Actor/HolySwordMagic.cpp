@@ -1,5 +1,14 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+/**
+ * @file HolySwordMagic.cpp
+ * @brief 성검 마법 액터 구현 파일
+ * 
+ * @details
+ * 보스의 성검 마법 스킬을 구현하는 액터입니다.
+ * 박스 컴포넌트와 나이아가라 이펙트를 사용합니다.
+ * 
+ * @author 이효원
+ * @date 2024-12-19
+ */
 
 #include "Boss/Actor/HolySwordMagic.h"
 #include "Components/BoxComponent.h"

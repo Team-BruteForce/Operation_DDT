@@ -1,4 +1,14 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+/**
+ * @file AnimNotify_PlayEffect.cpp
+ * @brief 이펙트 재생 애니메이션 노티파이 구현 파일
+ * 
+ * @details
+ * 애니메이션 시퀀스에서 이펙트를 재생하는 노티파이입니다.
+ * 다양한 이펙트 함수 타입과 위치, 회전, 스케일 설정을 지원합니다.
+ * 
+ * @author 이효원
+ * @date 2024-12-19
+ */
 
 #include "Boss/Notifies/AnimNotify_PlayEffect.h"
 #include "Global.h"

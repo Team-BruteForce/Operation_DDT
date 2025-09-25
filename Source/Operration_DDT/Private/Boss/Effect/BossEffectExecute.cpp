@@ -1,4 +1,14 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+/**
+ * @file BossEffectExecute.cpp
+ * @brief 보스 이펙트 실행기 구현 파일
+ * 
+ * @details
+ * 보스의 이펙트 실행을 담당하는 컴포넌트입니다.
+ * 이펙트 매니저와 연동하여 이펙트를 실행하고 관리합니다.
+ * 
+ * @author 이효원
+ * @date 2024-12-19
+ */
 
 #include "Boss/Effect/BossEffectExecute.h"
 #include "Global.h"

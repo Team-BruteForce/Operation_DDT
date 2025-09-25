@@ -1,4 +1,14 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+/**
+ * @file BossEffectManager.cpp
+ * @brief 보스 이펙트 매니저 구현 파일
+ * 
+ * @details
+ * 보스의 이펙트 시스템을 관리하는 매니저입니다.
+ * 데이터 테이블과 이펙트 풀링을 통해 이펙트를 효율적으로 관리합니다.
+ * 
+ * @author 이효원
+ * @date 2024-12-19
+ */
 
 #include "Boss/Effect/BossEffectManager.h"
 #include "Global.h"

@@ -1,4 +1,15 @@
-// TagRegistryRow.h
+/**
+ * @file TagRegistryRow.h
+ * @brief 태그 레지스트리 행 헤더 파일
+ * 
+ * @details
+ * 게임플레이 태그의 레지스트리 행을 정의하는 파일입니다.
+ * 태그의 카테고리와 메타데이터를 관리합니다.
+ * 
+ * @author 이효원
+ * @date 2024-12-19
+ */
+
 #pragma once
 #include "CoreMinimal.h"
 #include "Engine/DataTable.h"

@@ -1,5 +1,14 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+/**
+ * @file Task_SetVectorTargetLocation.cpp
+ * @brief 벡터 타겟 위치 설정 태스크 구현 파일
+ * 
+ * @details
+ * StateTree에서 보스의 벡터 타겟 위치를 설정하는 태스크입니다.
+ * 모션 워핑 컴포넌트와 타겟팅 컴포넌트를 사용합니다.
+ * 
+ * @author 이효원
+ * @date 2024-12-19
+ */
 
 #include "Boss/Task/Task_SetVectorTargetLocation.h"
 #include "Global.h"

@@ -1,4 +1,14 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+/**
+ * @file BossStatusWidget.cpp
+ * @brief 보스 상태 위젯 구현 파일
+ * 
+ * @details
+ * 보스의 상태를 표시하는 UI 위젯입니다.
+ * 보스의 체력과 페이즈 상태를 시각화합니다.
+ * 
+ * @author 이효원
+ * @date 2024-12-19
+ */
 
 #include "Boss/Widget/BossStatusWidget.h"
 

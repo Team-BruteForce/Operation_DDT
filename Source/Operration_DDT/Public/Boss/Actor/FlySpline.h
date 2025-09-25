@@ -1,4 +1,14 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+/**
+ * @file FlySpline.h
+ * @brief 비행 스플라인 액터 헤더 파일
+ * 
+ * @details
+ * 보스의 비행 경로를 정의하는 스플라인 액터입니다.
+ * 실린더 메시와 스플라인 컴포넌트를 통해 비행 궤도를 시각화합니다.
+ * 
+ * @author 이효원
+ * @date 2024-12-19
+ */
 
 #pragma once
 
@@ -6,6 +16,12 @@
 #include "GameFramework/Actor.h"
 #include "FlySpline.generated.h"
 
+/**
+ * @brief 비행 스플라인 액터
+ * 
+ * 보스의 비행 경로를 정의하는 스플라인 액터입니다.
+ * 실린더 메시와 스플라인 컴포넌트를 통해 비행 궤도를 시각화합니다.
+ */
 UCLASS()
 class OPERRATION_DDT_API AFlySpline : public AActor
 {

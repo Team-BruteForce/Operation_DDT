@@ -7,7 +7,9 @@
 #include "Task_SetCurrentAction.generated.h"
 
 /**
- * 
+ * @brief 보스의 현재 액션 상태를 변경하는 StateTree Task
+ * @details 보스의 GameplayTag를 통해 현재 실행 중인 액션을 변경합니다.
+ * @author 이효원
  */
 UCLASS()
 class OPERRATION_DDT_API UTask_SetCurrentAction : public UStateTreeTaskBlueprintBase

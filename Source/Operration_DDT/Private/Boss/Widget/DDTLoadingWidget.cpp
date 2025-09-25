@@ -1,5 +1,14 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+/**
+ * @file DDTLoadingWidget.cpp
+ * @brief DDT 로딩 위젯 구현 파일
+ * 
+ * @details
+ * 게임의 로딩 화면을 표시하는 위젯입니다.
+ * 플레이어 입력과 UI 컴포넌트를 관리합니다.
+ * 
+ * @author 이효원
+ * @date 2024-12-19
+ */
 
 #include "Boss/Widget/DDTLoadingWidget.h"
 
