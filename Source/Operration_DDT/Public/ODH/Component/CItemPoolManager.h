@@ -55,6 +55,20 @@ public:
     UFUNCTION(BlueprintCallable, BlueprintPure, Category="ItemPool")
     int32 GetTotalPooledCount() const { return TotalCount; }
 
+    /**
+     * @brief 모든 활성화된 아이템들을 풀로 반환하는 초기화 함수
+     * 플레이어 리스폰 시 호출하여 레벨에 남아있는 아이템들을 정리
+     */
+    UFUNCTION(BlueprintCallable, Category = "ItemPool")
+    void ResetAllActiveItems();
+    
+    /**
+     * @brief 특정 클래스의 모든 활성 아이템들을 풀로 반환
+     * @param ItemClass 초기화할 아이템 클래스 (nullptr이면 모든 클래스)
+     */
+    UFUNCTION(BlueprintCallable, Category = "ItemPool")
+    void ResetActiveItemsOfClass(TSubclassOf<AActor> ItemClass = nullptr);
+
 public:
     // 풀에서 보유 가능한 총 아이템 수(활성+비활성 합산)
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ItemPool")

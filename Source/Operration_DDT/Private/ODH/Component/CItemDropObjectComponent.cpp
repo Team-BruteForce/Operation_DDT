@@ -11,7 +11,6 @@ UCItemDropObjectComponent::UCItemDropObjectComponent()
     
     // 초기 체력 설정
     CurrentHealth = MaxHealth;
-    CurrentRespawnTimer = 0.0f;
     bIsDestroyed = false;
     bItemDropped = false;
 }
@@ -24,6 +23,10 @@ void UCItemDropObjectComponent::BeginPlay()
     AActor* Owner = GetOwner();
     if (Owner)
     {
+        // 초기 위치와 회전 저장
+        InitialLocation = Owner->GetActorLocation();
+        InitialRotation = Owner->GetActorRotation();
+        
         // ItemDropComponent 찾기
         ItemDropComponent = Owner->FindComponentByClass<UCItemDropComponent>();
         
@@ -37,8 +40,8 @@ void UCItemDropObjectComponent::BeginPlay()
                    *Owner->GetName());
         }
         
-        UE_LOG(LogTemp, Log, TEXT("UCItemDropObjectComponent: BeginPlay completed - %s"), 
-               *Owner->GetName());
+        UE_LOG(LogTemp, Log, TEXT("UCItemDropObjectComponent: BeginPlay completed - %s at location %s"), 
+               *Owner->GetName(), *InitialLocation.ToString());
     }
     
     // 초기 체력을 최대 체력으로 설정
@@ -52,11 +55,7 @@ void UCItemDropObjectComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 {
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
     
-    // 파괴된 상태일 때만 리스폰 타이머 업데이트
-    if (bIsDestroyed)
-    {
-        UpdateRespawnTimer(DeltaTime);
-    }
+    // 타이머 기반 리스폰 기능 제거됨 - 외부에서 수동으로 RespawnObject() 호출
 }
 
 void UCItemDropObjectComponent::TakeDamage(float DamageAmount)
@@ -115,13 +114,9 @@ void UCItemDropObjectComponent::TakeDamage(float DamageAmount)
 
 void UCItemDropObjectComponent::RespawnObject()
 {
-    // IsRespawn이 false이면 리스폰하지 않음
-    if (!IsRespawn)
-    {
-        UE_LOG(LogTemp, Log, TEXT("UCItemDropObjectComponent: Respawn disabled, not respawning - %s"), 
-               *GetOwner()->GetName());
-        return;
-    }
+    // 강제 초기화: IsRespawn 조건 무시하고 항상 초기화
+    AActor* Owner = GetOwner();
+    if (!Owner) return;
     
     // 체력을 최대치로 복구
     CurrentHealth = MaxHealth;
@@ -131,8 +126,8 @@ void UCItemDropObjectComponent::RespawnObject()
     bItemDropped = false;
     HitCount = 0;
     
-    // 리스폰 타이머 리셋
-    CurrentRespawnTimer = 0.0f;
+    // 초기 위치와 회전으로 복구
+    Owner->SetActorLocationAndRotation(InitialLocation, InitialRotation);
     
     // Mesh 다시 보이게 설정
     SetMeshVisibility(true);
@@ -140,8 +135,8 @@ void UCItemDropObjectComponent::RespawnObject()
     // 리스폰 이벤트 브로드캐스트
     OnObjectRespawned.Broadcast();
     
-    UE_LOG(LogTemp, Log, TEXT("UCItemDropObjectComponent: Object respawned successfully - %s"), 
-           *GetOwner()->GetName());
+    UE_LOG(LogTemp, Log, TEXT("UCItemDropObjectComponent: Object forcefully respawned at initial location - %s"), 
+           *Owner->GetName());
 }
 
 void UCItemDropObjectComponent::HandleObjectDestroyed()
@@ -170,25 +165,6 @@ void UCItemDropObjectComponent::HandleObjectDestroyed()
     }
 }
 
-void UCItemDropObjectComponent::UpdateRespawnTimer(float DeltaTime)
-{
-    // IsRespawn이 false이면 리스폰 타이머 업데이트 안함
-    if (!IsRespawn)
-    {
-        return;
-    }
-    
-    // 리스폰 타이머 감소
-    CurrentRespawnTimer -= DeltaTime;
-    
-    // 타이머가 0 이하가 되면 리스폰
-    if (CurrentRespawnTimer <= 0.0f)
-    {
-        UE_LOG(LogTemp, Log, TEXT("UCItemDropObjectComponent: Respawn time reached, respawning object - %s"), 
-               *GetOwner()->GetName());
-        RespawnObject();
-    }
-}
 
 void UCItemDropObjectComponent::SetMeshVisibility(bool bVisible)
 {
@@ -273,19 +249,9 @@ void UCItemDropObjectComponent::DelayedDestroy()
     // 파괴 이벤트 브로드캐스트
     OnObjectDestroyed.Broadcast();
     
-    // IsRespawn이 true일 때만 리스폰 타이머 시작
-    if (IsRespawn)
-    {
-        CurrentRespawnTimer = RespawnTime;
-        UE_LOG(LogTemp, Log, TEXT("UCItemDropObjectComponent: Mesh hidden, respawn timer started (%f seconds) - %s"), 
-               RespawnTime, *GetOwner()->GetName());
-    }
-    else
-    {
-        CurrentRespawnTimer = 0.0f; // 리스폰 안함
-        UE_LOG(LogTemp, Log, TEXT("UCItemDropObjectComponent: Mesh hidden, respawn disabled - %s"), 
-               *GetOwner()->GetName());
-    }
+    // 타이머 기반 리스폰 기능 제거됨 - 외부에서 수동으로 RespawnObject() 호출
+    UE_LOG(LogTemp, Log, TEXT("UCItemDropObjectComponent: Mesh hidden, object destroyed - %s"), 
+           *GetOwner()->GetName());
 }
 
 void UCItemDropObjectComponent::SetHitMeshComponent1(UStaticMeshComponent* MeshComp)

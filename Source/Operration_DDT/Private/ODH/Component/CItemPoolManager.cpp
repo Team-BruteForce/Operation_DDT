@@ -122,4 +122,63 @@ void AItemPoolManager::ReleaseItem(AActor* ItemActor)
     }
 }
 
+void AItemPoolManager::ResetAllActiveItems()
+{
+    int32 ResetCount = 0;
+    
+    // 모든 클래스 버킷을 순회
+    for (auto& Pair : ClassToBucket)
+    {
+        TSubclassOf<AActor> ItemClass = Pair.Key;
+        FItemPoolBucket& Bucket = Pair.Value;
+        
+        // 해당 클래스의 활성 아이템들을 모두 풀로 반환
+        TArray<AActor*> ActiveItemsCopy = Bucket.ActiveItems;
+        for (AActor* Item : ActiveItemsCopy)
+        {
+            if (IsValid(Item))
+            {
+                // ReleaseItem 함수를 사용하여 안전하게 반환
+                ReleaseItem(Item);
+                ResetCount++;
+            }
+        }
+    }
+    
+    UE_LOG(LogTemp, Log, TEXT("ItemPoolManager: Reset %d active items to pool"), ResetCount);
+}
+
+void AItemPoolManager::ResetActiveItemsOfClass(TSubclassOf<AActor> ItemClass)
+{
+    if (!ItemClass)
+    {
+        // ItemClass가 nullptr이면 모든 아이템 초기화
+        ResetAllActiveItems();
+        return;
+    }
+    
+    FItemPoolBucket* Bucket = ClassToBucket.Find(ItemClass);
+    if (!Bucket)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("ItemPoolManager: No bucket found for class %s"), 
+               *ItemClass->GetName());
+        return;
+    }
+    
+    int32 ResetCount = 0;
+    TArray<AActor*> ActiveItemsCopy = Bucket->ActiveItems;
+    
+    for (AActor* Item : ActiveItemsCopy)
+    {
+        if (IsValid(Item))
+        {
+            ReleaseItem(Item);
+            ResetCount++;
+        }
+    }
+    
+    UE_LOG(LogTemp, Log, TEXT("ItemPoolManager: Reset %d %s items to pool"), 
+           ResetCount, *ItemClass->GetName());
+}
+
 

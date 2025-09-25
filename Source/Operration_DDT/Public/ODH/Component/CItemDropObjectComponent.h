@@ -98,7 +98,7 @@ protected:
 private:
     // 체력 관련
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health", meta = (AllowPrivateAccess = "true"))
-    float MaxHealth = 100.0f;
+    float MaxHealth = 50.0f;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Health", meta = (AllowPrivateAccess = "true"))
     float CurrentHealth;
@@ -164,4 +164,12 @@ private:
     // 누적 타격 횟수 (홀수일 때 드랍)
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State", meta = (AllowPrivateAccess = "true"))
     int32 HitCount = 0;
+
+    // 초기 위치 저장 (BeginPlay에서 저장됨)
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Initial State", meta = (AllowPrivateAccess = "true"))
+    FVector InitialLocation = FVector::ZeroVector;
+
+    // 초기 회전 저장 (BeginPlay에서 저장됨)
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Initial State", meta = (AllowPrivateAccess = "true"))
+    FRotator InitialRotation = FRotator::ZeroRotator;
 };

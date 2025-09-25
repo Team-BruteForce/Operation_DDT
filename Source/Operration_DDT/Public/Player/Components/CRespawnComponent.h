@@ -52,6 +52,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Respawn")
 	float GetRespawnDelay() const { return RespawnDelay; }
 
+	// 모든 ItemDropObject 초기화
+	UFUNCTION(BlueprintCallable, Category = "Respawn")
+	void ResetAllItemDropObjects();
+
 	// 부활 델리게이트
 	UPROPERTY(BlueprintAssignable, Category = "Respawn")
 	FOnPlayerDeath OnPlayerDeath;

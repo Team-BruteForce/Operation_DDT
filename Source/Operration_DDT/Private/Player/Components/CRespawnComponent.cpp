@@ -17,6 +17,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "ODH/ODH_Enemy/Interface/AllEnemyRestart.h"
 #include "ODH/ODH_Enemy/CCombatEncounterManager.h"
+#include "ODH/Component/CItemPoolManager.h"
+#include "ODH/Component/CItemDropObjectComponent.h"
 #include "Player/DDTGameMode.h"
 #include "Player/Widget/CPlayerUI.h"
 #include "Player/Components/CMagazineComponent.h"
@@ -237,6 +239,21 @@ void UCRespawnComponent::RespawnPlayer()
 	{
 		CLog::Log("RespawnComponent: CombatEncounterManager is null, cannot restart enemies");
 	}
+
+	// 모든 드랍 아이템들을 풀로 반환
+	if (AItemPoolManager* ItemPool = Cast<AItemPoolManager>(
+		UGameplayStatics::GetActorOfClass(GetWorld(), AItemPoolManager::StaticClass())))
+	{
+		ItemPool->ResetAllActiveItems();
+		CLog::Log("RespawnComponent: All active items returned to pool");
+	}
+	else
+	{
+		CLog::Log("RespawnComponent: ItemPoolManager not found, cannot reset items");
+	}
+
+	// 모든 ItemDropObject 초기화
+	ResetAllItemDropObjects();
 }
 
 void UCRespawnComponent::SetRespawnLocation(FVector NewLocation)
@@ -249,5 +266,31 @@ void UCRespawnComponent::SetRespawnDelay(float NewDelay)
 {
 	RespawnDelay = FMath::Max(0.1f, NewDelay); // 최소 0.1초
 	CLog::Log("RespawnComponent: Respawn delay updated to: " + FString::SanitizeFloat(RespawnDelay) + " seconds");
+}
+
+void UCRespawnComponent::ResetAllItemDropObjects()
+{
+	if (!GetWorld()) return;
+	
+	int32 ResetCount = 0;
+	
+	// 월드의 모든 Actor에서 UCItemDropObjectComponent 찾기
+	TArray<AActor*> AllActors;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AActor::StaticClass(), AllActors);
+	
+	for (AActor* Actor : AllActors)
+	{
+		if (!IsValid(Actor)) continue;
+		
+		// 해당 Actor에서 UCItemDropObjectComponent 찾기
+		if (UCItemDropObjectComponent* ItemDropObjComp = Actor->FindComponentByClass<UCItemDropObjectComponent>())
+		{
+			// 파괴된 상태가 아니더라도 강제로 리스폰 (초기 상태로 복구)
+			ItemDropObjComp->RespawnObject();
+			ResetCount++;
+		}
+	}
+	
+	CLog::Log(FString::Printf(TEXT("RespawnComponent: Reset %d ItemDropObjects"), ResetCount));
 }
 
