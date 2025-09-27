@@ -236,12 +236,6 @@ void UFlyingComponent::UpdateTakeoff(float DeltaTime)
 		}
 	}
 	
-	// 디버그 시각화
-	if (GetWorld())
-	{
-		DrawDebugLine(GetWorld(), StartLocation, TargetLocation, FColor::Green, false, -1.0f, 0, 2.0f);
-		DrawDebugSphere(GetWorld(), TargetLocation, 30.0f, 8, FColor::Green, false, -1.0f, 0, 3.0f);
-	}
 }
 
 void UFlyingComponent::UpdateLanding(float DeltaTime)
@@ -306,12 +300,6 @@ void UFlyingComponent::UpdateLanding(float DeltaTime)
 		}
 	}
 	
-	// 디버그 시각화
-	if (GetWorld())
-	{
-		DrawDebugLine(GetWorld(), CurrentLocation, LandingLocation, FColor::Red, false, -1.0f, 0, 2.0f);
-		DrawDebugSphere(GetWorld(), LandingLocation, 30.0f, 8, FColor::Red, false, -1.0f, 0, 3.0f);
-	}
 }
 
 void UFlyingComponent::UpdateOrbit(float DeltaTime)
@@ -338,16 +326,6 @@ void UFlyingComponent::UpdateOrbit(float DeltaTime)
 	
 	MoveToLocation(TargetLocation, FlyingSpeed);
 	
-	// 디버그 시각화
-	if (GetWorld())
-	{
-		// 궤도 원 그리기
-		DrawDebugCircle(GetWorld(), OrbitCenter, OrbitRadius, 32, FColor::Cyan, false, -1.0f, 0, 2.0f);
-		
-		// 현재 위치와 목표 위치 표시
-		DrawDebugSphere(GetWorld(), TargetLocation, 40.0f, 12, FColor::Cyan, false, -1.0f, 0, 3.0f);
-		DrawDebugLine(GetWorld(), OwnerCharacter->GetActorLocation(), TargetLocation, FColor::Cyan, false, -1.0f, 0, 2.0f);
-	}
 }
 
 
@@ -380,7 +358,6 @@ void UFlyingComponent::UpdateAltitudeVariation(float DeltaTime)
 		FVector AltitudeLineEnd = AltitudeLineStart;
 		AltitudeLineEnd.Z += AltitudeVariationOffset;
 		
-		DrawDebugLine(GetWorld(), AltitudeLineStart, AltitudeLineEnd, FColor::Yellow, false, -1.0f, 0, 1.0f);
 	}
 }
 
@@ -643,17 +620,14 @@ void UFlyingComponent::UpdateSplineOrbit(float DeltaTime)
 	if (GetWorld())
 	{
 		// 현재 스플라인 위치 표시
-		DrawDebugSphere(GetWorld(), TargetLocation, 20.0f, 8, FColor::Green, false, 0.1f);
 		
 		// 가장 높은 스플라인 (활성) 표시
 		FVector ActiveSplineStart = Splines[3]->GetLocationAtSplinePoint(0, ESplineCoordinateSpace::World);
-		DrawDebugSphere(GetWorld(), ActiveSplineStart, 15.0f, 6, FColor::Red, false, 0.1f);
 		
 		// 다른 스플라인들 표시
 		for (int32 i = 0; i < 3; i++)
 		{
 			FVector SplineStart = Splines[i]->GetLocationAtSplinePoint(0, ESplineCoordinateSpace::World);
-			DrawDebugSphere(GetWorld(), SplineStart, 10.0f, 4, FColor::Blue, false, 0.1f);
 		}
 	}
 }
@@ -795,11 +769,8 @@ void UFlyingComponent::UpdateHovering(float DeltaTime)
 		if (DebugTargetPawn)
 			{
 			FVector PlayerLocation = DebugTargetPawn->GetActorLocation();
-				DrawDebugLine(GetWorld(), CurrentLocation, PlayerLocation, FColor::Yellow, false, 0.1f, 0, 2.0f);
 			}
 			
-			DrawDebugSphere(GetWorld(), HoveringLocation, 50.0f, 12, FColor::Purple, false, 0.1f, 0, 3.0f);
-			DrawDebugLine(GetWorld(), CurrentLocation, HoveringLocation, FColor::Purple, false, 0.1f, 0, 2.0f);
 	}
 }
 
@@ -1100,7 +1071,6 @@ void UFlyingComponent::DebugHoveringEnvironmentAnalysis()
 		
 		// 디버그용 라인트레이스 시각화 (항상 표시)
 		FColor DebugColor = bHit ? FColor::Red : FColor::Green;
-		DrawDebugLine(GetWorld(), TraceStart, TraceStart + TraceDirection * TraceLength, DebugColor, false, 0.1f, 0, 2.0f);
 		
 		// 거리 정보 로그
 		CLog::Log(FString::Printf(TEXT("포인트 %d: 플레이어에서 원주로 - 시작점 %s, 끝점 %s, 거리 %f"), 
@@ -1110,10 +1080,8 @@ void UFlyingComponent::DebugHoveringEnvironmentAnalysis()
 		if (bHit)
 		{
 			// 장애물에 막힘 - 해당 방향의 원을 빨간색으로 표시
-			DrawDebugSphere(GetWorld(), CirclePoint, 30.0f, 8, FColor::Red, false, 0.1f, 0, 3.0f);
 			
 			// 충돌 지점도 빨간색으로 표시
-			DrawDebugSphere(GetWorld(), HitResult.Location, 20.0f, 6, FColor::Red, false, 0.1f, 0, 2.0f);
 			
 			BlockedPoints++;
 			
@@ -1123,7 +1091,6 @@ void UFlyingComponent::DebugHoveringEnvironmentAnalysis()
 		else
 		{
 			// 갈 수 있음 - 해당 방향의 원을 초록색으로 표시
-			DrawDebugSphere(GetWorld(), CirclePoint, 25.0f, 6, FColor::Green, false, 0.1f, 0, 3.0f);
 			AccessiblePoints++;
 			
 			CLog::Log(FString::Printf(TEXT("포인트 %d (각도 %f도): 갈 수 있음 (거리: %f)"), i, Angle, TraceLength));
@@ -1148,7 +1115,6 @@ void UFlyingComponent::DebugHoveringEnvironmentAnalysis()
 	// 800 높이에서 원 그리기
 	FVector CircleCenter = PlayerLocation;
 	CircleCenter.Z += 800.0f;
-	DrawDebugCircle(GetWorld(), CircleCenter, EnvironmentAnalysisRadius, EnvironmentAnalysisPoints, CircleColor, false, 0.1f, 0, 5.0f);
 	
 	// 결과 요약
 	float AccessibilityRatio = (float)AccessiblePoints / (float)EnvironmentAnalysisPoints * 100.0f;
@@ -1248,8 +1214,6 @@ void UFlyingComponent::DebugSimpleLineTraceTest()
 		{
 			
 			// 충돌 지점 표시
-			DrawDebugSphere(GetWorld(), HitResult.Location, 50.0f, 12, FColor::Red, false, 2.0f, 0, 5.0f);
-			DrawDebugLine(GetWorld(), BossLocation, HitResult.Location, FColor::Red, false, 2.0f, 0, 3.0f);
 		}
 		else
 		{
@@ -1258,7 +1222,6 @@ void UFlyingComponent::DebugSimpleLineTraceTest()
 	
 	// 전체 라인 표시
 	FColor LineColor = FColor::Yellow;
-	DrawDebugLine(GetWorld(), BossLocation, PlayerLocation, LineColor, false, 2.0f, 0, 2.0f);
 	
 	CLog::Log("=== 라인트레이스 테스트 완료 ===");
 }
@@ -1624,8 +1587,6 @@ void UFlyingComponent::UpdateDistanceMaintenance(float DeltaTime)
 	if (GetWorld())
 	{
 		FVector CurrentLocation = OwnerCharacter->GetActorLocation();
-		DrawDebugLine(GetWorld(), CurrentLocation, DistanceMaintenanceTarget, FColor::Orange, false, 0.1f, 0, 2.0f);
-		DrawDebugSphere(GetWorld(), DistanceMaintenanceTarget, 50.0f, 12, FColor::Orange, false, 0.1f, 0, 3.0f);
 	}
 }
 
@@ -1779,8 +1740,6 @@ void UFlyingComponent::UpdateSplineDistanceMaintenance(float DeltaTime)
 	if (GetWorld())
 	{
 		FVector CurrentLocation = OwnerCharacter->GetActorLocation();
-		DrawDebugLine(GetWorld(), CurrentLocation, SplineDistanceMaintenanceTarget, FColor::Magenta, false, 0.1f, 0, 2.0f);
-		DrawDebugSphere(GetWorld(), SplineDistanceMaintenanceTarget, 50.0f, 12, FColor::Magenta, false, 0.1f, 0, 3.0f);
 	}
 }
 

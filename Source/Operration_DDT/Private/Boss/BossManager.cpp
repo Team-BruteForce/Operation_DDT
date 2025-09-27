@@ -212,7 +212,6 @@ void ABossManager::ResetAllBossComponents()
 	if (UCBossStatusComponent* StatusComp = CHelpers::GetComponent<UCBossStatusComponent>(SpawnedBoss))
 	{
 		StatusComp->ResetAllStats();
-		UE_LOG(LogTemp, Warning, TEXT("✅ 보스 스탯 초기화 완료"));
 	}
 
 	// 2. 상태 컴포넌트 초기화  
@@ -233,7 +232,6 @@ void ABossManager::ResetAllBossComponents()
 	if (UCBossWeaponComponent* WeaponComp = CHelpers::GetComponent<UCBossWeaponComponent>(SpawnedBoss))
 	{
 		WeaponComp->ResetWeaponSystem();
-		UE_LOG(LogTemp, Warning, TEXT("✅ 보스 무기 시스템 초기화 완료"));
 	}
 
 	// 5. 비행 시스템 초기화
@@ -241,14 +239,12 @@ void ABossManager::ResetAllBossComponents()
 	{
 		FlyingComp->ResetFlyingSystem();
 		FlyingComp->StopFlying();
-		UE_LOG(LogTemp, Warning, TEXT("✅ 보스 비행 시스템 초기화 완료"));
 	}
 
 	// 6. 이동 시스템 초기화
 	if (UCBossMovementComponent* MovementComp = CHelpers::GetComponent<UCBossMovementComponent>(SpawnedBoss))
 	{
 		MovementComp->ResetMovementSystem();
-		UE_LOG(LogTemp, Warning, TEXT("✅ 보스 이동 시스템 초기화 완료"));
 	}
 }
 

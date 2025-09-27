@@ -218,7 +218,6 @@ float ADDTPlayer::TakeDamage(float DamageAmount, struct FDamageEvent const& Dama
 {
 	if (State->IsCanDodge())
 	{
-		CLog::Print("Dodge!");
 		return Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 	}
 	Status->GetDamage(DamageAmount);

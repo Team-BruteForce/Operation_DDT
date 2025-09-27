@@ -233,11 +233,10 @@ void UCBossWeaponComponent::ResetWeaponSystem()
 	if (!IsPaseZeroMode())
 	{
 		// 현재 무기가 있다면 조용히 해제 (몽타주 없이)
-		GetBossEquipment()->Unequip(CurrentWeaponMode);
+		//GetBossEquipment()->Unequip(CurrentWeaponMode);
 	}
 	
 	CurrentWeaponMode = BossTags.PaseZero;
-	UE_LOG(LogTemp, Warning, TEXT("🔇 무기 모드를 PaseZero로 조용히 초기화 (몽타주 없음)"));
 
 
 	// 4. 델리게이트 이벤트 발생 (무기 모드 변경 알림)

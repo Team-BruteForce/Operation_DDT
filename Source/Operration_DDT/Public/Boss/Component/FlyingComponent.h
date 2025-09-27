@@ -705,5 +705,4 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hovering Debug")
 	float LineTraceDistance = 2000.0f;  // 라인트레이스 거리
-	
 };
